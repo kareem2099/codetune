@@ -84,7 +84,10 @@ app.get('/callback', async (req, res) => {
     }
 
     if (code) {
-        // Success - show success page with the authorization code
+        // Success - automatically handle the authorization code
+        console.log('✅ Received Spotify authorization code');
+
+        // Show success page and automatically close
         return res.send(`
             <!DOCTYPE html>
             <html>
@@ -109,14 +112,7 @@ app.get('/callback', async (req, res) => {
                         backdrop-filter: blur(10px);
                     }
                     h1 { margin-bottom: 1rem; color: #1db954; }
-                    .code {
-                        background: rgba(0, 0, 0, 0.2);
-                        padding: 1rem;
-                        border-radius: 10px;
-                        font-family: monospace;
-                        margin: 1rem 0;
-                        word-break: break-all;
-                    }
+                    .success { color: #4CAF50; }
                     button {
                         background: #1db954;
                         color: white;
@@ -125,49 +121,23 @@ app.get('/callback', async (req, res) => {
                         border-radius: 25px;
                         cursor: pointer;
                         font-size: 16px;
-                        margin: 0.5rem;
-                    }
-                    .copy-btn {
-                        background: #667eea;
+                        margin-top: 1rem;
                     }
                 </style>
             </head>
             <body>
                 <div class="container">
                     <h1>✅ Authentication Successful!</h1>
-                    <p>CodeTune has been successfully connected to your Spotify account.</p>
-                    <p>Please copy the authorization code below and paste it back in VS Code:</p>
-                    <div class="code" id="authCode">${code}</div>
-                    <div>
-                        <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
-                        <button onclick="window.close()">✅ Done</button>
-                    </div>
+                    <p class="success">CodeTune has been successfully connected to your Spotify account.</p>
+                    <p>This window will close automatically in 3 seconds...</p>
+                    <button onclick="window.close()">Close Now</button>
                 </div>
 
                 <script>
-                    function copyCode() {
-                        const codeElement = document.getElementById('authCode');
-                        const range = document.createRange();
-                        range.selectNode(codeElement);
-                        window.getSelection().removeAllRanges();
-                        window.getSelection().addRange(range);
-                        document.execCommand('copy');
-                        window.getSelection().removeAllRanges();
-
-                        // Visual feedback
-                        const copyBtn = document.querySelector('.copy-btn');
-                        const originalText = copyBtn.textContent;
-                        copyBtn.textContent = '✅ Copied!';
-                        setTimeout(() => {
-                            copyBtn.textContent = originalText;
-                        }, 2000);
-                    }
-
-                    // Auto-select the code for easy copying
-                    document.getElementById('authCode').onclick = function() {
-                        this.select();
-                        document.execCommand('copy');
-                    };
+                    // Auto-close after 3 seconds
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
                 </script>
             </body>
             </html>
