@@ -35,7 +35,7 @@ export class SpotifyService {
         this.context = context;
 
         // Get redirect URI from configuration or use default
-        const redirectUri = vscode.workspace.getConfiguration('codeTune').get('spotifyRedirectUri', 'http://localhost:8888/callback');
+        const redirectUri = vscode.workspace.getConfiguration('codeTune').get('spotifyRedirectUri', 'https://server-5198m68fj-freerave.vercel.app/callback');
 
         this.spotifyApi = new SpotifyWebApi({
             clientId: vscode.workspace.getConfiguration('codeTune').get('spotifyClientId', ''),
@@ -148,10 +148,11 @@ export class SpotifyService {
 
     private async waitForCallback(): Promise<SpotifyCredentials | null> {
         return new Promise((resolve) => {
-            // Check if the local callback server is running
+            // Use the Vercel server for callback handling
             const checkServer = async () => {
                 try {
-                    const response = await axios.get('http://localhost:8888/health', { timeout: 2000 });
+                    // Check if the Vercel server is accessible
+                    const response = await axios.get('https://server-5198m68fj-freerave.vercel.app/health', { timeout: 5000 });
                     if (response.status === 200) {
                         // Server is running, use automated flow
                         await this.handleAutomatedCallback();
@@ -159,7 +160,7 @@ export class SpotifyService {
                         return;
                     }
                 } catch (error) {
-                    console.log('Callback server not available, falling back to manual input');
+                    console.log('Vercel callback server not available, falling back to manual input');
                 }
 
                 // Fallback: Ask user to paste the callback URL manually
@@ -170,7 +171,7 @@ export class SpotifyService {
                     if (selection === 'Paste URL') {
                         vscode.window.showInputBox({
                             prompt: 'Paste the redirected URL from your browser',
-                            placeHolder: 'http://localhost:8888/callback?code=...'
+                            placeHolder: 'https://server-5198m68fj-freerave.vercel.app/callback?code=...'
                         }).then(url => {
                             if (url) {
                                 this.handleCallback(url).then(resolve).catch(() => resolve(null));
@@ -200,40 +201,66 @@ export class SpotifyService {
 
         const pollServer = async () => {
             try {
-                const response = await axios.get(`http://localhost:8888/auth-status/${sessionId}`, { timeout: 5000 });
-                const data = response.data;
+                // For Vercel deployment, we'll use a simpler approach
+                // Since Vercel doesn't support session-based polling easily,
+                // we'll fall back to manual URL input for now
+                vscode.window.showInformationMessage(
+                    '🎵 Authentication started! Please complete it in your browser and paste the callback URL.',
+                    'OK'
+                );
 
-                if (data.status === 'completed') {
-                    if (data.error) {
-                        vscode.window.showErrorMessage(`Spotify authentication failed: ${data.error}`);
-                        return;
+                // Fallback to manual input since Vercel doesn't support session polling
+                vscode.window.showInformationMessage(
+                    'Please complete the authentication in your browser and paste the redirected URL here.',
+                    'Paste URL'
+                ).then(selection => {
+                    if (selection === 'Paste URL') {
+                        vscode.window.showInputBox({
+                            prompt: 'Paste the redirected URL from your browser',
+                            placeHolder: 'https://server-5198m68fj-freerave.vercel.app/callback?code=...'
+                        }).then(async (url) => {
+                            if (url) {
+                                try {
+                                    const credentials = await this.handleCallback(url);
+                                    if (credentials) {
+                                        await this.saveCredentials(credentials);
+                                        vscode.window.showInformationMessage('✅ Successfully connected to Spotify!');
+                                    }
+                                } catch (error) {
+                                    vscode.window.showErrorMessage('Failed to process authentication callback');
+                                }
+                            }
+                        });
                     }
+                });
 
-                    if (data.code) {
-                        const credentials = await this.handleCallback(`http://localhost:8888/callback?code=${data.code}`);
-                        if (credentials) {
-                            await this.saveCredentials(credentials);
-                            vscode.window.showInformationMessage('✅ Successfully connected to Spotify!');
-                        }
-                    }
-                    return;
-                }
-
-                // Still pending, continue polling
-                attempts++;
-                if (attempts < maxAttempts) {
-                    setTimeout(pollServer, 1000); // Poll every second
-                } else {
-                    vscode.window.showErrorMessage('Authentication timeout. Please try again.');
-                }
+                return;
             } catch (error) {
-                console.error('Error polling auth status:', error);
-                attempts++;
-                if (attempts < maxAttempts) {
-                    setTimeout(pollServer, 1000);
-                } else {
-                    vscode.window.showErrorMessage('Authentication timeout. Please try again.');
-                }
+                console.error('Error with automated callback:', error);
+                // Fallback to manual input
+                vscode.window.showInformationMessage(
+                    'Please complete the authentication in your browser and paste the redirected URL here.',
+                    'Paste URL'
+                ).then(selection => {
+                    if (selection === 'Paste URL') {
+                        vscode.window.showInputBox({
+                            prompt: 'Paste the redirected URL from your browser',
+                            placeHolder: 'https://server-5198m68fj-freerave.vercel.app/callback?code=...'
+                        }).then(async (url) => {
+                            if (url) {
+                                try {
+                                    const credentials = await this.handleCallback(url);
+                                    if (credentials) {
+                                        await this.saveCredentials(credentials);
+                                        vscode.window.showInformationMessage('✅ Successfully connected to Spotify!');
+                                    }
+                                } catch (error) {
+                                    vscode.window.showErrorMessage('Failed to process authentication callback');
+                                }
+                            }
+                        });
+                    }
+                });
             }
         };
 

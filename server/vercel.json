@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "spotify-callback.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/callback",
+      "dest": "/spotify-callback.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/spotify-callback.js"
+    }
+  ]
+}
