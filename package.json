@@ -1,0 +1,134 @@
+{
+  "name": "codetune",
+  "displayName": "codeTune",
+  "description": "relaxing while you code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.104.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "relaxing",
+    "music",
+    "code",
+    "focus",
+    "quran",
+    "tune",
+    "islamic"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codeTune.openPlayer",
+        "title": "Open CodeTune Player"
+      },
+      {
+        "command": "codeTune.playMusic",
+        "title": "Play Music"
+      },
+      {
+        "command": "codeTune.playQuran",
+        "title": "Play Quran"
+      },
+      {
+        "command": "codeTune.connectSpotify",
+        "title": "Connect to Spotify"
+      },
+      {
+        "command": "codeTune.searchSpotify",
+        "title": "Search Spotify"
+      },
+      {
+        "command": "codeTune.pause",
+        "title": "Pause"
+      },
+      {
+        "command": "codeTune.stop",
+        "title": "Stop"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "codeTune.openPlayer"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "codeTune.playMusic",
+        "key": "ctrl+shift+m"
+      },
+      {
+        "command": "codeTune.playQuran",
+        "key": "ctrl+shift+q"
+      }
+    ],
+    "configuration": {
+      "title": "CodeTune",
+      "properties": {
+        "codeTune.musicVolume": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Default volume for music"
+        },
+        "codeTune.quranVolume": {
+          "type": "number",
+          "default": 0.7,
+          "description": "Default volume for Quran"
+        },
+        "codeTune.spotifyClientId": {
+          "type": "string",
+          "default": "",
+          "description": "Spotify Client ID for API access"
+        },
+        "codeTune.spotifyClientSecret": {
+          "type": "string",
+          "default": "",
+          "description": "Spotify Client Secret for API access"
+        },
+        "codeTune.spotifyRedirectUri": {
+          "type": "string",
+          "default": "http://localhost:8888/callback",
+          "description": "Spotify OAuth redirect URI (use your deployed server URL for production)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && node esbuild.js",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "node esbuild.js --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "npm run check-types && npm run lint && node esbuild.js --production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/spotify-web-api-node": "^5.0.11",
+    "@types/vscode": "^1.104.0",
+    "@typescript-eslint/eslint-plugin": "^8.42.0",
+    "@typescript-eslint/parser": "^8.42.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.34.0",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "spotify-web-api-node": "^5.0.2"
+  }
+}

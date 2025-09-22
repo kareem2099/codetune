@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "functions": {
+    "api/spotify-callback.js": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
+    {
+      "src": "/callback",
+      "dest": "/api/spotify-callback.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/api/spotify-callback.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/spotify-callback.js"
+    }
+  ]
+}
