@@ -2,23 +2,31 @@ import * as vscode from 'vscode';
 import { MusicPlayer } from '../file/musicPlayer';
 import { QuranPlayer } from '../file/quranPlayer';
 import { SpotifyService } from './spotifyService';
+import { MusicServiceManager, MusicServiceType } from './musicService';
+import { YouTubeMusicService } from './youtubeMusicService';
+import { LocalMusicService } from './localMusicService';
+import { MusicTrack } from './musicService';
+import { YouTubeAuthPanel } from './youtubeAuthPanel';
 
 export class PlayerWebviewPanel {
     private panel: vscode.WebviewPanel;
     private musicPlayer: MusicPlayer;
     private quranPlayer: QuranPlayer;
     private spotifyService: SpotifyService;
+    private musicServiceManager: MusicServiceManager;
     private disposables: vscode.Disposable[] = [];
 
     constructor(
         context: vscode.ExtensionContext,
         musicPlayer: MusicPlayer,
         quranPlayer: QuranPlayer,
-        spotifyService: SpotifyService
+        spotifyService: SpotifyService,
+        musicServiceManager: MusicServiceManager
     ) {
         this.musicPlayer = musicPlayer;
         this.quranPlayer = quranPlayer;
         this.spotifyService = spotifyService;
+        this.musicServiceManager = musicServiceManager;
 
         // Create webview panel
         this.panel = vscode.window.createWebviewPanel(
@@ -146,6 +154,206 @@ export class PlayerWebviewPanel {
                     vscode.window.showErrorMessage(`Failed to load playlist: ${error}`);
                 }
                 break;
+            case 'searchYoutube':
+                try {
+                    // Get YouTube Music service from the music service manager
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    const tracks = await youtubeService.searchTracks(message.query);
+                    if (tracks.length === 0) {
+                        vscode.window.showInformationMessage('No tracks found on YouTube Music. Try a different search term.');
+                        return;
+                    }
+
+                    const trackNames = tracks.map(track =>
+                        `${track.name} - ${track.artists.join(', ')}`
+                    );
+
+                    const selected = await vscode.window.showQuickPick(trackNames, {
+                        placeHolder: 'Select a track to play'
+                    });
+
+                    if (selected) {
+                        const track: MusicTrack = tracks[trackNames.indexOf(selected)];
+                        // Set the search results as the playback queue
+                        if (youtubeService && typeof (youtubeService as any).setPlaybackQueue === 'function') {
+                            (youtubeService as any).setPlaybackQueue(tracks);
+                        }
+                        // Play the selected track
+                        if (youtubeService.playTrack) {
+                            await youtubeService.playTrack(track.id);
+                        }
+                        this.updateUI();
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube search failed: ${error}`);
+                }
+                break;
+            case 'toggleYoutube':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    const currentTrack = (youtubeService as any).getCurrentTrack();
+                    if (!currentTrack) {
+                        vscode.window.showInformationMessage('No track selected. Search for music first.');
+                        return;
+                    }
+
+                    const isPlaying = (youtubeService as any).getIsPlaying();
+                    if (isPlaying) {
+                        (youtubeService as any).pausePlayback();
+                        vscode.window.showInformationMessage('⏸️ YouTube Music paused');
+                    } else {
+                        (youtubeService as any).resumePlayback();
+                        vscode.window.showInformationMessage('▶️ YouTube Music resumed');
+                    }
+                    this.updateUI();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube playback failed: ${error}`);
+                }
+                break;
+            case 'youtubeNext':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    (youtubeService as any).skipToNext();
+                    const nextTrack = (youtubeService as any).getCurrentTrack();
+                    if (nextTrack) {
+                        vscode.window.showInformationMessage(`⏭️ Playing: ${nextTrack.name}`);
+                    }
+                    this.updateUI();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube next track failed: ${error}`);
+                }
+                break;
+            case 'youtubePrevious':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    (youtubeService as any).skipToPrevious();
+                    const prevTrack = (youtubeService as any).getCurrentTrack();
+                    if (prevTrack) {
+                        vscode.window.showInformationMessage(`⏮️ Playing: ${prevTrack.name}`);
+                    }
+                    this.updateUI();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube previous track failed: ${error}`);
+                }
+                break;
+            case 'setYoutubeVolume':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    (youtubeService as any).setVolume(message.volume);
+                    vscode.window.showInformationMessage(`🔊 YouTube Music volume set to ${Math.round(message.volume * 100)}%`);
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube volume control failed: ${error}`);
+                }
+                break;
+            case 'loadYoutubePlaylist':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    const tracks = await youtubeService.getPlaylistTracks(message.playlistId);
+                    if (tracks.length === 0) {
+                        vscode.window.showInformationMessage('No tracks found in this playlist');
+                        return;
+                    }
+
+                    const trackNames = tracks.map(track =>
+                        `${track.name} - ${track.artists.join(', ')}`
+                    );
+
+                    const selected = await vscode.window.showQuickPick(trackNames, {
+                        placeHolder: 'Select a track to play'
+                    });
+
+                    if (selected) {
+                        const track = tracks[trackNames.indexOf(selected)];
+                        if (youtubeService.playTrack) {
+                            await youtubeService.playTrack(track.id);
+                        } else {
+                            vscode.window.showInformationMessage(
+                                '🎵 Opening track in YouTube Music...',
+                                'Open in YouTube'
+                            ).then(selection => {
+                                if (selection === 'Open in YouTube') {
+                                    vscode.env.openExternal(vscode.Uri.parse(track.externalUrl || ''));
+                                }
+                            });
+                        }
+                        this.updateUI();
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to load YouTube playlist: ${error}`);
+                }
+                break;
+            case 'connectYouTube':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    const success = await youtubeService.authenticate();
+                    if (success) {
+                        vscode.window.showInformationMessage('🎵 YouTube Music connected successfully!');
+                    } else {
+                        vscode.window.showInformationMessage('YouTube Music connection initiated. Please check your browser and complete the authentication.');
+                    }
+                    this.updateUI();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube authentication failed: ${error}`);
+                }
+                break;
+            case 'disconnectYouTube':
+                try {
+                    const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+                    if (!youtubeService) {
+                        vscode.window.showErrorMessage('YouTube Music service not available');
+                        return;
+                    }
+
+                    await youtubeService.logout();
+                    vscode.window.showInformationMessage('🎵 YouTube Music disconnected');
+                    this.updateUI();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`YouTube disconnection failed: ${error}`);
+                }
+                break;
+            case 'openYouTubeAuth':
+                try {
+                    const youtubeAuthPanel = new YouTubeAuthPanel(this.musicServiceManager.getContext(), this.musicServiceManager);
+                    youtubeAuthPanel.reveal();
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Failed to open YouTube authentication: ${error}`);
+                }
+                break;
         }
     }
 
@@ -179,6 +387,27 @@ export class PlayerWebviewPanel {
             console.log('Could not check authentication:', error);
         }
 
+        // Get current YouTube Music state
+        let youtubeState = {
+            isPlaying: false,
+            currentTrack: '',
+            volume: 0.5
+        };
+
+        try {
+            const youtubeService = this.musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService) {
+                const currentTrack = (youtubeService as any).getCurrentTrack();
+                const isPlaying = (youtubeService as any).getIsPlaying();
+                youtubeState.isPlaying = isPlaying;
+                youtubeState.currentTrack = currentTrack ? `${currentTrack.name} - ${currentTrack.artists.join(', ')}` : '';
+                youtubeState.volume = 0.5; // Default volume since YouTube doesn't provide volume via API
+            }
+        } catch (error) {
+            // Ignore YouTube Music errors
+            console.log('Could not get YouTube Music state:', error);
+        }
+
         this.panel.webview.postMessage({
             command: 'updateState',
             musicState: {
@@ -191,7 +420,8 @@ export class PlayerWebviewPanel {
                 currentSurah: this.quranPlayer.getCurrentSurah(),
                 volume: this.quranPlayer.getVolume()
             },
-            spotifyState: spotifyState
+            spotifyState: spotifyState,
+            youtubeState: youtubeState
         });
     }
 
@@ -445,6 +675,33 @@ export class PlayerWebviewPanel {
             gap: 20px;
         }
 
+        .service-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .service-btn {
+            padding: 8px 16px;
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9em;
+        }
+
+        .service-btn:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .service-btn.active {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
         @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
@@ -458,9 +715,16 @@ export class PlayerWebviewPanel {
         <p style="color: var(--vscode-descriptionForeground); margin: 5px 0;">Relaxing music and Quran while you code</p>
     </div>
 
+    <!-- Service Selection -->
+    <div class="service-selector">
+        <button class="service-btn active" onclick="selectService('spotify')">🎧 Spotify</button>
+        <button class="service-btn" onclick="selectService('youtube_music')">🎥 YouTube</button>
+        <button class="service-btn" onclick="selectService('local')">💾 Local</button>
+    </div>
+
     <div class="grid">
         <!-- Spotify Player Section -->
-        <div class="player-section spotify-section">
+        <div class="player-section spotify-section" id="spotifySection">
             <div class="player-title">
                 <div style="display: flex; align-items: center;">
                     <span class="icon">🎵</span>
@@ -501,10 +765,79 @@ export class PlayerWebviewPanel {
             </div>
         </div>
 
-        <!-- Local Music Player Section -->
-        <div class="player-section">
+        <!-- YouTube Music Player Section -->
+        <div class="player-section youtube-section" id="youtubeSection" style="display: none;">
             <div class="player-title">
-                <span class="icon">🎹</span>
+                <div style="display: flex; align-items: center;">
+                    <span class="icon">🎥</span>
+                    <span>YouTube Music</span>
+                    <span id="youtubeStatus" class="status-indicator"></span>
+                </div>
+                <div id="youtubeStatusText" class="spotify-status spotify-disconnected">Ready</div>
+            </div>
+
+            <div class="current-playing" id="currentYoutube">Search for music on YouTube</div>
+
+            <!-- YouTube Authentication Section -->
+            <div class="auth-section" style="margin-bottom: 20px; padding: 15px; background-color: var(--vscode-textBlockQuote-background); border-left: 4px solid #FF0000; border-radius: 4px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="youtube-icon">🎵</span>
+                        <span style="font-weight: bold;">YouTube Authentication</span>
+                    </div>
+                    <div id="youtubeAuthStatus" class="spotify-status spotify-disconnected" style="font-size: 0.8em;">Not Connected</div>
+                </div>
+
+                <div class="controls" style="justify-content: center; margin-bottom: 10px;">
+                    <button class="btn" onclick="connectYouTube()" id="youtubeConnectBtn" style="background-color: #FF0000; color: white;">🔗 Connect YouTube</button>
+                    <button class="btn" onclick="disconnectYouTube()" id="youtubeDisconnectBtn" style="display: none;">🔌 Disconnect</button>
+                    <button class="btn" onclick="openYouTubeAuth()" id="youtubeAuthBtn">⚙️ Auth Panel</button>
+                </div>
+
+                <div style="font-size: 0.9em; color: var(--vscode-descriptionForeground); text-align: center;">
+                    Connect your YouTube account for enhanced search and personalized recommendations
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="toggleYoutube()" id="youtubePlayBtn">▶️ Play</button>
+                <button class="btn" onclick="youtubeNext()" id="youtubeNextBtn">⏭️ Next</button>
+                <button class="btn" onclick="youtubePrevious()" id="youtubePrevBtn">⏮️ Previous</button>
+            </div>
+
+            <div class="search-section">
+                <input type="text" class="search-input" id="youtubeSearch" placeholder="Search YouTube Music..." onkeypress="handleYoutubeSearchKey(event)">
+                <button class="search-btn" onclick="searchYoutube()">🔍</button>
+            </div>
+
+            <div class="volume-control">
+                <label>Volume:</label>
+                <input type="range" class="volume-slider" id="youtubeVolume" min="0" max="100" value="50" onchange="setYoutubeVolume(this.value)">
+                <span id="youtubeVolumeValue">50%</span>
+            </div>
+
+            <div class="playlist-list" id="youtubePlaylists">
+                <div class="playlist-item" onclick="loadYoutubePlaylist('PLrAXtmRdnEQyN2JDJy0b5Y7b8gA3Y6H8')">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(45deg, #ff0000, #ff6b6b); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white;">▶️</div>
+                    <div class="track-info">
+                        <div class="track-name">Popular Music 2024</div>
+                        <div class="track-artist">Trending hits</div>
+                    </div>
+                </div>
+                <div class="playlist-item" onclick="loadYoutubePlaylist('PLrAXtmRdnEQyN2JDJy0b5Y7b8gA3Y6H9')">
+                    <div style="width: 40px; height: 40px; background: linear-gradient(45deg, #ff6b6b, #feca57); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white;">🎵</div>
+                    <div class="track-info">
+                        <div class="track-name">Top Hits</div>
+                        <div class="track-artist">Most popular songs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Local Music Player Section -->
+        <div class="player-section local-section" id="localSection" style="display: none;">
+            <div class="player-title">
+                <span class="icon">💾</span>
                 <span>Local Music</span>
                 <span id="musicStatus" class="status-indicator"></span>
             </div>
@@ -514,6 +847,7 @@ export class PlayerWebviewPanel {
             <div class="controls">
                 <button class="btn" onclick="toggleMusic()">▶️ Play/Pause</button>
                 <button class="btn" onclick="stopMusic()">⏹️ Stop</button>
+                <button class="btn" onclick="setupLocalMusic()">📁 Setup Folders</button>
             </div>
 
             <div class="volume-control">
@@ -604,6 +938,7 @@ export class PlayerWebviewPanel {
         let musicState = { isPlaying: false, currentTrack: '', volume: 0.5 };
         let quranState = { isPlaying: false, currentSurah: '', volume: 0.7 };
         let spotifyState = { isConnected: false, isPlaying: false, currentTrack: '', volume: 0.5 };
+        let youtubeState = { isPlaying: false, currentTrack: '', volume: 0.5 };
 
         // Spotify controls
         function connectSpotify() {
@@ -703,6 +1038,89 @@ export class PlayerWebviewPanel {
             document.getElementById('quranVolumeValue').textContent = value + '%';
         }
 
+        // Service switching functionality
+        function selectService(service) {
+            // Hide all service sections
+            document.getElementById('spotifySection').style.display = 'none';
+            document.getElementById('youtubeSection').style.display = 'none';
+            document.getElementById('localSection').style.display = 'none';
+
+            // Remove active class from all service buttons
+            document.querySelectorAll('.service-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected service section
+            switch(service) {
+                case 'spotify':
+                    document.getElementById('spotifySection').style.display = 'block';
+                    document.querySelector('.service-btn[onclick*="spotify"]').classList.add('active');
+                    break;
+                case 'youtube_music':
+                    document.getElementById('youtubeSection').style.display = 'block';
+                    document.querySelector('.service-btn[onclick*="youtube"]').classList.add('active');
+                    break;
+                case 'local':
+                    document.getElementById('localSection').style.display = 'block';
+                    document.querySelector('.service-btn[onclick*="local"]').classList.add('active');
+                    break;
+            }
+        }
+
+        // YouTube Music controls
+        function searchYoutube() {
+            const query = document.getElementById('youtubeSearch').value;
+            if (query.trim()) {
+                vscode.postMessage({ command: 'searchYoutube', query: query });
+            }
+        }
+
+        function handleYoutubeSearchKey(event) {
+            if (event.key === 'Enter') {
+                searchYoutube();
+            }
+        }
+
+        function toggleYoutube() {
+            vscode.postMessage({ command: 'toggleYoutube' });
+        }
+
+        function youtubeNext() {
+            vscode.postMessage({ command: 'youtubeNext' });
+        }
+
+        function youtubePrevious() {
+            vscode.postMessage({ command: 'youtubePrevious' });
+        }
+
+        function setYoutubeVolume(value) {
+            const volume = value / 100;
+            vscode.postMessage({ command: 'setYoutubeVolume', volume: volume });
+            document.getElementById('youtubeVolumeValue').textContent = value + '%';
+        }
+
+        function loadYoutubePlaylist(playlistId) {
+            vscode.postMessage({ command: 'loadYoutubePlaylist', playlistId: playlistId });
+        }
+
+        // YouTube Authentication controls
+        function connectYouTube() {
+            vscode.postMessage({ command: 'connectYouTube' });
+        }
+
+        function disconnectYouTube() {
+            vscode.postMessage({ command: 'disconnectYouTube' });
+        }
+
+        function openYouTubeAuth() {
+            vscode.postMessage({ command: 'openYouTubeAuth' });
+        }
+
+        // Local Music controls
+        function setupLocalMusic() {
+            vscode.postMessage({ command: 'setupLocalMusic' });
+        }
+
         // Handle messages from extension
         window.addEventListener('message', event => {
             const message = event.data;
@@ -711,6 +1129,7 @@ export class PlayerWebviewPanel {
                 musicState = message.musicState;
                 quranState = message.quranState;
                 spotifyState = message.spotifyState || spotifyState;
+                youtubeState = message.youtubeState || youtubeState;
                 updateUI();
             }
         });
@@ -781,6 +1200,27 @@ export class PlayerWebviewPanel {
             } else {
                 quranStatusEl.className = 'status-indicator';
                 currentQuranEl.textContent = 'No Surah playing';
+            }
+
+            // Update YouTube Music UI
+            const youtubeStatusEl = document.getElementById('youtubeStatus');
+            const currentYoutubeEl = document.getElementById('currentYoutube');
+            const youtubePlayBtn = document.getElementById('youtubePlayBtn');
+
+            if (youtubeState.currentTrack) {
+                if (youtubeState.isPlaying) {
+                    youtubeStatusEl.className = 'status-indicator status-playing';
+                    youtubePlayBtn.textContent = '⏸️ Pause';
+                    currentYoutubeEl.textContent = \`🎵 Playing: \${youtubeState.currentTrack}\`;
+                } else {
+                    youtubeStatusEl.className = 'status-indicator status-paused';
+                    youtubePlayBtn.textContent = '▶️ Play';
+                    currentYoutubeEl.textContent = \`⏸ Paused: \${youtubeState.currentTrack}\`;
+                }
+            } else {
+                youtubeStatusEl.className = 'status-indicator';
+                youtubePlayBtn.textContent = '▶️ Play';
+                currentYoutubeEl.textContent = 'Search for music on YouTube';
             }
 
             // Update volume sliders

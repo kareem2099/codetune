@@ -3,10 +3,16 @@ import { MusicPlayer } from './file/musicPlayer';
 import { QuranPlayer } from './file/quranPlayer';
 import { PlayerWebviewPanel } from './logic/webviewPanel';
 import { SpotifyService } from './logic/spotifyService';
+import { MusicServiceManager, MusicServiceType } from './logic/musicService';
+import { YouTubeMusicService } from './logic/youtubeMusicService';
+import { LocalMusicService } from './logic/localMusicService';
+import { ActivityBarViewProvider } from './logic/activityBarView';
+import { YouTubeAuthPanel } from './logic/youtubeAuthPanel';
 
 let musicPlayer: MusicPlayer;
 let quranPlayer: QuranPlayer;
 let spotifyService: SpotifyService;
+let musicServiceManager: MusicServiceManager;
 let webviewPanel: PlayerWebviewPanel | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,6 +23,261 @@ export function activate(context: vscode.ExtensionContext) {
     quranPlayer = new QuranPlayer(context);
     spotifyService = new SpotifyService(context);
 
+    // Initialize service manager
+    musicServiceManager = new MusicServiceManager(context);
+
+    // Register music services
+    const youtubeMusicService = new YouTubeMusicService(context, {
+        clientId: process.env.YOUTUBE_CLIENT_ID || '',
+        clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
+        apiKey: process.env.YOUTUBE_API_KEY || '',
+        redirectUri: process.env.YOUTUBE_REDIRECT_URI || 'http://localhost:8888/youtube-callback'
+    });
+
+    const localMusicService = new LocalMusicService(context);
+
+    musicServiceManager.registerService(spotifyService);
+    musicServiceManager.registerService(youtubeMusicService);
+    musicServiceManager.registerService(localMusicService);
+
+    // Initialize all services
+    musicServiceManager.initializeServices();
+
+    // Initialize Activity Bar webview
+    console.log('Extension: Creating Activity Bar provider...');
+    const activityBarProvider = new ActivityBarViewProvider(
+        context.extensionUri,
+        musicPlayer,
+        quranPlayer,
+        spotifyService,
+        musicServiceManager
+    );
+
+    console.log('Extension: Registering Activity Bar provider...');
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(ActivityBarViewProvider.viewType, activityBarProvider)
+    );
+    console.log('Extension: Activity Bar provider registered successfully');
+
+    // Service selection commands
+    const selectMusicServiceCommand = vscode.commands.registerCommand(
+        'codeTune.selectMusicService',
+        async () => {
+            const selectedService = await musicServiceManager.selectService();
+            if (selectedService) {
+                vscode.window.showInformationMessage(
+                    `🎵 Switched to ${musicServiceManager.getService(selectedService)?.name}`
+                );
+            }
+        }
+    );
+
+    const searchMusicCommand = vscode.commands.registerCommand(
+        'codeTune.searchMusic',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            const searchHistory = youtubeService instanceof YouTubeMusicService ?
+                youtubeService.getSearchHistory() : [];
+
+            // Show search history as quick pick items if available
+            let query: string | undefined;
+            if (searchHistory.length > 0) {
+                const historyItems = searchHistory.slice(0, 5).map((item, index) => ({
+                    label: item,
+                    description: `Recent search #${index + 1}`,
+                    alwaysShow: true
+                }));
+
+                const selected = await vscode.window.showQuickPick(
+                    [
+                        { label: 'Enter new search...', description: 'Type your own query' },
+                        ...historyItems
+                    ],
+                    {
+                        placeHolder: 'Search music or select from recent searches...',
+                        matchOnDescription: true
+                    }
+                );
+
+                if (selected) {
+                    if (selected.label === 'Enter new search...') {
+                        query = await vscode.window.showInputBox({
+                            prompt: 'Search Music',
+                            placeHolder: 'Enter song, artist, or album name...'
+                        });
+                    } else {
+                        query = selected.label;
+                    }
+                }
+            } else {
+                query = await vscode.window.showInputBox({
+                    prompt: 'Search Music',
+                    placeHolder: 'Enter song, artist, or album name...'
+                });
+            }
+
+            if (query) {
+                try {
+                    const tracks = await musicServiceManager.searchTracks(query);
+
+                    if (tracks.length === 0) {
+                        vscode.window.showInformationMessage('No tracks found. Try a different search term.');
+                        return;
+                    }
+
+                    const trackNames = tracks.map(track =>
+                        `${track.name} - ${track.artists.join(', ')} (${Math.floor(track.duration / 60000)}:${Math.floor((track.duration % 60000) / 1000).toString().padStart(2, '0')})`
+                    );
+
+                    const selected = await vscode.window.showQuickPick(trackNames, {
+                        placeHolder: 'Select a track to play'
+                    });
+
+                    if (selected) {
+                        const track = tracks[trackNames.indexOf(selected)];
+                        await musicServiceManager.playTrack(track.id);
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Search failed: ${error}`);
+                }
+            }
+        }
+    );
+
+    const browsePlaylistsCommand = vscode.commands.registerCommand(
+        'codeTune.browsePlaylists',
+        async () => {
+            try {
+                const playlists = await musicServiceManager.getUserPlaylists();
+                if (playlists.length === 0) {
+                    vscode.window.showInformationMessage('No playlists found. Try switching to a different service.');
+                    return;
+                }
+
+                const playlistNames = playlists.map(playlist =>
+                    `${playlist.name} (${playlist.trackCount} tracks) - ${playlist.service}`
+                );
+
+                const selected = await vscode.window.showQuickPick(playlistNames, {
+                    placeHolder: 'Select a playlist to browse'
+                });
+
+                if (selected) {
+                    const playlist = playlists[playlistNames.indexOf(selected)];
+                    const tracks = await musicServiceManager.getPlaylistTracks(playlist.id);
+
+                    const trackNames = tracks.map(track =>
+                        `${track.name} - ${track.artists.join(', ')}`
+                    );
+
+                    const trackSelected = await vscode.window.showQuickPick(trackNames, {
+                        placeHolder: 'Select a track to play'
+                    });
+
+                    if (trackSelected) {
+                        const track = tracks[trackNames.indexOf(trackSelected)];
+                        await musicServiceManager.playTrack(track.id);
+                    }
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to browse playlists: ${error}`);
+            }
+        }
+    );
+
+    const setupLocalMusicCommand = vscode.commands.registerCommand(
+        'codeTune.setupLocalMusic',
+        async () => {
+            const localService = musicServiceManager.getService(MusicServiceType.LOCAL);
+            if (localService && localService instanceof LocalMusicService) {
+                await localService.selectMusicFolders();
+            }
+        }
+    );
+
+    // YouTube Music enhanced features commands
+    const connectYouTubeCommand = vscode.commands.registerCommand(
+        'codeTune.connectYouTube',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService && youtubeService instanceof YouTubeMusicService) {
+                await youtubeService.authenticate();
+            }
+        }
+    );
+
+    const disconnectYouTubeCommand = vscode.commands.registerCommand(
+        'codeTune.disconnectYouTube',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService && youtubeService instanceof YouTubeMusicService) {
+                await youtubeService.logout();
+            }
+        }
+    );
+
+    const clearYouTubeCacheCommand = vscode.commands.registerCommand(
+        'codeTune.clearYouTubeCache',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService && youtubeService instanceof YouTubeMusicService) {
+                youtubeService.clearCache();
+                vscode.window.showInformationMessage('YouTube Music cache cleared');
+            }
+        }
+    );
+
+    const viewYouTubeSearchHistoryCommand = vscode.commands.registerCommand(
+        'codeTune.viewYouTubeSearchHistory',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService && youtubeService instanceof YouTubeMusicService) {
+                const history = youtubeService.getSearchHistory();
+                if (history.length === 0) {
+                    vscode.window.showInformationMessage('No search history available');
+                    return;
+                }
+
+                const selected = await vscode.window.showQuickPick(
+                    history.map((query, index) => ({
+                        label: query,
+                        description: `Search #${index + 1}`
+                    })),
+                    {
+                        placeHolder: 'Select a previous search to repeat'
+                    }
+                );
+
+                if (selected) {
+                    // Trigger search with selected query
+                    vscode.commands.executeCommand('codeTune.searchMusic');
+                }
+            }
+        }
+    );
+
+    const clearYouTubeSearchHistoryCommand = vscode.commands.registerCommand(
+        'codeTune.clearYouTubeSearchHistory',
+        async () => {
+            const youtubeService = musicServiceManager.getService(MusicServiceType.YOUTUBE_MUSIC);
+            if (youtubeService && youtubeService instanceof YouTubeMusicService) {
+                youtubeService.clearSearchHistory();
+                vscode.window.showInformationMessage('YouTube Music search history cleared');
+            }
+        }
+    );
+
+    const playTrackCommand = vscode.commands.registerCommand(
+        'codeTune.playTrack',
+        async (trackId: string) => {
+            try {
+                await musicServiceManager.playTrack(trackId);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to play track: ${error}`);
+            }
+        }
+    );
+
     // Register commands
     const openPlayerCommand = vscode.commands.registerCommand(
         'codeTune.openPlayer',
@@ -24,7 +285,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (webviewPanel) {
                 webviewPanel.reveal();
             } else {
-                webviewPanel = new PlayerWebviewPanel(context, musicPlayer, quranPlayer, spotifyService);
+                webviewPanel = new PlayerWebviewPanel(context, musicPlayer, quranPlayer, spotifyService, musicServiceManager);
                 webviewPanel.onDispose(() => {
                     webviewPanel = undefined;
                 });
@@ -206,6 +467,23 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    // Test command to verify activity bar is working
+    const testActivityBarCommand = vscode.commands.registerCommand(
+        'codeTune.testActivityBar',
+        () => {
+            vscode.window.showInformationMessage('Activity Bar is working! ✅');
+        }
+    );
+
+    // YouTube Authentication Webview
+    const openYouTubeAuthCommand = vscode.commands.registerCommand(
+        'codeTune.openYouTubeAuth',
+        () => {
+            const youtubeAuthPanel = new YouTubeAuthPanel(context, musicServiceManager);
+            youtubeAuthPanel.reveal();
+        }
+    );
+
     const stopCommand = vscode.commands.registerCommand(
         'codeTune.stop',
         async () => {
@@ -227,8 +505,20 @@ export function activate(context: vscode.ExtensionContext) {
         playQuranCommand,
         connectSpotifyCommand,
         searchSpotifyCommand,
+        selectMusicServiceCommand,
+        searchMusicCommand,
+        browsePlaylistsCommand,
+        setupLocalMusicCommand,
+        connectYouTubeCommand,
+        disconnectYouTubeCommand,
+        clearYouTubeCacheCommand,
+        viewYouTubeSearchHistoryCommand,
+        clearYouTubeSearchHistoryCommand,
+        playTrackCommand,
         pauseCommand,
-        stopCommand
+        stopCommand,
+        testActivityBarCommand,
+        openYouTubeAuthCommand
     );
 
     // Status bar item

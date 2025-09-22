@@ -20,7 +20,27 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
-  "contributes": {
+    "contributes": {
+    "views": {
+      "codeTune": [
+        {
+          "id": "codeTuneMain",
+          "name": "CodeTune",
+          "icon": "$(music)",
+          "contextualTitle": "CodeTune Music Player",
+          "type": "webview"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codeTune",
+          "title": "CodeTune",
+          "icon": "$(music)"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "codeTune.openPlayer",
@@ -43,12 +63,48 @@
         "title": "Search Spotify"
       },
       {
+        "command": "codeTune.selectMusicService",
+        "title": "Select Music Service"
+      },
+      {
+        "command": "codeTune.searchMusic",
+        "title": "Search Music"
+      },
+      {
+        "command": "codeTune.browsePlaylists",
+        "title": "Browse Playlists"
+      },
+      {
+        "command": "codeTune.setupLocalMusic",
+        "title": "Setup Local Music"
+      },
+      {
         "command": "codeTune.pause",
         "title": "Pause"
       },
       {
         "command": "codeTune.stop",
         "title": "Stop"
+      },
+      {
+        "command": "codeTune.clearYouTubeCache",
+        "title": "Clear YouTube Music Cache"
+      },
+      {
+        "command": "codeTune.viewYouTubeSearchHistory",
+        "title": "View YouTube Search History"
+      },
+      {
+        "command": "codeTune.clearYouTubeSearchHistory",
+        "title": "Clear YouTube Search History"
+      },
+      {
+        "command": "codeTune.connectYouTube",
+        "title": "Connect to YouTube Music"
+      },
+      {
+        "command": "codeTune.disconnectYouTube",
+        "title": "Disconnect YouTube Music"
       }
     ],
     "menus": {
@@ -111,7 +167,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "start:youtube-server": "node server/start-youtube-server.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
