@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import SpotifyWebApi = require('spotify-web-api-node');
 import axios from 'axios';
+import { MusicService, MusicServiceType, MusicTrack, MusicPlaylist } from './musicService';
 
 export interface SpotifyCredentials {
     accessToken: string;
@@ -16,6 +17,7 @@ export interface SpotifyTrack {
     duration: number;
     imageUrl?: string;
     previewUrl?: string;
+    service: MusicServiceType.SPOTIFY;
 }
 
 export interface SpotifyPlaylist {
@@ -24,9 +26,15 @@ export interface SpotifyPlaylist {
     description?: string;
     imageUrl?: string;
     trackCount: number;
+    service: MusicServiceType.SPOTIFY;
 }
 
-export class SpotifyService {
+export class SpotifyService implements MusicService {
+    public readonly name = 'Spotify';
+    public readonly type = MusicServiceType.SPOTIFY;
+    public readonly isFree = false;
+    public readonly requiresAuth = true;
+
     private spotifyApi: SpotifyWebApi;
     private context: vscode.ExtensionContext;
     private credentials: SpotifyCredentials | null = null;
@@ -38,9 +46,15 @@ export class SpotifyService {
         const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-umber.vercel.app';
         const redirectUri = `${serverUrl}/callback`;
 
+        // Use embedded credentials for better security and user experience
+        const SPOTIFY_CONFIG = {
+            clientId: '9cfd443bc07047e4953e78a7587b49df',
+            clientSecret: '4975b3242a674a17bcf4e9e9aea551bf'
+        };
+
         this.spotifyApi = new SpotifyWebApi({
-            clientId: vscode.workspace.getConfiguration('codeTune').get('spotifyClientId', ''),
-            clientSecret: vscode.workspace.getConfiguration('codeTune').get('spotifyClientSecret', ''),
+            clientId: SPOTIFY_CONFIG.clientId,
+            clientSecret: SPOTIFY_CONFIG.clientSecret,
             redirectUri: redirectUri
         });
 
@@ -101,14 +115,7 @@ export class SpotifyService {
     }
 
     public async authenticate(): Promise<boolean> {
-        const clientId = vscode.workspace.getConfiguration('codeTune').get('spotifyClientId', '');
-
-        if (!clientId) {
-            vscode.window.showErrorMessage(
-                'Spotify Client ID not configured. Please set codeTune.spotifyClientId in your settings.'
-            );
-            return false;
-        }
+        // Credentials are now embedded in the service, no configuration needed
 
         try {
             // Generate authorization URL
@@ -325,7 +332,8 @@ export class SpotifyService {
                 name: playlist.name,
                 description: playlist.description,
                 imageUrl: playlist.images?.[0]?.url,
-                trackCount: playlist.tracks.total
+                trackCount: playlist.tracks.total,
+                service: MusicServiceType.SPOTIFY
             }));
         } catch (error) {
             console.error('Failed to get user playlists:', error);
@@ -347,7 +355,8 @@ export class SpotifyService {
                 album: item.track.album.name,
                 duration: item.track.duration_ms,
                 imageUrl: item.track.album.images?.[0]?.url,
-                previewUrl: item.track.preview_url
+                previewUrl: item.track.preview_url,
+                service: MusicServiceType.SPOTIFY
             }));
         } catch (error) {
             console.error('Failed to get playlist tracks:', error);
@@ -369,7 +378,8 @@ export class SpotifyService {
                 album: track.album.name,
                 duration: track.duration_ms,
                 imageUrl: track.album.images?.[0]?.url,
-                previewUrl: track.preview_url
+                previewUrl: track.preview_url,
+                service: MusicServiceType.SPOTIFY
             })) || [];
         } catch (error) {
             console.error('Failed to search tracks:', error);

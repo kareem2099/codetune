@@ -1,35 +1,47 @@
-# 🎵 CodeTune - Relaxing Music & Quran for Developers
+# 🎵 CodeTune - Professional Music & Audio Integration for VS Code
 
-CodeTune is a VS Code extension that brings relaxation and focus to your coding sessions with integrated music players and Quran recitation capabilities. Perfect for developers who want to create a peaceful coding environment.
+<div align="center">
+
+[![VS Code Version](https://img.shields.io/badge/VS%20Code-1.74+-blue.svg)](https://code.visualstudio.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
+**Enhance your coding experience with integrated music streaming, local audio playback, and spiritual content - all within VS Code.**
+
+[🚀 Installation](#-installation) • [📖 Usage](#-usage) • [⚙️ Configuration](#️-configuration) • [🎯 Features](#-features) • [🐛 Troubleshooting](#-troubleshooting)
+
+</div>
+
+---
 
 ## ✨ Features
 
-### 🎵 **Spotify Integration**
-- **Connect your Spotify account** and play your personal music library
-- **Search Spotify's catalog** directly from VS Code
-- **Full playback controls** - play, pause, skip, previous, volume control
-- **Real-time playback status** with current track information
-- **Your playlists and liked songs** accessible within the extension
+### 🎵 **Multi-Service Music Integration**
+- **🎵 YouTube Music**: Enhanced search with AI-powered query processing, caching, and smart filtering
+- **🎵 Spotify**: Full integration with your personal library and catalog search
+- **🎹 Local Audio**: Play your local music files with advanced controls
+- **📱 Activity Bar Integration**: Native VS Code sidebar for seamless music control
 
-### 🎹 **Local Music Player**
-- Play local audio files (MP3, WAV, OGG)
-- Built-in relaxing tracks for focus and meditation
-- Customizable volume controls
-- Track selection and playback management
+### 🎯 **Advanced YouTube Music Features**
+- **🔍 Smart Search**: AI-enhanced queries with automatic music keyword detection
+- **⚡ Real-time Metadata**: Actual track duration, high-quality thumbnails, accurate artist info
+- **💾 Intelligent Caching**: 5-minute search result caching for improved performance
+- **📚 Search History**: Track and reuse your recent searches
+- **🎛️ Quality Filtering**: Automatic removal of non-music content (tutorials, reviews, etc.)
+- **📊 Rich Display**: Duration, view counts, and upload dates in search results
 
-### 📿 **Quran Player**
-- **Multiple Quran reciters** to choose from
-- **Complete Surah list** with Arabic text and transliteration
-- **Online streaming** for high-quality audio
-- **Reciter selection** for personalized experience
-- **Volume controls** for comfortable listening
+### 📿 **Quran & Spiritual Content**
+- **📖 Complete Quran Library**: All 114 Surahs with multiple reciters
+- **🎙️ Premium Reciters**: High-quality audio from renowned Qaris
+- **🌐 Online Streaming**: Crystal-clear audio with global CDN
+- **⚙️ Customizable Experience**: Volume controls and reciter selection
 
-### 🎛️ **Beautiful Interface**
-- **Modern webview panel** with responsive design
-- **Real-time status indicators** for all players
-- **Intuitive controls** with hover effects
-- **Dark/light theme support** matching VS Code
-- **Grid layout** for easy navigation
+### 🎛️ **Professional Interface**
+- **📱 Activity Bar Views**: Dedicated "Music Explorer" and "Search" panels
+- **🌙 Theme Integration**: Full dark/light mode support
+- **⚡ Real-time Updates**: Live status indicators and progress tracking
+- **🎮 Intuitive Controls**: Professional-grade playback interface
+- **📊 Visual Feedback**: Loading states, search progress, and result counts
 
 ## 🚀 Installation
 
@@ -106,35 +118,130 @@ To use Spotify features, you need to configure your Spotify App credentials:
 
 ## 🎮 Usage
 
-### Opening CodeTune
-- **Command Palette**: `Ctrl+Shift+P` → "CodeTune: Open CodeTune Player"
-- **Status Bar**: Click the "CodeTune" button
-- **Keyboard Shortcut**: Configure your own shortcuts in VS Code settings
+### 📱 Activity Bar Integration
 
-### Spotify Controls
+CodeTune now features a professional Activity Bar integration for seamless music control:
+
+1. **Access CodeTune**: Click the 🎵 "CodeTune" icon in the VS Code Activity Bar
+2. **Music Explorer**: Browse services, search history, and current results
+3. **Search View**: Quick searches and real-time search results
+4. **One-Click Play**: Click any track to play it instantly
+
+#### Activity Bar Interface
+```
+🎵 CodeTune Activity Bar
+┌─────────────────────────────────────┐
+│ 🎵 YouTube Music                    │
+│ ┌─────────────────────────────────┐ │
+│ │ 🔍 Search: [input field]        │ │
+│ │ 🎵 Open Player    🗑️ Clear Cache │ │
+│ │ Ready to search                 │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ 🎵 Spotify                          │
+│ ┌─────────────────────────────────┐ │
+│ │ 🔗 Connect        🔍 Search      │ │
+│ │ ⏯️ Play/Pause     ⏭️ Next        │ │
+│ │ Not connected                   │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ 🎹 Local Music                      │
+│ ┌─────────────────────────────────┐ │
+│ │ Peaceful  Focus                 │ │
+│ │ Meditation  Nature              │ │
+│ │ [volume slider]  50%            │ │
+│ │ Select a track to play          │ │
+│ └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│ 📿 Quran                            │
+│ ┌─────────────────────────────────┐ │
+│ │ [dropdown] Select Surah...      │ │
+│ │ 🎵 Play                         │ │
+│ │ [volume slider]  70%            │ │
+│ │ Select a Surah to begin         │ │
+│ └─────────────────────────────────┘ │
+└─────────────────────────────────────┘
+```
+
+### 🎵 YouTube Music Enhanced Search
+
+Experience the most advanced YouTube Music integration:
+
+1. **🔐 Authentication**: Connect your Google account for enhanced features
+2. **Smart Search**: Enter natural queries like "chill music for coding"
+3. **AI Enhancement**: Automatic detection of music types (official, live, remix, etc.)
+4. **Rich Results**: See duration, quality thumbnails, and accurate metadata
+5. **Quick Access**: Recent searches available in Activity Bar
+6. **Cache System**: Fast repeated searches with 5-minute intelligent caching
+7. **Personal Playlists**: Access your YouTube Music playlists when authenticated
+
+#### YouTube Authentication Setup
+
+1. **Get Google API Credentials**:
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select existing one
+   - Enable YouTube Data API v3
+   - Create OAuth 2.0 credentials
+   - Add your redirect URI (e.g., `http://localhost:8888/youtube-callback`)
+
+2. **Configure VS Code Settings**:
+   - Open VS Code Settings (Ctrl+,)
+   - Search for "CodeTune"
+   - Set your YouTube credentials:
+     - `codeTune.youtubeClientId`: Your Google Client ID
+     - `codeTune.youtubeClientSecret`: Your Google Client Secret
+     - `codeTune.youtubeRedirectUri`: Your callback URL
+
+3. **Connect YouTube**:
+   - Click the 🎵 CodeTune icon in Activity Bar
+   - Click "🔗 Connect" in YouTube Music section
+   - Follow browser authentication flow
+   - Enjoy enhanced search and personal playlists!
+
+### 🎵 Spotify Integration
+
 1. **Connect**: Click "Connect" in the Spotify section
-2. **Authenticate**: Follow the browser authentication flow
+2. **Authenticate**: Follow the secure browser authentication flow
 3. **Search**: Use the search box to find tracks, artists, or albums
 4. **Play**: Click on any track or use the playback controls
 5. **Control**: Use play/pause, next/previous, and volume controls
 
-### Local Music
-1. **Select Track**: Choose from the built-in relaxing tracks
+### 🎹 Local Music Player
+
+1. **Select Track**: Choose from built-in relaxing tracks
 2. **Play**: Click play or use the toggle button
 3. **Volume**: Adjust using the volume slider
+4. **Integration**: Works seamlessly with Activity Bar
 
-### Quran Player
-1. **Select Surah**: Choose from the list of available Surahs
-2. **Select Reciter**: Click "Select Reciter" to choose your preferred reciter
-3. **Play**: Start recitation with play controls
-4. **Volume**: Adjust volume for comfortable listening
+### 📿 Quran Player
 
-### Keyboard Shortcuts
+1. **Select Surah**: Choose from all 114 Surahs
+2. **Select Reciter**: Choose from premium reciters
+3. **Play**: Start recitation with professional controls
+4. **Volume**: Adjust for comfortable listening
+
+### ⌨️ Keyboard Shortcuts
 
 Configure these in VS Code settings:
 
 - `Ctrl+Shift+M`: Play local music
 - `Ctrl+Shift+Q`: Play Quran
+- `Ctrl+Shift+P`: Open command palette for all CodeTune commands
+
+## 📸 Screenshots
+
+<div align="center">
+
+### Activity Bar Integration
+![Activity Bar](https://via.placeholder.com/300x400/2D3748/FFFFFF?text=🎵+CodeTune+Activity+Bar)
+
+### YouTube Music Search
+![YouTube Search](https://via.placeholder.com/300x400/2D3748/FFFFFF?text=🔍+YouTube+Music+Search)
+
+### Main Interface
+![Main Interface](https://via.placeholder.com/300x400/2D3748/FFFFFF?text=🎛️+Main+Interface)
+
+</div>
 
 ## 🎯 Commands
 
