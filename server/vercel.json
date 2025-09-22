@@ -3,12 +3,19 @@
   "functions": {
     "api/spotify-callback.js": {
       "maxDuration": 30
+    },
+    "api/youtube-callback.js": {
+      "maxDuration": 30
     }
   },
   "routes": [
     {
       "src": "/callback",
       "dest": "/api/spotify-callback.js"
+    },
+    {
+      "src": "/youtube-callback",
+      "dest": "/api/youtube-callback.js"
     },
     {
       "src": "/health",
