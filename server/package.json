@@ -1,11 +1,12 @@
 {
-  "name": "codetune-spotify-callback",
+  "name": "codetune-oauth-callbacks",
   "version": "1.0.0",
-  "description": "Spotify OAuth callback server for CodeTune VS Code extension",
-  "main": "api/spotify-callback.js",
+  "description": "OAuth callback server for CodeTune VS Code extension (Spotify & YouTube)",
   "scripts": {
     "start": "node api/spotify-callback.js",
-    "dev": "node api/spotify-callback.js"
+    "dev": "node api/spotify-callback.js",
+    "start:youtube": "node api/youtube-callback.js",
+    "dev:youtube": "node api/youtube-callback.js"
   },
   "dependencies": {
     "express": "^4.18.2",
