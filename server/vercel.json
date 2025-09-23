@@ -18,7 +18,11 @@
       "dest": "/api/youtube-callback.js"
     },
     {
-      "src": "/health",
+      "src": "/health/youtube",
+      "dest": "/api/youtube-callback.js"
+    },
+    {
+      "src": "/health/spotify",
       "dest": "/api/spotify-callback.js"
     }
   ]
