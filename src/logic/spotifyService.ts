@@ -43,7 +43,7 @@ export class SpotifyService implements MusicService {
         this.context = context;
 
         // Use Vercel server URL for callback
-        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-umber.vercel.app';
+        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-nu-lovat.vercel.app';
         const redirectUri = `${serverUrl}/callback`;
 
         // Use embedded credentials for better security and user experience
@@ -216,7 +216,7 @@ export class SpotifyService implements MusicService {
                     'Paste URL'
                 ).then(selection => {
                     if (selection === 'Paste URL') {
-                        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-umber.vercel.app';
+                        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-nu-lovat.vercel.app';
                         vscode.window.showInputBox({
                             prompt: 'Paste the redirected URL from your browser',
                             placeHolder: `${serverUrl}/callback?code=...`
@@ -245,7 +245,7 @@ export class SpotifyService implements MusicService {
                     'Paste URL'
                 ).then(selection => {
                     if (selection === 'Paste URL') {
-                        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-umber.vercel.app';
+                        const serverUrl = process.env.VERCEL_SERVER_URL || 'https://server-nu-lovat.vercel.app';
                         vscode.window.showInputBox({
                             prompt: 'Paste the redirected URL from your browser',
                             placeHolder: `${serverUrl}/callback?code=...`

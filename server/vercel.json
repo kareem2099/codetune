@@ -5,7 +5,8 @@
       "maxDuration": 30
     },
     "api/youtube-callback.js": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 1024
     }
   },
   "routes": [

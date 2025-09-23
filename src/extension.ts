@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
         clientId: process.env.YOUTUBE_CLIENT_ID || '',
         clientSecret: process.env.YOUTUBE_CLIENT_SECRET || '',
         apiKey: process.env.YOUTUBE_API_KEY || '',
-        redirectUri: process.env.YOUTUBE_REDIRECT_URI || 'http://localhost:8888/youtube-callback'
+        redirectUri: process.env.YOUTUBE_REDIRECT_URI || 'https://server-nu-lovat.vercel.app/youtube-callback'
     });
 
     const localMusicService = new LocalMusicService(context);
