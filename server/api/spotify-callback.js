@@ -214,5 +214,5 @@ app.get('/health', (req, res) => {
 });
 
 // Export for Vercel serverless function
-const serverless = require('serverless-http');
-module.exports = serverless(app);
+// const serverless = require('serverless-http');
+module.exports = app;
