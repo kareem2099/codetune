@@ -7,8 +7,10 @@ import { SpotifyService } from './logic/spotifyService';
 import { MusicServiceManager, MusicServiceType } from './logic/musicService';
 import { YouTubeMusicService } from './logic/youtubeMusicService';
 import { LocalMusicService } from './logic/localMusicService';
+import { LocalMusicPlayer } from './logic/localMusicPlayer';
 import { ActivityBarViewProvider } from './logic/activityBarView';
 import { YouTubeAuthPanel } from './logic/youtubeAuthPanel';
+import { QuranWebviewPanel } from './logic/quranWebviewPanel';
 
 // Load environment variables
 const dotenv = require('dotenv');
@@ -503,6 +505,193 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+
+
+    // Enhanced local music commands
+    const manageLocalMusicCommand = vscode.commands.registerCommand(
+        'codeTune.manageLocalMusic',
+        async () => {
+            const localService = musicServiceManager.getService(MusicServiceType.LOCAL);
+            if (localService && localService instanceof LocalMusicService) {
+                const action = await vscode.window.showQuickPick([
+                    {
+                        label: 'Add Music Folders',
+                        description: 'Select folders containing your music files',
+                        action: 'addFolders'
+                    },
+                    {
+                        label: 'Create Playlist',
+                        description: 'Create a new custom playlist',
+                        action: 'createPlaylist'
+                    },
+                    {
+                        label: 'View Statistics',
+                        description: 'View your music collection statistics',
+                        action: 'viewStats'
+                    },
+                    {
+                        label: 'Organize by Artist',
+                        description: 'Organize music files by artist folders',
+                        action: 'organize'
+                    },
+                    {
+                        label: 'Search with Filters',
+                        description: 'Advanced search with genre, year, duration filters',
+                        action: 'advancedSearch'
+                    }
+                ], {
+                    placeHolder: 'Choose an action to manage your local music'
+                });
+
+                if (action) {
+                    switch (action.action) {
+                        case 'addFolders':
+                            await localService.selectMusicFolders();
+                            break;
+                        case 'createPlaylist':
+                            await createCustomPlaylist(localService);
+                            break;
+                        case 'viewStats':
+                            await showMusicStatistics(localService);
+                            break;
+                        case 'organize':
+                            await localService.organizeMusicByArtist();
+                            break;
+                        case 'advancedSearch':
+                            await advancedMusicSearch(localService);
+                            break;
+                    }
+                }
+            }
+        }
+    );
+
+    const createCustomPlaylist = async (localService: LocalMusicService) => {
+        const name = await vscode.window.showInputBox({
+            prompt: 'Playlist Name',
+            placeHolder: 'Enter a name for your playlist'
+        });
+
+        if (!name) {
+             return;
+        }
+
+        const description = await vscode.window.showInputBox({
+            prompt: 'Description (optional)',
+            placeHolder: 'Enter a description for your playlist'
+        });
+
+        const playlist = await localService.createCustomPlaylist(name, description);
+        vscode.window.showInformationMessage(`✅ Created playlist "${name}"`);
+
+        // Add tracks to playlist
+        const tracks = await localService.getAllTracks();
+        if (tracks.length === 0) {
+            vscode.window.showInformationMessage('No tracks available. Add some music folders first.');
+            return;
+        }
+
+        const trackItems = tracks.map(track => ({
+            label: track.name,
+            description: `${track.artists.join(', ')} - ${track.album}`,
+            track: track
+        }));
+
+        const selectedTracks = await vscode.window.showQuickPick(trackItems, {
+            canPickMany: true,
+            placeHolder: 'Select tracks to add to the playlist'
+        });
+
+        if (selectedTracks) {
+            for (const item of selectedTracks) {
+                await localService.addTrackToPlaylist(playlist.id, item.track.id);
+            }
+            vscode.window.showInformationMessage(`✅ Added ${selectedTracks.length} tracks to "${name}"`);
+        }
+    };
+
+    const showMusicStatistics = async (localService: LocalMusicService) => {
+        const stats = await localService.getMusicStatistics();
+
+        const formatDuration = (ms: number) => {
+            const hours = Math.floor(ms / (1000 * 60 * 60));
+            const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            return `${hours}h ${minutes}m`;
+        };
+
+        const formatSize = (bytes: number) => {
+            const mb = bytes / (1024 * 1024);
+            return `${mb.toFixed(1)} MB`;
+        };
+
+        const message = `📊 Music Collection Statistics:
+• Total Tracks: ${stats.totalTracks}
+• Total Duration: ${formatDuration(stats.totalDuration)}
+• Total Size: ${formatSize(stats.totalSize)}
+• Artists: ${stats.artists.length}
+• Albums: ${stats.albums.length}
+• Genres: ${stats.genres.length}
+• Years: ${stats.years.length}`;
+
+        vscode.window.showInformationMessage(message, 'View Details').then(selection => {
+            if (selection === 'View Details') {
+                const details = [
+                    `Genres: ${stats.genres.join(', ')}`,
+                    `Years: ${stats.years.join(', ')}`,
+                    `Top Artists: ${stats.artists.slice(0, 10).join(', ')}`,
+                    `Top Albums: ${stats.albums.slice(0, 10).join(', ')}`
+                ].join('\n\n');
+
+                vscode.window.showInformationMessage(details);
+            }
+        });
+    };
+
+    const advancedMusicSearch = async (localService: LocalMusicService) => {
+        const query = await vscode.window.showInputBox({
+            prompt: 'Search Query',
+            placeHolder: 'Enter song, artist, or album name...'
+        });
+
+        if (!query) {return;}
+
+        const genre = await vscode.window.showQuickPick(
+            ['Any Genre', ...await localService.getMusicStatistics().then(s => s.genres)],
+            { placeHolder: 'Filter by genre (optional)' }
+        );
+
+        const year = await vscode.window.showQuickPick(
+            ['Any Year', ...await localService.getMusicStatistics().then(s => s.years.map(String))],
+            { placeHolder: 'Filter by year (optional)' }
+        );
+
+        const filters: any = {};
+        if (genre && genre !== 'Any Genre') {filters.genre = genre;}
+        if (year && year !== 'Any Year') {filters.year = parseInt(year);}
+
+        const results = await localService.searchTracksAdvanced(query, 50, filters);
+
+        if (results.length === 0) {
+            vscode.window.showInformationMessage('No tracks found matching your criteria.');
+            return;
+        }
+
+        const trackItems = results.map(track => ({
+            label: track.name,
+            description: `${track.artists.join(', ')} - ${track.album}${track.genre ? ` [${track.genre}]` : ''}`,
+            detail: track.year ? `Year: ${track.year}` : undefined,
+            track: track
+        }));
+
+        const selected = await vscode.window.showQuickPick(trackItems, {
+            placeHolder: `Found ${results.length} tracks`
+        });
+
+        if (selected) {
+            await musicServiceManager.playTrack(selected.track.id);
+        }
+    };
+
     // Add to subscriptions
     context.subscriptions.push(
         openPlayerCommand,
@@ -523,7 +712,8 @@ export function activate(context: vscode.ExtensionContext) {
         pauseCommand,
         stopCommand,
         testActivityBarCommand,
-        openYouTubeAuthCommand
+        openYouTubeAuthCommand,
+        manageLocalMusicCommand
     );
 
     // Status bar item

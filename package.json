@@ -105,12 +105,22 @@
       {
         "command": "codeTune.disconnectYouTube",
         "title": "Disconnect YouTube Music"
+      },
+      {
+        "command": "codeTune.manageLocalMusic",
+        "title": "Manage Local Music"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "codeTune.openPlayer"
+        },
+        {
+          "command": "codeTune.setupLocalMusic"
+        },
+        {
+          "command": "codeTune.manageLocalMusic"
         }
       ]
     },
@@ -187,6 +197,7 @@
   "dependencies": {
     "axios": "^1.6.0",
     "dotenv": "^17.2.2",
+    "music-metadata": "^11.9.0",
     "spotify-web-api-node": "^5.0.2"
   }
 }

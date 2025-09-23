@@ -702,9 +702,121 @@ export class PlayerWebviewPanel {
             color: var(--vscode-button-foreground);
         }
 
+        /* Quran-specific styles */
+        .quran-section {
+            border-left: 4px solid #2e7d32;
+        }
+
+        .ayah-display {
+            background: linear-gradient(135deg, #2e7d32, #388e3c);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 20px rgba(46, 125, 50, 0.2);
+        }
+
+        .ayah-image-container {
+            margin-bottom: 15px;
+        }
+
+        .ayah-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .ayah-info {
+            margin-top: 10px;
+        }
+
+        .ayah-text {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            line-height: 1.6;
+            direction: rtl;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .ayah-reference {
+            font-size: 1em;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        .playback-mode-selector, .quality-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+
+        .playback-mode-selector select, .quality-selector select {
+            padding: 6px 12px;
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            background-color: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            font-size: 0.9em;
+        }
+
+        .quick-access {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--vscode-textBlockQuote-background);
+            border-radius: 8px;
+            border-left: 3px solid #2e7d32;
+        }
+
+        .quick-access h4 {
+            margin: 0 0 10px 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 1em;
+        }
+
+        .quick-surahs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            background-color: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background-color: var(--vscode-button-secondaryHoverBackground);
+            transform: translateY(-1px);
+        }
+
         @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
+            }
+
+            .quick-surahs {
+                justify-content: center;
+            }
+
+            .quick-btn {
+                font-size: 0.7em;
+                padding: 4px 8px;
+            }
+
+            .ayah-text {
+                font-size: 1.2em;
             }
         }
     </style>
@@ -720,6 +832,7 @@ export class PlayerWebviewPanel {
         <button class="service-btn active" onclick="selectService('spotify')">🎧 Spotify</button>
         <button class="service-btn" onclick="selectService('youtube_music')">🎥 YouTube</button>
         <button class="service-btn" onclick="selectService('local')">💾 Local</button>
+        <button class="service-btn" onclick="selectService('quran')">📿 Quran</button>
     </div>
 
     <div class="grid">
@@ -883,54 +996,137 @@ export class PlayerWebviewPanel {
                 </div>
             </div>
         </div>
+
+        <!-- Quran Player Section -->
+        <div class="player-section quran-section" id="quranSection" style="display: none;">
+            <div class="player-title">
+                <span class="icon">📿</span>
+                <span>Quran Player</span>
+                <span id="quranStatus" class="status-indicator"></span>
+            </div>
+
+            <div class="current-playing" id="currentQuran">No Surah playing</div>
+
+            <!-- Ayah Display Area -->
+            <div class="ayah-display" id="ayahDisplay" style="display: none;">
+                <div class="ayah-image-container">
+                    <img id="ayahImage" class="ayah-image" alt="Current Ayah" />
+                </div>
+                <div class="ayah-info">
+                    <div class="ayah-text" id="ayahText"></div>
+                    <div class="ayah-reference" id="ayahReference"></div>
+                </div>
+            </div>
+
+            <!-- Playback Mode Selector -->
+            <div class="playback-mode-selector">
+                <label>Playback Mode:</label>
+                <select id="playbackModeSelect" onchange="setPlaybackMode(this.value)">
+                    <option value="surah">Full Surah</option>
+                    <option value="ayah">Ayah by Ayah</option>
+                </select>
+            </div>
+
+            <!-- Quality Selector -->
+            <div class="quality-selector">
+                <label>Audio Quality:</label>
+                <select id="qualitySelect" onchange="setAudioQuality(this.value)">
+                    <option value="32">32 kbps (Low)</option>
+                    <option value="48">48 kbps</option>
+                    <option value="64">64 kbps</option>
+                    <option value="128" selected>128 kbps (High)</option>
+                    <option value="192">192 kbps (Best)</option>
+                </select>
+            </div>
+
+            <div class="controls">
+                <button class="btn" onclick="toggleQuran()">▶️ Play/Pause</button>
+                <button class="btn" onclick="stopQuran()">⏹️ Stop</button>
+                <button class="btn" onclick="selectReciter()">👤 Select Reciter</button>
+                <button class="btn" onclick="showAyahImage()">🖼️ Show Image</button>
+            </div>
+
+            <div class="volume-control">
+                <label>Volume:</label>
+                <input type="range" class="volume-slider" id="quranVolume" min="0" max="100" value="70" onchange="setQuranVolume(this.value)">
+                <span id="quranVolumeValue">70%</span>
+            </div>
+
+            <!-- Quick Access Surahs -->
+            <div class="quick-access">
+                <h4>Quick Access:</h4>
+                <div class="quick-surahs">
+                    <button class="quick-btn" onclick="playQuran('001 - Al-Fatiha (الفاتحة)')">1. الفاتحة</button>
+                    <button class="quick-btn" onclick="playQuran('036 - Ya-Sin (يس)')">36. يس</button>
+                    <button class="quick-btn" onclick="playQuran('055 - Ar-Rahman (الرحمن)')">55. الرحمن</button>
+                    <button class="quick-btn" onclick="playQuran('067 - Al-Mulk (الملك)')">67. الملك</button>
+                    <button class="quick-btn" onclick="playQuran('112 - Al-Ikhlas (الإخلاص)')">112. الإخلاص</button>
+                    <button class="quick-btn" onclick="playQuran('114 - An-Nas (الناس)')">114. الناس</button>
+                </div>
+            </div>
+
+            <div class="surah-list" id="surahList">
+                <div class="surah-item" onclick="playQuran('001 - Al-Fatiha (الفاتحة)')">
+                    <div class="track-info">
+                        <div class="track-name">001 - Al-Fatiha (The Opening)</div>
+                        <div class="track-artist">7 verses</div>
+                    </div>
+                    <div class="arabic-text">الفاتحة</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('002 - Al-Baqarah (البقرة)')">
+                    <div class="track-info">
+                        <div class="track-name">002 - Al-Baqarah (The Cow)</div>
+                        <div class="track-artist">286 verses</div>
+                    </div>
+                    <div class="arabic-text">البقرة</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('003 - Aal-E-Imran (آل عمران)')">
+                    <div class="track-info">
+                        <div class="track-name">003 - Aal-E-Imran (The Family of Imran)</div>
+                        <div class="track-artist">200 verses</div>
+                    </div>
+                    <div class="arabic-text">آل عمران</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('036 - Ya-Sin (يس)')">
+                    <div class="track-info">
+                        <div class="track-name">036 - Ya-Sin (Yaseen)</div>
+                        <div class="track-artist">83 verses</div>
+                    </div>
+                    <div class="arabic-text">يس</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('055 - Ar-Rahman (الرحمن)')">
+                    <div class="track-info">
+                        <div class="track-name">055 - Ar-Rahman (The Beneficent)</div>
+                        <div class="track-artist">78 verses</div>
+                    </div>
+                    <div class="arabic-text">الرحمن</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('067 - Al-Mulk (الملك)')">
+                    <div class="track-info">
+                        <div class="track-name">067 - Al-Mulk (The Sovereignty)</div>
+                        <div class="track-artist">30 verses</div>
+                    </div>
+                    <div class="arabic-text">الملك</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('112 - Al-Ikhlas (الإخلاص)')">
+                    <div class="track-info">
+                        <div class="track-name">112 - Al-Ikhlas (The Sincerity)</div>
+                        <div class="track-artist">4 verses</div>
+                    </div>
+                    <div class="arabic-text">الإخلاص</div>
+                </div>
+                <div class="surah-item" onclick="playQuran('114 - An-Nas (الناس)')">
+                    <div class="track-info">
+                        <div class="track-name">114 - An-Nas (The Mankind)</div>
+                        <div class="track-artist">6 verses</div>
+                    </div>
+                    <div class="arabic-text">الناس</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Quran Player Section -->
-    <div class="player-section">
-        <div class="player-title">
-            <span class="icon">📿</span>
-            <span>Quran Player</span>
-            <span id="quranStatus" class="status-indicator"></span>
-        </div>
 
-        <div class="current-playing" id="currentQuran">No Surah playing</div>
-
-        <div class="controls">
-            <button class="btn" onclick="toggleQuran()">▶️ Play/Pause</button>
-            <button class="btn" onclick="stopQuran()">⏹️ Stop</button>
-            <button class="btn" onclick="selectReciter()">👤 Select Reciter</button>
-        </div>
-
-        <div class="volume-control">
-            <label>Volume:</label>
-            <input type="range" class="volume-slider" id="quranVolume" min="0" max="100" value="70" onchange="setQuranVolume(this.value)">
-            <span id="quranVolumeValue">70%</span>
-        </div>
-
-        <div class="surah-list" id="surahList">
-            <div class="surah-item" onclick="playQuran('001 - الفاتحة (Al-Fatiha)')">
-                <div class="track-info">
-                    <div class="track-name">001 - Al-Fatiha (The Opening)</div>
-                    <div class="track-artist">7 verses</div>
-                </div>
-                <div class="arabic-text">الفاتحة</div>
-            </div>
-            <div class="surah-item" onclick="playQuran('002 - البقرة (Al-Baqara)')">
-                <div class="track-info">
-                    <div class="track-name">002 - Al-Baqara (The Cow)</div>
-                    <div class="track-artist">286 verses</div>
-                </div>
-                <div class="arabic-text">البقرة</div>
-            </div>
-            <div class="surah-item" onclick="playQuran('003 - آل عمران (Aal-E-Imran)')">
-                <div class="track-info">
-                    <div class="track-name">003 - Aal-E-Imran (The Family of Imran)</div>
-                    <div class="track-artist">200 verses</div>
-                </div>
-                <div class="arabic-text">آل عمران</div>
-            </div>
-        </div>
-    </div>
 
     <script>
         const vscode = acquireVsCodeApi();
@@ -1040,29 +1236,48 @@ export class PlayerWebviewPanel {
 
         // Service switching functionality
         function selectService(service) {
-            // Hide all service sections
-            document.getElementById('spotifySection').style.display = 'none';
-            document.getElementById('youtubeSection').style.display = 'none';
-            document.getElementById('localSection').style.display = 'none';
+            // Hide all service sections with null checks
+            const sections = ['spotifySection', 'youtubeSection', 'localSection', 'quranSection'];
+            sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.style.display = 'none';
+                }
+            });
 
             // Remove active class from all service buttons
-            document.querySelectorAll('.service-btn').forEach(btn => {
-                btn.classList.remove('active');
+            const serviceButtons = document.querySelectorAll('.service-btn');
+            serviceButtons.forEach(btn => {
+                if (btn) {
+                    btn.classList.remove('active');
+                }
             });
 
             // Show selected service section
             switch(service) {
                 case 'spotify':
-                    document.getElementById('spotifySection').style.display = 'block';
-                    document.querySelector('.service-btn[onclick*="spotify"]').classList.add('active');
+                    const spotifySection = document.getElementById('spotifySection');
+                    const spotifyBtn = document.querySelector('.service-btn[onclick*="spotify"]');
+                    if (spotifySection) spotifySection.style.display = 'block';
+                    if (spotifyBtn) spotifyBtn.classList.add('active');
                     break;
                 case 'youtube_music':
-                    document.getElementById('youtubeSection').style.display = 'block';
-                    document.querySelector('.service-btn[onclick*="youtube"]').classList.add('active');
+                    const youtubeSection = document.getElementById('youtubeSection');
+                    const youtubeBtn = document.querySelector('.service-btn[onclick*="youtube"]');
+                    if (youtubeSection) youtubeSection.style.display = 'block';
+                    if (youtubeBtn) youtubeBtn.classList.add('active');
                     break;
                 case 'local':
-                    document.getElementById('localSection').style.display = 'block';
-                    document.querySelector('.service-btn[onclick*="local"]').classList.add('active');
+                    const localSection = document.getElementById('localSection');
+                    const localBtn = document.querySelector('.service-btn[onclick*="local"]');
+                    if (localSection) localSection.style.display = 'block';
+                    if (localBtn) localBtn.classList.add('active');
+                    break;
+                case 'quran':
+                    const quranSection = document.getElementById('quranSection');
+                    const quranBtn = document.querySelector('.service-btn[onclick*="quran"]');
+                    if (quranSection) quranSection.style.display = 'block';
+                    if (quranBtn) quranBtn.classList.add('active');
                     break;
             }
         }
@@ -1135,7 +1350,7 @@ export class PlayerWebviewPanel {
         });
 
         function updateUI() {
-            // Update Spotify UI
+            // Update Spotify UI with null checks
             const spotifyStatusEl = document.getElementById('spotifyStatus');
             const currentSpotifyEl = document.getElementById('currentSpotify');
             const connectionStatusEl = document.getElementById('spotifyConnectionStatus');
@@ -1145,91 +1360,102 @@ export class PlayerWebviewPanel {
             const prevBtn = document.getElementById('prevBtn');
 
             if (spotifyState.isConnected) {
-                connectionStatusEl.textContent = 'Connected';
-                connectionStatusEl.className = 'spotify-status spotify-connected';
-                connectBtn.textContent = '🔗 Reconnect';
-                playPauseBtn.disabled = false;
-                nextBtn.disabled = false;
-                prevBtn.disabled = false;
+                if (connectionStatusEl) {
+                    connectionStatusEl.textContent = 'Connected';
+                    connectionStatusEl.className = 'spotify-status spotify-connected';
+                }
+                if (connectBtn) connectBtn.textContent = '🔗 Reconnect';
+                if (playPauseBtn) playPauseBtn.disabled = false;
+                if (nextBtn) nextBtn.disabled = false;
+                if (prevBtn) prevBtn.disabled = false;
 
                 if (spotifyState.isPlaying) {
-                    spotifyStatusEl.className = 'status-indicator status-playing';
-                    playPauseBtn.textContent = '⏸️ Pause';
-                    currentSpotifyEl.textContent = \`🎵 Playing: \${spotifyState.currentTrack}\`;
+                    if (spotifyStatusEl) spotifyStatusEl.className = 'status-indicator status-playing';
+                    if (playPauseBtn) playPauseBtn.textContent = '⏸️ Pause';
+                    if (currentSpotifyEl) currentSpotifyEl.textContent = \`🎵 Playing: \${spotifyState.currentTrack}\`;
                 } else {
-                    spotifyStatusEl.className = 'status-indicator status-paused';
-                    playPauseBtn.textContent = '▶️ Play';
-                    currentSpotifyEl.textContent = \`⏸ Paused: \${spotifyState.currentTrack}\`;
+                    if (spotifyStatusEl) spotifyStatusEl.className = 'status-indicator status-paused';
+                    if (playPauseBtn) playPauseBtn.textContent = '▶️ Play';
+                    if (currentSpotifyEl) currentSpotifyEl.textContent = \`⏸ Paused: \${spotifyState.currentTrack}\`;
                 }
             } else {
-                connectionStatusEl.textContent = 'Not Connected';
-                connectionStatusEl.className = 'spotify-status spotify-disconnected';
-                connectBtn.textContent = '🔗 Connect';
-                playPauseBtn.disabled = true;
-                nextBtn.disabled = true;
-                prevBtn.disabled = true;
-                spotifyStatusEl.className = 'status-indicator';
-                currentSpotifyEl.textContent = 'Connect to Spotify to start playing';
+                if (connectionStatusEl) {
+                    connectionStatusEl.textContent = 'Not Connected';
+                    connectionStatusEl.className = 'spotify-status spotify-disconnected';
+                }
+                if (connectBtn) connectBtn.textContent = '🔗 Connect';
+                if (playPauseBtn) playPauseBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
+                if (prevBtn) prevBtn.disabled = true;
+                if (spotifyStatusEl) spotifyStatusEl.className = 'status-indicator';
+                if (currentSpotifyEl) currentSpotifyEl.textContent = 'Connect to Spotify to start playing';
             }
 
-            // Update music UI
+            // Update music UI with null checks
             const musicStatusEl = document.getElementById('musicStatus');
             const currentMusicEl = document.getElementById('currentMusic');
 
             if (musicState.isPlaying) {
-                musicStatusEl.className = 'status-indicator status-playing';
-                currentMusicEl.textContent = \`♪ Playing: \${musicState.currentTrack}\`;
+                if (musicStatusEl) musicStatusEl.className = 'status-indicator status-playing';
+                if (currentMusicEl) currentMusicEl.textContent = \`♪ Playing: \${musicState.currentTrack}\`;
             } else if (musicState.currentTrack) {
-                musicStatusEl.className = 'status-indicator status-paused';
-                currentMusicEl.textContent = \`⏸ Paused: \${musicState.currentTrack}\`;
+                if (musicStatusEl) musicStatusEl.className = 'status-indicator status-paused';
+                if (currentMusicEl) currentMusicEl.textContent = \`⏸ Paused: \${musicState.currentTrack}\`;
             } else {
-                musicStatusEl.className = 'status-indicator';
-                currentMusicEl.textContent = 'No music playing';
+                if (musicStatusEl) musicStatusEl.className = 'status-indicator';
+                if (currentMusicEl) currentMusicEl.textContent = 'No music playing';
             }
 
-            // Update Quran UI
+            // Update Quran UI with null checks
             const quranStatusEl = document.getElementById('quranStatus');
             const currentQuranEl = document.getElementById('currentQuran');
 
             if (quranState.isPlaying) {
-                quranStatusEl.className = 'status-indicator status-playing';
-                currentQuranEl.textContent = \`📿 Playing: \${quranState.currentSurah}\`;
+                if (quranStatusEl) quranStatusEl.className = 'status-indicator status-playing';
+                if (currentQuranEl) currentQuranEl.textContent = \`📿 Playing: \${quranState.currentSurah}\`;
             } else if (quranState.currentSurah) {
-                quranStatusEl.className = 'status-indicator status-paused';
-                currentQuranEl.textContent = \`⏸ Paused: \${quranState.currentSurah}\`;
+                if (quranStatusEl) quranStatusEl.className = 'status-indicator status-paused';
+                if (currentQuranEl) currentQuranEl.textContent = \`⏸ Paused: \${quranState.currentSurah}\`;
             } else {
-                quranStatusEl.className = 'status-indicator';
-                currentQuranEl.textContent = 'No Surah playing';
+                if (quranStatusEl) quranStatusEl.className = 'status-indicator';
+                if (currentQuranEl) currentQuranEl.textContent = 'No Surah playing';
             }
 
-            // Update YouTube Music UI
+            // Update YouTube Music UI with null checks
             const youtubeStatusEl = document.getElementById('youtubeStatus');
             const currentYoutubeEl = document.getElementById('currentYoutube');
             const youtubePlayBtn = document.getElementById('youtubePlayBtn');
 
             if (youtubeState.currentTrack) {
                 if (youtubeState.isPlaying) {
-                    youtubeStatusEl.className = 'status-indicator status-playing';
-                    youtubePlayBtn.textContent = '⏸️ Pause';
-                    currentYoutubeEl.textContent = \`🎵 Playing: \${youtubeState.currentTrack}\`;
+                    if (youtubeStatusEl) youtubeStatusEl.className = 'status-indicator status-playing';
+                    if (youtubePlayBtn) youtubePlayBtn.textContent = '⏸️ Pause';
+                    if (currentYoutubeEl) currentYoutubeEl.textContent = \`🎵 Playing: \${youtubeState.currentTrack}\`;
                 } else {
-                    youtubeStatusEl.className = 'status-indicator status-paused';
-                    youtubePlayBtn.textContent = '▶️ Play';
-                    currentYoutubeEl.textContent = \`⏸ Paused: \${youtubeState.currentTrack}\`;
+                    if (youtubeStatusEl) youtubeStatusEl.className = 'status-indicator status-paused';
+                    if (youtubePlayBtn) youtubePlayBtn.textContent = '▶️ Play';
+                    if (currentYoutubeEl) currentYoutubeEl.textContent = \`⏸ Paused: \${youtubeState.currentTrack}\`;
                 }
             } else {
-                youtubeStatusEl.className = 'status-indicator';
-                youtubePlayBtn.textContent = '▶️ Play';
-                currentYoutubeEl.textContent = 'Search for music on YouTube';
+                if (youtubeStatusEl) youtubeStatusEl.className = 'status-indicator';
+                if (youtubePlayBtn) youtubePlayBtn.textContent = '▶️ Play';
+                if (currentYoutubeEl) currentYoutubeEl.textContent = 'Search for music on YouTube';
             }
 
-            // Update volume sliders
-            document.getElementById('musicVolume').value = musicState.volume * 100;
-            document.getElementById('musicVolumeValue').textContent = Math.round(musicState.volume * 100) + '%';
-            document.getElementById('quranVolume').value = quranState.volume * 100;
-            document.getElementById('quranVolumeValue').textContent = Math.round(quranState.volume * 100) + '%';
-            document.getElementById('spotifyVolume').value = spotifyState.volume * 100;
-            document.getElementById('spotifyVolumeValue').textContent = Math.round(spotifyState.volume * 100) + '%';
+            // Update volume sliders with null checks
+            const musicVolumeSlider = document.getElementById('musicVolume');
+            const musicVolumeValue = document.getElementById('musicVolumeValue');
+            const quranVolumeSlider = document.getElementById('quranVolume');
+            const quranVolumeValue = document.getElementById('quranVolumeValue');
+            const spotifyVolumeSlider = document.getElementById('spotifyVolume');
+            const spotifyVolumeValue = document.getElementById('spotifyVolumeValue');
+
+            if (musicVolumeSlider) musicVolumeSlider.value = musicState.volume * 100;
+            if (musicVolumeValue) musicVolumeValue.textContent = Math.round(musicState.volume * 100) + '%';
+            if (quranVolumeSlider) quranVolumeSlider.value = quranState.volume * 100;
+            if (quranVolumeValue) quranVolumeValue.textContent = Math.round(quranState.volume * 100) + '%';
+            if (spotifyVolumeSlider) spotifyVolumeSlider.value = spotifyState.volume * 100;
+            if (spotifyVolumeValue) spotifyVolumeValue.textContent = Math.round(spotifyState.volume * 100) + '%';
         }
 
         // Initialize UI
