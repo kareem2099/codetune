@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { MusicPlayer } from './file/musicPlayer';
 import { QuranPlayer } from './file/quranPlayer';
 import { PlayerWebviewPanel } from './logic/webviewPanel';
@@ -8,6 +9,10 @@ import { YouTubeMusicService } from './logic/youtubeMusicService';
 import { LocalMusicService } from './logic/localMusicService';
 import { ActivityBarViewProvider } from './logic/activityBarView';
 import { YouTubeAuthPanel } from './logic/youtubeAuthPanel';
+
+// Load environment variables
+const dotenv = require('dotenv');
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 let musicPlayer: MusicPlayer;
 let quranPlayer: QuranPlayer;
