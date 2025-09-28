@@ -1,8 +1,13 @@
 {
   "name": "codetune",
-  "displayName": "codeTune",
-  "description": "relaxing while you code",
-  "version": "0.0.1",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "0.0.2",
+  "publisher": "FreeRave",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kareem2099/codetune.git"
+  },
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -21,13 +26,61 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "CodeTune",
+      "properties": {
+        "codeTune.enableReminders": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.enableReminders%"
+        },
+        "codeTune.reminderInterval": {
+          "type": "number",
+          "default": 60,
+          "minimum": 5,
+          "maximum": 240,
+          "description": "%config.codeTune.reminderInterval%"
+        },
+        "codeTune.showAdia": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.showAdia%"
+        },
+        "codeTune.showAhadis": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.showAhadis%"
+        },
+        "codeTune.showWisdom": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.showWisdom%"
+        },
+        "codeTune.workingHoursOnly": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.codeTune.workingHoursOnly%"
+        },
+        "codeTune.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "en", "ar"],
+          "enumDescriptions": [
+            "Auto (Follow VS Code)",
+            "English",
+            "العربية (Arabic)"
+          ],
+          "description": "Choose the display language for CodeTune"
+        }
+      }
+    },
     "views": {
       "codeTune": [
         {
           "id": "codeTuneMain",
-          "name": "CodeTune",
+          "name": "%views.codeTuneMain.name%",
           "icon": "$(music)",
-          "contextualTitle": "CodeTune Music Player",
+          "contextualTitle": "%views.codeTuneMain.contextualTitle%",
           "type": "webview"
         }
       ]
@@ -36,134 +89,31 @@
       "activitybar": [
         {
           "id": "codeTune",
-          "title": "CodeTune",
+          "title": "%viewsContainers.codeTune.title%",
           "icon": "$(music)"
         }
       ]
     },
     "commands": [
       {
-        "command": "codeTune.openPlayer",
-        "title": "Open CodeTune Player"
-      },
-      {
-        "command": "codeTune.playMusic",
-        "title": "Play Music"
-      },
-      {
         "command": "codeTune.playQuran",
-        "title": "Play Quran"
-      },
-      {
-        "command": "codeTune.connectSpotify",
-        "title": "Connect to Spotify"
-      },
-      {
-        "command": "codeTune.searchSpotify",
-        "title": "Search Spotify"
-      },
-      {
-        "command": "codeTune.selectMusicService",
-        "title": "Select Music Service"
-      },
-      {
-        "command": "codeTune.searchMusic",
-        "title": "Search Music"
-      },
-      {
-        "command": "codeTune.browsePlaylists",
-        "title": "Browse Playlists"
-      },
-      {
-        "command": "codeTune.setupLocalMusic",
-        "title": "Setup Local Music"
-      },
-      {
-        "command": "codeTune.pause",
-        "title": "Pause"
+        "title": "%commands.codeTune.playQuran.title%"
       },
       {
         "command": "codeTune.stop",
-        "title": "Stop"
+        "title": "%commands.codeTune.stop.title%"
       },
       {
-        "command": "codeTune.clearYouTubeCache",
-        "title": "Clear YouTube Music Cache"
-      },
-      {
-        "command": "codeTune.viewYouTubeSearchHistory",
-        "title": "View YouTube Search History"
-      },
-      {
-        "command": "codeTune.clearYouTubeSearchHistory",
-        "title": "Clear YouTube Search History"
-      },
-      {
-        "command": "codeTune.connectYouTube",
-        "title": "Connect to YouTube Music"
-      },
-      {
-        "command": "codeTune.disconnectYouTube",
-        "title": "Disconnect YouTube Music"
-      },
-      {
-        "command": "codeTune.manageLocalMusic",
-        "title": "Manage Local Music"
+        "command": "codeTune.openSettings",
+        "title": "%commands.codeTune.openSettings.title%"
       }
     ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "codeTune.openPlayer"
-        },
-        {
-          "command": "codeTune.setupLocalMusic"
-        },
-        {
-          "command": "codeTune.manageLocalMusic"
-        }
-      ]
-    },
     "keybindings": [
-      {
-        "command": "codeTune.playMusic",
-        "key": "ctrl+shift+m"
-      },
       {
         "command": "codeTune.playQuran",
         "key": "ctrl+shift+q"
       }
-    ],
-    "configuration": {
-      "title": "CodeTune",
-      "properties": {
-        "codeTune.musicVolume": {
-          "type": "number",
-          "default": 0.5,
-          "description": "Default volume for music"
-        },
-        "codeTune.quranVolume": {
-          "type": "number",
-          "default": 0.7,
-          "description": "Default volume for Quran"
-        },
-        "codeTune.spotifyClientId": {
-          "type": "string",
-          "default": "",
-          "description": "Spotify Client ID for API access"
-        },
-        "codeTune.spotifyClientSecret": {
-          "type": "string",
-          "default": "",
-          "description": "Spotify Client Secret for API access"
-        },
-        "codeTune.spotifyRedirectUri": {
-          "type": "string",
-          "default": "http://localhost:8888/callback",
-          "description": "Spotify OAuth redirect URI (use your deployed server URL for production)"
-        }
-      }
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -177,13 +127,11 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test",
-    "start:youtube-server": "node server/start-youtube-server.js"
+    "test": "vscode-test"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/spotify-web-api-node": "^5.0.11",
     "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
@@ -198,6 +146,6 @@
     "axios": "^1.6.0",
     "dotenv": "^17.2.2",
     "music-metadata": "^11.9.0",
-    "spotify-web-api-node": "^5.0.2"
+    "vscode-nls": "^5.2.0"
   }
 }

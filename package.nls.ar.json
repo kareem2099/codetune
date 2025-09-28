@@ -1,0 +1,17 @@
+{
+  "displayName": "كود تيون",
+  "description": "الاسترخاء أثناء البرمجة",
+  "config.codeTune.enableReminders": "تفعيل التذكيرات الإسلامية وإشعارات الحكم",
+  "config.codeTune.reminderInterval": "الفاصل الزمني بين التذكيرات الإسلامية بالدقائق",
+  "config.codeTune.showAdia": "عرض الأدعية الإسلامية (الأدعية) في التذكيرات",
+  "config.codeTune.showAhadis": "عرض أقوال النبي (الأحاديث) في التذكيرات",
+  "config.codeTune.showWisdom": "عرض الحكم الإسلامية والآيات في التذكيرات",
+  "config.codeTune.workingHoursOnly": "عرض التذكيرات فقط خلال ساعات العمل (9 صباحاً - 6 مساءً)",
+  "config.codeTune.language": "اختر لغة العرض لكود تيون",
+  "views.codeTuneMain.name": "كود تيون",
+  "views.codeTuneMain.contextualTitle": "مشغل الموسيقى كود تيون",
+  "viewsContainers.codeTune.title": "كود تيون",
+  "commands.codeTune.playQuran.title": "تشغيل القرآن",
+  "commands.codeTune.stop.title": "إيقاف",
+  "commands.codeTune.openSettings.title": "فتح الإعدادات"
+}

@@ -1,0 +1,17 @@
+{
+  "displayName": "codeTune",
+  "description": "relaxing while you code",
+  "config.codeTune.enableReminders": "Enable Islamic reminders and wisdom notifications",
+  "config.codeTune.reminderInterval": "Interval between Islamic reminders in minutes",
+  "config.codeTune.showAdia": "Show Islamic prayers (Adia) in reminders",
+  "config.codeTune.showAhadis": "Show Prophet's sayings (Ahadis) in reminders",
+  "config.codeTune.showWisdom": "Show Islamic wisdom and verses in reminders",
+  "config.codeTune.workingHoursOnly": "Only show reminders during working hours (9 AM - 6 PM)",
+  "config.codeTune.language": "Choose the display language for CodeTune",
+  "views.codeTuneMain.name": "CodeTune",
+  "views.codeTuneMain.contextualTitle": "CodeTune Music Player",
+  "viewsContainers.codeTune.title": "CodeTune",
+  "commands.codeTune.playQuran.title": "Play Quran",
+  "commands.codeTune.stop.title": "Stop",
+  "commands.codeTune.openSettings.title": "Open Settings"
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeTune - Modern Quran Player</title>
+    <link rel="stylesheet" href="{{cssUri}}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="header-content">
+                <div class="brand">
+                    <div class="brand-icon">📿</div>
+                    <div class="brand-text" data-localize="codeTune">CodeTune</div>
+                    <div class="brand-version">v0.0.2</div>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" id="themeToggle" title="Toggle theme">
+                        <span class="icon">🌙</span>
+                    </button>
+                    <button class="action-btn" id="settingsBtn" title="Settings">
+                        <span class="icon">⚙️</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Islamic Date & Prayer Times -->
+        <div class="islamic-info-card">
+            <div class="islamic-header">
+                <div class="islamic-icon">🕌</div>
+                <span data-localize="islamicInformation">Islamic Information</span>
+            </div>
+            <div class="islamic-content">
+                <div class="hijri-date">
+                    <div class="date-label" data-localize="hijriDate">Hijri Date</div>
+                    <div class="date-value" id="hijriDate">Loading...</div>
+                </div>
+                <div class="prayer-timer">
+                    <div class="prayer-label" data-localize="nextPrayer">Next Prayer</div>
+                    <div class="prayer-info">
+                        <div class="prayer-name" id="nextPrayer">Fajr</div>
+                        <div class="prayer-countdown" id="prayerCountdown">--:--:--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Player Card -->
+        <div class="player-card">
+            <div class="player-header">
+                <div class="player-title">
+                    <div class="player-icon">🎵</div>
+                    <span data-localize="quranPlayer">Quran Player</span>
+                </div>
+                <div class="status-badge" id="connectionStatus" data-localize="available">Available</div>
+            </div>
+
+            <!-- Now Playing Display -->
+            <div class="now-playing" id="nowPlaying" style="display: none;">
+                <div class="playing-info">
+                    <div class="surah-title" id="currentSurah">Al-Fatiha</div>
+                    <div class="surah-subtitle" id="currentSurahArabic">الفاتحة</div>
+                </div>
+                <div class="playing-controls">
+                    <button class="control-btn" id="prevBtn" title="Previous">
+                        <span class="icon">⏮️</span>
+                    </button>
+                    <button class="control-btn primary" id="playPauseBtn" title="Play/Pause">
+                        <span class="icon" id="playPauseIcon">▶️</span>
+                    </button>
+                    <button class="control-btn" id="nextBtn" title="Next">
+                        <span class="icon">⏭️</span>
+                    </button>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Access Grid -->
+            <div class="quick-access">
+                <div class="quick-access-title" data-localize="quickAccess">Quick Access</div>
+                <div class="surah-grid">
+                    <button class="surah-card" data-surah="001" title="Al-Fatiha (The Opening)">
+                        <div class="surah-number">1</div>
+                        <div class="surah-name">الفاتحة</div>
+                    </button>
+                    <button class="surah-card" data-surah="036" title="Ya-Sin">
+                        <div class="surah-number">36</div>
+                        <div class="surah-name">يس</div>
+                    </button>
+                    <button class="surah-card" data-surah="055" title="Ar-Rahman (The Beneficent)">
+                        <div class="surah-number">55</div>
+                        <div class="surah-name">الرحمن</div>
+                    </button>
+                    <button class="surah-card" data-surah="067" title="Al-Mulk (The Sovereignty)">
+                        <div class="surah-number">67</div>
+                        <div class="surah-name">الملك</div>
+                    </button>
+                    <button class="surah-card" data-surah="078" title="An-Naba (The Announcement)">
+                        <div class="surah-number">78</div>
+                        <div class="surah-name">النبأ</div>
+                    </button>
+                    <button class="surah-card" data-surah="112" title="Al-Ikhlas (The Sincerity)">
+                        <div class="surah-number">112</div>
+                        <div class="surah-name">الإخلاص</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search and Browse -->
+            <div class="search-section">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="surahSearch" data-localize="searchSurah" placeholder="Search Surah..." autocomplete="off">
+                </div>
+                <button class="browse-btn" id="browseBtn" data-localize="browseAll">
+                    <span class="icon">📚</span>
+                    <span data-localize="browseAll">Browse All</span>
+                </button>
+            </div>
+
+            <!-- Volume Control -->
+            <div class="volume-section">
+                <div class="volume-label">
+                    <span class="icon">🔊</span>
+                    <span data-localize="volume">Volume</span>
+                </div>
+                <div class="volume-control">
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                    <span class="volume-value" id="volumeValue">70%</span>
+                </div>
+            </div>
+
+
+
+            <!-- Status Messages -->
+            <div class="status-message" id="statusMessage" data-localize="chooseSurah">
+                Choose a Surah to begin recitation
+            </div>
+        </div>
+
+        <!-- Surah Browser Modal -->
+        <div class="modal" id="surahModal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 data-localize="browseAllSurahs">Browse All Surahs</h3>
+                    <button class="modal-close" id="modalClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="surah-list" id="surahList">
+                        <!-- Surahs will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
+    <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+</body>
+</html>

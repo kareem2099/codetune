@@ -6,7 +6,11 @@
     "start": "node api/spotify-callback.js",
     "dev": "node api/spotify-callback.js",
     "start:youtube": "node api/youtube-callback.js",
-    "dev:youtube": "node api/youtube-callback.js"
+    "dev:youtube": "node api/youtube-callback.js",
+    "start:hijri": "node api/hijri-date.js",
+    "dev:hijri": "node api/hijri-date.js",
+    "start:prayer": "node api/next-prayer.js",
+    "dev:prayer": "node api/next-prayer.js"
   },
   "dependencies": {
     "express": "^4.18.2",

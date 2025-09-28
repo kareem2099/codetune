@@ -2,6 +2,7 @@
 
 <div align="center">
 
+[![Version](https://img.shields.io/badge/Version-0.0.2-blue.svg)](https://github.com/kareem2099/codetune/releases)
 [![VS Code Version](https://img.shields.io/badge/VS%20Code-1.74+-blue.svg)](https://code.visualstudio.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
@@ -247,13 +248,10 @@ Configure these in VS Code settings:
 
 | Command | Description |
 |---------|-------------|
-| `codeTune.openPlayer` | Open the main CodeTune interface |
-| `codeTune.playMusic` | Play local music |
 | `codeTune.playQuran` | Play Quran recitation |
-| `codeTune.connectSpotify` | Connect to Spotify |
-| `codeTune.searchSpotify` | Search Spotify catalog |
-| `codeTune.pause` | Pause all players |
 | `codeTune.stop` | Stop all players |
+| `codeTune.openSettings` | Open CodeTune settings panel |
+| `codeTune.testActivityBar` | Test activity bar functionality |
 
 ## 🔧 Development
 

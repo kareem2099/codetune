@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeTune Settings</title>
+    <link rel="stylesheet" href="{{cssUri}}">
+</head>
+<body>
+    <div class="header">
+        <h1 data-localize="settingsTitle">⚙️ CodeTune Settings</h1>
+        <p data-localize="customizeExperience">Customize your CodeTune experience</p>
+    </div>
+
+    <div class="grid">
+        <!-- Audio Settings -->
+        <div class="settings-section">
+            <div class="settings-title">
+                <span>🎵</span>
+                <span data-localize="audioSettings">Audio Settings</span>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="defaultQuranVolume">Default Quran Volume</div>
+                <div class="setting-description" data-localize="volumeDescription">Set the default volume for Quran recitation (0-100%)</div>
+                <div class="setting-control">
+                    <input type="range" class="setting-input" id="quranVolume" min="0" max="100" value="70" oninput="updateQuranVolume(this.value)">
+                    <span id="quranVolumeValue">70%</span>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="defaultReciter">Default Reciter</div>
+                <div class="setting-description" data-localize="chooseReciter">Choose your preferred Quran reciter</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="defaultReciter">
+                        <option value="default" data-localize="defaultReciterOption">Default Reciter</option>
+                        <option value="abdulrahman" data-localize="abdulrahman">Abdul Rahman Al-Sudais</option>
+                        <option value="mishary" data-localize="mishary">Mishary Rashid Alafasy</option>
+                        <option value="saud" data-localize="saud">Saad Al-Ghamidi</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="audioQuality">Audio Quality</div>
+                <div class="setting-description" data-localize="selectQuality">Select preferred audio quality for streaming</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="audioQuality">
+                        <option value="32" data-localize="lowQuality">32 kbps (Low)</option>
+                        <option value="64" data-localize="mediumQuality">64 kbps (Medium)</option>
+                        <option value="128" selected data-localize="highQuality">128 kbps (High)</option>
+                        <option value="192" data-localize="bestQuality">192 kbps (Best)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playback Settings -->
+        <div class="settings-section">
+            <div class="settings-title">
+                <span>▶️</span>
+                <span data-localize="playbackSettings">Playback Settings</span>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="defaultPlaybackMode">Default Playback Mode</div>
+                <div class="setting-description" data-localize="choosePlayback">Choose how to play Quran recitations</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="playbackMode">
+                        <option value="surah" selected data-localize="fullSurah">Full Surah</option>
+                        <option value="ayah" data-localize="ayahByAyah">Ayah by Ayah</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="autoPlay">Auto-play on Startup</div>
+                <div class="setting-description" data-localize="autoPlayDesc">Automatically start playing when VS Code opens</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="autoPlay" onchange="updateAutoPlay(this.checked)">
+                    <label for="autoPlay" data-localize="enableAutoPlay">Enable auto-play</label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="continueLast">Continue from Last Position</div>
+                <div class="setting-description" data-localize="continueDesc">Resume playback from where you left off</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="continueLast" checked onchange="updateContinueLast(this.checked)">
+                    <label for="continueLast" data-localize="enableResumePlayback">Enable resume playback</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="settings-section">
+            <div class="settings-title">
+                <span>🎨</span>
+                <span data-localize="appearanceSettings">Appearance Settings</span>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="theme">Theme</div>
+                <div class="setting-description" data-localize="chooseTheme">Choose the visual theme for CodeTune</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="themeSelect">
+                        <option value="auto" selected data-localize="autoFollow">Auto (Follow VS Code)</option>
+                        <option value="light" data-localize="lightTheme">Light Theme</option>
+                        <option value="dark" data-localize="darkTheme">Dark Theme</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="compactMode">Compact Mode</div>
+                <div class="setting-description" data-localize="compactDesc">Use a more compact layout to save space</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="compactMode" onchange="updateCompactMode(this.checked)">
+                    <label for="compactMode">Enable compact mode</label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="showNotifications">Show Notifications</div>
+                <div class="setting-description" data-localize="notificationsDesc">Display notifications for playback events</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="showNotifications" checked onchange="updateShowNotifications(this.checked)">
+                    <label for="showNotifications">Enable notifications</label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="language">Language</div>
+                <div class="setting-description" data-localize="chooseLanguage">Choose the display language for CodeTune</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="languageSelect">
+                        <option value="auto" data-localize="autoFollow">Auto (Follow VS Code)</option>
+                        <option value="en">English</option>
+                        <option value="ar">العربية (Arabic)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Islamic Reminders -->
+        <div class="settings-section">
+            <div class="settings-title">
+                <span>🕌</span>
+                <span data-localize="islamicRemindersTitle">Islamic Reminders</span>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="enableReminders">Enable Reminders</div>
+                <div class="setting-description" data-localize="remindersDesc">Receive Islamic reminders and wisdom notifications</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="enableReminders" onchange="updateEnableReminders(this.checked)">
+                    <label for="enableReminders">Enable Islamic reminders</label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="reminderInterval">Reminder Interval</div>
+                <div class="setting-description" data-localize="reminderIntervalDesc">How often to show Islamic reminders</div>
+                <div class="setting-control">
+                    <select class="setting-select" id="reminderInterval">
+                        <option value="5" data-localize="every5Minutes">Every 5 minutes</option>
+                        <option value="15" data-localize="every15Minutes">Every 15 minutes</option>
+                        <option value="30" data-localize="every30Minutes">Every 30 minutes</option>
+                        <option value="60" selected data-localize="every1Hour">Every 1 hour</option>
+                        <option value="120" data-localize="every2Hours">Every 2 hours</option>
+                        <option value="240" data-localize="every4Hours">Every 4 hours</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="reminderTypes">Reminder Types</div>
+                <div class="setting-description" data-localize="reminderTypesDesc">Choose which types of Islamic content to receive</div>
+                <div class="setting-control">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label><input type="checkbox" id="showAdia" checked onchange="updateShowAdia(this.checked)" data-localize="adiaPrayers"> Adia (Islamic Prayers)</label>
+                        <label><input type="checkbox" id="showAhadis" checked onchange="updateShowAhadis(this.checked)" data-localize="ahadisSayings"> Ahadis (Prophet's Sayings)</label>
+                        <label><input type="checkbox" id="showWisdom" checked onchange="updateShowWisdom(this.checked)" data-localize="islamicWisdom"> Islamic Wisdom</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="workingHoursOnly">Working Hours Only</div>
+                <div class="setting-description" data-localize="workingHoursDesc">Only show reminders during typical working hours (9 AM - 6 PM)</div>
+                <div class="setting-control">
+                    <input type="checkbox" id="workingHoursOnly" onchange="updateWorkingHoursOnly(this.checked)">
+                    <label for="workingHoursOnly">Working hours only</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Settings -->
+        <div class="settings-section">
+            <div class="settings-title">
+                <span>🔧</span>
+                <span data-localize="advancedSettings">Advanced Settings</span>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="cacheSize">Cache Size</div>
+                <div class="setting-description" data-localize="cacheSizeDesc">Maximum cache size for downloaded audio (MB)</div>
+                <div class="setting-control">
+                    <input type="number" class="setting-input" id="cacheSize" value="100" min="10" max="1000">
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="downloadTimeout">Download Timeout</div>
+                <div class="setting-description" data-localize="downloadTimeoutDesc">Timeout for audio downloads (seconds)</div>
+                <div class="setting-control">
+                    <input type="number" class="setting-input" id="downloadTimeout" value="30" min="10" max="120">
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label" data-localize="retryAttempts">Retry Attempts</div>
+                <div class="setting-description" data-localize="retryAttemptsDesc">Number of retry attempts for failed downloads</div>
+                <div class="setting-control">
+                    <input type="number" class="setting-input" id="retryAttempts" value="3" min="1" max="10">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Boxes -->
+    <div class="info-box success">
+        <span data-localize="settingsSaved">Settings are automatically saved when you change them. No need to manually save!</span>
+    </div>
+
+    <div class="info-box">
+        <span data-localize="tipText">Tip: You can also use keyboard shortcuts: Ctrl+Shift+Q to play Quran, and use the activity bar for quick access to your favorite Surahs.</span>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="controls">
+        <button class="btn btn-primary" onclick="saveSettings()" data-localize="saveSettings">
+            💾 Save Settings
+        </button>
+        <button class="btn btn-secondary" onclick="resetSettings()" data-localize="resetDefault">
+            🔄 Reset to Default
+        </button>
+        <button class="btn btn-danger" onclick="closeSettings()" data-localize="close">
+            ❌ Close
+        </button>
+    </div>
+
+    <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
+    <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+</body>
+</html>

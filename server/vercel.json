@@ -7,6 +7,12 @@
     "api/youtube-callback.js": {
       "maxDuration": 30,
       "memory": 1024
+    },
+    "api/hijri-date.js": {
+      "maxDuration": 10
+    },
+    "api/next-prayer.js": {
+      "maxDuration": 10
     }
   },
   "routes": [
@@ -25,6 +31,14 @@
     {
       "src": "/health/spotify",
       "dest": "/api/spotify-callback.js"
+    },
+    {
+      "src": "/api/hijri-date",
+      "dest": "/api/hijri-date.js"
+    },
+    {
+      "src": "/api/next-prayer",
+      "dest": "/api/next-prayer.js"
     }
   ]
 }

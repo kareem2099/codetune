@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to CodeTune - Islamic Reminders</title>
+    <link rel="stylesheet" href="{{cssUri}}">
+</head>
+<body>
+    <div class="welcome-container">
+        <!-- Header -->
+        <div class="welcome-header">
+            <div class="welcome-icon">🕌</div>
+            <h1 class="welcome-title" data-localize="welcomeTitle">Assalamu Alaikum! مرحباً!</h1>
+            <p class="welcome-subtitle" data-localize="welcomeSubtitle">Welcome to CodeTune with Islamic Reminders</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="welcome-content">
+            <div class="feature-highlight">
+                <div class="highlight-icon">🌟</div>
+                <h2 data-localize="newFeature">New Feature: Islamic Reminders & Prayer Times</h2>
+                <p data-localize="enhanceExperience">Enhance your coding experience with spiritual reminders and Islamic wisdom</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h3 data-localize="hijriDateDisplay">Hijri Date Display</h3>
+                    <p data-localize="hijriDateDisplayDesc">View the Islamic calendar date in your activity bar</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⏰</div>
+                    <h3>Prayer Time Countdown</h3>
+                    <p>Real-time countdown to the next prayer time</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Islamic Reminders</h3>
+                    <p>Receive periodic wisdom from Quran and Hadith</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Full Customization</h3>
+                    <p>Control reminder frequency and content types</p>
+                </div>
+            </div>
+
+            <div class="sample-reminder">
+                <h3>Sample Reminder</h3>
+                <div class="reminder-preview">
+                    <div class="reminder-header">
+                        <span class="reminder-type">🕌 Adia (Prayer)</span>
+                    </div>
+                    <div class="reminder-content">
+                        <p class="arabic-text">اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ</p>
+                        <p class="english-text">"O Allah, I ask You for pardon and well-being in this world and in the Hereafter."</p>
+                        <p class="source-text">Source: Sunan Ibn Majah</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="welcome-actions">
+            <button class="action-btn primary" onclick="openSettings()">
+                <span class="btn-icon">⚙️</span>
+                Open Settings
+            </button>
+            <button class="action-btn secondary" onclick="learnMore()">
+                <span class="btn-icon">📚</span>
+                Learn More
+            </button>
+            <button class="action-btn tertiary" onclick="closeWelcome()">
+                <span class="btn-icon">✅</span>
+                Got it!
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="welcome-footer">
+            <p>✨ May Allah bless your coding journey with peace and productivity 🤲</p>
+            <p class="footer-note">This welcome message will only appear for the first 3 days after installation</p>
+        </div>
+    </div>
+
+    <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
+    <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+</body>
+</html>
