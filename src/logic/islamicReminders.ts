@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { IslamicCalendar } from './islamicCalendar';
 
 interface ReminderSettings {
     enableReminders: boolean;
@@ -6,11 +7,13 @@ interface ReminderSettings {
     showAdia: boolean;
     showAhadis: boolean;
     showWisdom: boolean;
+    showMorningAzkar: boolean;
+    showEveningAzkar: boolean;
     workingHoursOnly: boolean;
 }
 
 interface IslamicContent {
-    type: 'adia' | 'hadis' | 'wisdom';
+    type: 'adia' | 'hadis' | 'wisdom' | 'morningAzkar' | 'eveningAzkar';
     arabic: string;
     english: string;
     source?: string;
@@ -121,6 +124,72 @@ export class IslamicRemindersManager {
         }
     ];
 
+    private morningAzkar: IslamicContent[] = [
+        {
+            type: 'morningAzkar',
+            arabic: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ',
+            english: 'We have entered the morning and the whole kingdom belongs to Allah. The praise is to Allah. There is none worthy of worship but Allah alone, no partner has He.',
+            source: 'Morning Azkar'
+        },
+        {
+            type: 'morningAzkar',
+            arabic: 'اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ',
+            english: 'O Allah, by You we enter the morning and by You we enter the evening, by You we live and by You we die, and to You is the resurrection.',
+            source: 'Morning Azkar'
+        },
+        {
+            type: 'morningAzkar',
+            arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا وَرِزْقًا طَيِّبًا وَعَمَلًا مُتَقَبَّلًا',
+            english: 'O Allah, I ask You for knowledge that is beneficial, provision that is pure, and actions that are accepted.',
+            source: 'Morning Azkar'
+        },
+        {
+            type: 'morningAzkar',
+            arabic: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
+            english: 'Glory be to Allah and all praise is due to Him, glory be to Allah the Great.',
+            source: 'Morning Azkar'
+        },
+        {
+            type: 'morningAzkar',
+            arabic: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
+            english: 'I seek refuge in the perfect words of Allah from the evil of what He has created.',
+            source: 'Morning Azkar'
+        }
+    ];
+
+    private eveningAzkar: IslamicContent[] = [
+        {
+            type: 'eveningAzkar',
+            arabic: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ',
+            english: 'We have entered the evening and the whole kingdom belongs to Allah. The praise is to Allah. There is none worthy of worship but Allah alone, no partner has He.',
+            source: 'Evening Azkar'
+        },
+        {
+            type: 'eveningAzkar',
+            arabic: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ',
+            english: 'O Allah, by You we enter the evening and by You we enter the morning, by You we live and by You we die, and to You is the return.',
+            source: 'Evening Azkar'
+        },
+        {
+            type: 'eveningAzkar',
+            arabic: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ',
+            english: 'O Allah, I ask You for pardon and well-being in this world and in the Hereafter.',
+            source: 'Evening Azkar'
+        },
+        {
+            type: 'eveningAzkar',
+            arabic: 'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ',
+            english: 'In the name of Allah, with whose name nothing in the earth or heaven can cause harm.',
+            source: 'Evening Azkar'
+        },
+        {
+            type: 'eveningAzkar',
+            arabic: 'قُلْ هُوَ اللَّهُ أَحَدٌ',
+            english: 'Say, "He is Allah, the One."',
+            source: 'Surah Al-Ikhlas'
+        }
+    ];
+
     constructor() {
         this.settings = {
             enableReminders: true,
@@ -128,6 +197,8 @@ export class IslamicRemindersManager {
             showAdia: true,
             showAhadis: true,
             showWisdom: true,
+            showMorningAzkar: true,
+            showEveningAzkar: true,
             workingHoursOnly: false
         };
         this.loadSettings();
@@ -136,7 +207,7 @@ export class IslamicRemindersManager {
 
     private loadSettings() {
         try {
-            // Use VS Code's workspace configuration instead of localStorage
+            // Load from VS Code configuration system
             const config = vscode.workspace.getConfiguration('codeTune');
             this.settings = {
                 enableReminders: config.get('enableReminders', true),
@@ -144,10 +215,14 @@ export class IslamicRemindersManager {
                 showAdia: config.get('showAdia', true),
                 showAhadis: config.get('showAhadis', true),
                 showWisdom: config.get('showWisdom', true),
+                showMorningAzkar: config.get('showMorningAzkar', true),
+                showEveningAzkar: config.get('showEveningAzkar', true),
                 workingHoursOnly: config.get('workingHoursOnly', false)
             };
+            console.log('Islamic reminders loaded from VSCode config:', this.settings);
         } catch (error) {
             console.warn('Failed to load Islamic reminder settings:', error);
+            // Keep default settings
         }
     }
 
@@ -162,7 +237,21 @@ export class IslamicRemindersManager {
 
     private getRandomContent(): IslamicContent | null {
         const availableTypes: IslamicContent[] = [];
+        const now = new Date();
 
+        // Add time-based azkar based on current time
+        const prayerTimes = IslamicCalendar.calculatePrayerTimes();
+        const isMorningTime = now >= prayerTimes.fajr && now < IslamicRemindersManager.calculateSunriseTime();
+        const isEveningTime = now >= prayerTimes.asr && now < prayerTimes.maghrib;
+
+        if (this.settings.showMorningAzkar && isMorningTime) {
+            availableTypes.push(...this.morningAzkar);
+        }
+        if (this.settings.showEveningAzkar && isEveningTime) {
+            availableTypes.push(...this.eveningAzkar);
+        }
+
+        // Always available content (not time-based)
         if (this.settings.showAdia) {availableTypes.push(...this.adia);}
         if (this.settings.showAhadis) {availableTypes.push(...this.ahadis);}
         if (this.settings.showWisdom) {availableTypes.push(...this.wisdom);}
@@ -171,6 +260,15 @@ export class IslamicRemindersManager {
 
         const randomIndex = Math.floor(Math.random() * availableTypes.length);
         return availableTypes[randomIndex];
+    }
+
+    private static calculateSunriseTime(): Date {
+        // Approximate sunrise as when the sun is at 0 degrees (same as Maghrib is sunset)
+        // For simplicity, we calculate it as Fajr + approximately 5 hours
+        // A more accurate calculation would require astronomical data
+        const prayerTimes = IslamicCalendar.calculatePrayerTimes();
+        const sunriseEstimate = new Date(prayerTimes.fajr.getTime() + (5 * 60 * 60 * 1000)); // Fajr + 5 hours
+        return sunriseEstimate;
     }
 
     private showReminder() {
@@ -182,6 +280,8 @@ export class IslamicRemindersManager {
 
         const typeLabel = content.type === 'adia' ? 'Adia (Prayer)' :
                          content.type === 'hadis' ? 'Hadis (Prophet\'s Saying)' :
+                         content.type === 'morningAzkar' ? 'Morning Azkar' :
+                         content.type === 'eveningAzkar' ? 'Evening Azkar' :
                          'Islamic Wisdom';
 
         // Show notification with Islamic content

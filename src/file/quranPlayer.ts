@@ -21,6 +21,7 @@ interface QuranEdition {
     englishName: string;
     format: string;
     type: string;
+    audioType: 'full-surah' | 'verse-by-verse'; // New field to distinguish audio capabilities
 }
 
 interface AyahInfo {
@@ -51,6 +52,7 @@ export class QuranPlayer {
     private currentGlobalAyah: number = 1; // Global ayah number across entire Quran
     private bitrate: number = 128; // Audio quality (32, 48, 64, 128, 192)
     private availableBitrates: number[] = [32, 48, 64, 128, 192];
+    private messageSender: ((message: any) => void) | null = null;
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
@@ -58,6 +60,24 @@ export class QuranPlayer {
         this.initializeSurahs();
         this.initializeEditions();
         this.loadAvailableEditions();
+    }
+
+    /**
+     * Set the message sender function for bidirectional communication with webview
+     */
+    setMessageSender(sender: (message: any) => void): void {
+        this.messageSender = sender;
+    }
+
+    /**
+     * Send a message to the webview
+     */
+    private sendToWebview(message: any): void {
+        if (this.messageSender) {
+            this.messageSender(message);
+        } else {
+            console.warn('No message sender available for webview communication');
+        }
     }
 
     // Load all available audio editions from the API
@@ -71,7 +91,8 @@ export class QuranPlayer {
                     name: edition.name,
                     englishName: edition.englishName,
                     format: edition.format,
-                    type: edition.type
+                    type: edition.type,
+                    audioType: edition.type === 'translation' ? 'full-surah' : 'verse-by-verse' // Map API type to our categorization
                 }));
             }
         } catch (error) {
@@ -201,14 +222,40 @@ export class QuranPlayer {
     }
 
     private initializeEditions(): void {
-        // Popular Quran reciters available on the CDN
+        // Popular Quran reciters available on the Islamic Network CDN
         this.editions = [
-            { identifier: 'ar.alafasy', language: 'ar', name: 'مشاري راشد العفاسي', englishName: 'Mishary Rashid Alafasy', format: 'audio', type: 'versebyverse' },
-            { identifier: 'ar.alsudais', language: 'ar', name: 'عبد الرحمن السديس', englishName: 'Abdul Rahman Al-Sudais', format: 'audio', type: 'versebyverse' },
-            { identifier: 'ar.alghamidi', language: 'ar', name: 'سعود الشريم', englishName: 'Saad Al-Ghamidi', format: 'audio', type: 'versebyverse' },
-            { identifier: 'ar.almaeaqly', language: 'ar', name: 'ماهر المعيقلي', englishName: 'Maher Al-Mueaqly', format: 'audio', type: 'versebyverse' },
-            { identifier: 'ar.alajamy', language: 'ar', name: 'أحمد علي العجمي', englishName: 'Ahmed Ali Al-Ajmy', format: 'audio', type: 'versebyverse' },
-            { identifier: 'ar.bassit', language: 'ar', name: 'عبد الباسط عبد الصمد', englishName: 'Abdul Basit Abdul Samad', format: 'audio', type: 'versebyverse' }
+            // Full Surah Reciters (translation type from API)
+            { identifier: 'ar.abdulbasitmurattal', language: 'ar', name: 'عبد الباسط عبد الصمد المرتل', englishName: 'Abdul Basit Abdul Samad', format: 'audio', type: 'versebyverse', audioType: 'full-surah' },
+            { identifier: 'ar.minshawi', language: 'ar', name: 'محمد صديق المنشاوي', englishName: 'Muhammad Siddiq Al-Minshawy', format: 'audio', type: 'versebyverse', audioType: 'full-surah' },
+            { identifier: 'ar.minshawimujawwad', language: 'ar', name: 'محمد صديق المنشاوي (المجود)', englishName: 'Minshawy Mujawwad', format: 'audio', type: 'versebyverse', audioType: 'full-surah' },
+            { identifier: 'fa.hedayatfarfooladvand', language: 'fa', name: 'Fooladvand - Hedayatfar', englishName: 'Fooladvand - Hedayatfar', format: 'audio', type: 'translation', audioType: 'full-surah' },
+
+            // Verse-by-Verse Reciters (versebyverse type from API)
+            { identifier: 'ar.alafasy', language: 'ar', name: 'مشاري راشد العفاسي', englishName: 'Mishary Rashid Alafasy', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.abdurrahmaansudais', language: 'ar', name: 'عبد الرحمن السديس', englishName: 'Abdurrahman As-Sudais', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.husary', language: 'ar', name: 'محمود خليل الحصري', englishName: 'Mahmoud Khalil Al-Hussary', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.husarymujawwad', language: 'ar', name: 'محمود خليل الحصري (المجود)', englishName: 'Hussary Mujawwad', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.mahermuaiqly', language: 'ar', name: 'ماهر المعيقلي', englishName: 'Maher Al Muaiqly', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.hudhaify', language: 'ar', name: 'علي بن عبدالرحمن الحذيفي', englishName: 'Ali bin Abdulrahman Al-Hudhaify', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.saoodshuraym', language: 'ar', name: 'سعود الشريم', englishName: 'Saood bin Ibraaheem Ash-Shuraym', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.ahmedajamy', language: 'ar', name: 'أحمد علي العجمي', englishName: 'Ahmed Ibn Ali Al-Ajamy', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.muhammadayyoub', language: 'ar', name: 'محمد أيوب', englishName: 'Muhammad Ayyoub', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.abdullahbasfar', language: 'ar', name: 'عبد الله بصفر', englishName: 'Abdullah Basfar', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.shaatree', language: 'ar', name: 'أبو بكر الشاطري', englishName: 'Abu Bakr Ash-Shatri', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.hanirifai', language: 'ar', name: 'هاني الرفاعي', englishName: 'Hani Ar-Rifai', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.muhammadjibreel', language: 'ar', name: 'محمد جبريل', englishName: 'Muhammad Jibreel', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.ibrahimakhbar', language: 'ar', name: 'إبراهيم الأخضر', englishName: 'Ibrahim Akhdar', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.abdulsamad', language: 'ar', name: 'عبدالباسط عبدالصمد', englishName: 'Abdul Samad', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.aymanswoaid', language: 'ar', name: 'أيمن سويد', englishName: 'Ayman Sowaid', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+
+            // International Reciters
+            { identifier: 'en.walk', language: 'en', name: 'Ibrahim Walk', englishName: 'Ibrahim Walk', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ur.khan', language: 'ur', name: 'Shamshad Ali Khan', englishName: 'Shamshad Ali Khan', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'zh.chinese', language: 'zh', name: '中文', englishName: 'Chinese', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'fr.leclerc', language: 'fr', name: 'Youssouf Leclerc', englishName: 'Youssouf Leclerc', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ru.kuliev-audio', language: 'ru', name: 'Elmir Kuliev by 1MuslimApp', englishName: 'Elmir Kuliev by 1MuslimApp', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ru.kuliev-audio-2', language: 'ru', name: 'Elmir Kuliev 2 by 1MuslimApp', englishName: 'Elmir Kuliev 2 by 1MuslimApp', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' },
+            { identifier: 'ar.parhizgar', language: 'ar', name: 'شهریار پرهیزگار', englishName: 'Parhizgar', format: 'audio', type: 'versebyverse', audioType: 'verse-by-verse' }
         ];
     }
 
@@ -228,21 +275,60 @@ export class QuranPlayer {
         ];
     }
 
-    async play(surahSelection: string): Promise<void> {
+    /**
+     * Check if current reciter supports full surah playback
+     */
+    private doesReciterSupportFullSurah(reciter?: string): boolean {
+        const editionId = reciter || this.currentEdition;
+        const edition = this.editions.find(e => e.identifier === editionId);
+        return edition?.audioType === 'full-surah';
+    }
+
+    /**
+     * Get recommended playback mode for current reciter
+     */
+    private getRecommendedPlaybackMode(reciter?: string): 'full-surah' | 'ayah-by-ayah' {
+        return this.doesReciterSupportFullSurah(reciter) ? 'full-surah' : 'ayah-by-ayah';
+    }
+
+    async play(surahNumber: string, mode?: string, reciter?: string): Promise<void> {
         try {
             this.stop(); // Stop current recitation if playing
 
             // Parse surah number from selection
-            const surahNumber = parseInt(surahSelection.split(' - ')[0]);
-            const surah = this.surahs.find(s => s.number === surahNumber);
+            const surahNum = parseInt(surahNumber);
+            const surah = this.surahs.find(s => s.number === surahNum);
 
             if (!surah) {
                 vscode.window.showErrorMessage('Invalid Surah selection');
                 return;
             }
 
-            // Stream online by default (CDN streaming)
-            await this.streamOnline(surah);
+            // Update reciter if provided
+            if (reciter) {
+                this.currentEdition = reciter;
+            }
+
+            // Validate requested mode against reciter capabilities
+            if (mode === 'full-surah' && !this.doesReciterSupportFullSurah()) {
+                vscode.window.showErrorMessage(`Selected reciter doesn't support full surah playback. Falling back to ayah-by-ayah mode.`);
+                mode = 'ayah-by-ayah';
+            }
+
+            // Use streaming mode based on provided mode, or intelligent default
+            if (mode === 'ayah-by-ayah') {
+                await this.streamAyahByAyah(surah);
+            } else if (mode === 'full-surah') {
+                await this.streamFullSurah(surah);
+            } else {
+                // Intelligent default: Auto-select based on reciter capabilities
+                const recommendedMode = this.getRecommendedPlaybackMode();
+                if (recommendedMode === 'full-surah') {
+                    await this.streamFullSurah(surah);
+                } else {
+                    await this.streamAyahByAyah(surah);
+                }
+            }
 
         } catch (error) {
             vscode.window.showErrorMessage(`Error playing Quran: ${error}`);
@@ -285,24 +371,17 @@ export class QuranPlayer {
                 `🎵 Streaming Surah: ${surah.name} (${surah.transliteration}) - ${surah.verses} verses`
             );
 
-            // VSCode webviews cannot play audio directly, so we open in browser
-            try {
-                await vscode.env.openExternal(vscode.Uri.parse(surahUrl));
-                vscode.window.showInformationMessage(
-                    `🎵 Opened ${surah.name} in your browser for audio playback`
-                );
-            } catch (error) {
-                // Fallback: try to use system audio player
-                vscode.window.showInformationMessage(
-                    `🎵 Please open this URL in your browser to listen: ${surahUrl}`,
-                    'Copy URL'
-                ).then(selection => {
-                    if (selection === 'Copy URL') {
-                        vscode.env.clipboard.writeText(surahUrl);
-                        vscode.window.showInformationMessage('URL copied to clipboard!');
-                    }
-                });
-            }
+            // Send audio URL to webview for internal playback
+            const webviewMessage = {
+                type: 'playAudio',
+                url: surahUrl,
+                surah: surah,
+                mode: 'full-surah'
+            };
+
+            // Send message to webview through the message sender
+            this.sendToWebview(webviewMessage);
+
         } catch (error) {
             vscode.window.showErrorMessage(`Error streaming full Surah: ${error}`);
         }
@@ -317,64 +396,13 @@ export class QuranPlayer {
             );
 
             // Start streaming first ayah
-            await this.playNextAyah(surah);
+            await this.playNextAyah(surah, 0); // Start with ayah 0, so it becomes 1 (first ayah)
         } catch (error) {
             vscode.window.showErrorMessage(`Error streaming Ayah by Ayah: ${error}`);
         }
     }
 
-    private async playNextAyah(surah: Surah): Promise<void> {
-        if (this.currentAyah > surah.verses) {
-            vscode.window.showInformationMessage(
-                `✅ Completed Surah: ${surah.name} (${surah.verses} verses)`
-            );
-            this.stop();
-            return;
-        }
 
-        try {
-            // Calculate global ayah number for CDN
-            const globalAyahNumber = this.getGlobalAyahNumber(surah.number, this.currentAyah);
-            const bitrate = this.bitrate.toString();
-            const edition = this.currentEdition;
-            const ayahUrl = `https://cdn.islamic.network/quran/audio/${bitrate}/${edition}/${globalAyahNumber}.mp3`;
-
-            vscode.window.showInformationMessage(
-                `🎵 Playing Ayah ${this.currentAyah}/${surah.verses} from ${surah.name}`
-            );
-
-            // VSCode webviews cannot play audio directly, so we open in browser
-            try {
-                await vscode.env.openExternal(vscode.Uri.parse(ayahUrl));
-                vscode.window.showInformationMessage(
-                    `🎵 Opened Ayah ${this.currentAyah} from ${surah.name} in your browser`
-                );
-            } catch (error) {
-                // Fallback: copy URL to clipboard
-                vscode.window.showInformationMessage(
-                    `🎵 Please open this URL in your browser to listen: ${ayahUrl}`,
-                    'Copy URL'
-                ).then(selection => {
-                    if (selection === 'Copy URL') {
-                        vscode.env.clipboard.writeText(ayahUrl);
-                        vscode.window.showInformationMessage('URL copied to clipboard!');
-                    }
-                });
-            }
-
-            this.currentAyah++;
-
-            // Auto-advance to next ayah after a delay
-            setTimeout(() => {
-                if (this.isPlaying) {
-                    this.playNextAyah(surah);
-                }
-            }, 6000); // 6 second delay between ayahs
-
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error playing Ayah ${this.currentAyah}: ${error}`);
-        }
-    }
 
     private getGlobalAyahNumber(surahNumber: number, ayahInSurah: number): number {
         // Calculate the global ayah number across the entire Quran
@@ -391,21 +419,36 @@ export class QuranPlayer {
         return globalAyah;
     }
 
+    /**
+     * Get available reciters with their audio capabilities for UI display
+     */
+    getRecitersWithCapabilities(): Array<{label: string, description: string, detail: string, edition: string}> {
+        return this.editions.map(edition => {
+            const capability = edition.audioType === 'full-surah' ? '🎵 Full Surah' : '📖 Verse-by-Verse';
+            return {
+                label: edition.englishName,
+                description: edition.name,
+                detail: capability,
+                edition: edition.identifier
+            };
+        });
+    }
+
     async selectReciter(): Promise<void> {
-        const reciters = this.editions.map(edition => ({
-            label: edition.englishName,
-            description: edition.name,
-            edition: edition.identifier
-        }));
+        const reciters = this.getRecitersWithCapabilities();
 
         const selected = await vscode.window.showQuickPick(reciters, {
-            placeHolder: 'Select a Quran Reciter'
+            placeHolder: 'Select a Quran Reciter',
+            matchOnDescription: true,
+            matchOnDetail: true
         });
 
         if (selected) {
             this.currentEdition = selected.edition;
+            const edition = this.editions.find(e => e.identifier === selected.edition);
+            const mode = edition?.audioType === 'full-surah' ? 'Full Surah' : 'Verse-by-Verse';
             vscode.window.showInformationMessage(
-                `📖 Selected Reciter: ${selected.label} (${selected.description})`
+                `📖 Selected Reciter: ${selected.label} (${mode})`
             );
         }
     }
@@ -436,6 +479,7 @@ export class QuranPlayer {
     }
 
     setEdition(edition: string): void {
+        console.log('QuranPlayer: Setting edition to:', edition);
         this.currentEdition = edition;
     }
 
@@ -604,7 +648,7 @@ export class QuranPlayer {
 
             // Send to webview for streaming
             const webviewMessage = {
-                type: 'streamQuran',
+                type: 'playAudio',
                 url: ayahUrl,
                 surah: {
                     number: this.currentSurahNumber,
@@ -617,6 +661,8 @@ export class QuranPlayer {
                 edition: this.currentEdition,
                 mode: 'single-ayah'
             };
+
+            this.sendToWebview(webviewMessage);
 
         } catch (error) {
             vscode.window.showErrorMessage(`Error streaming Ayah: ${error}`);
@@ -870,6 +916,58 @@ export class QuranPlayer {
             console.error('Error fetching page ayahs:', error);
         }
         return [];
+    }
+
+    /**
+     * Play the next ayah in sequence (for ayah-by-ayah mode)
+     * @param surahInfo - Surah object containing number, name, etc.
+     * @param currentAyah - Current ayah number in the surah
+     */
+    async playNextAyah(surahInfo: any, currentAyah: number): Promise<void> {
+        const nextAyah = currentAyah + 1;
+        const surah = this.surahs.find(s => s.number === surahInfo.number);
+
+        if (!surah) {
+            vscode.window.showErrorMessage('Surah not found');
+            return;
+        }
+
+        if (nextAyah > surah.verses) {
+            vscode.window.showInformationMessage(
+                `✅ Completed Surah: ${surah.name} (${surah.verses} verses)`
+            );
+            this.stop();
+            return;
+        }
+
+        try {
+            // Play next ayah
+            const globalAyahNumber = this.getGlobalAyahNumber(surah.number, nextAyah);
+            this.currentAyah = nextAyah;
+
+            const ayahUrl = this.getAyahAudioUrl(globalAyahNumber);
+            const mode = 'ayah-by-ayah';
+
+            vscode.window.showInformationMessage(
+                `🎵 Playing Ayah ${this.currentAyah}/${surah.verses} from ${surah.name}`
+            );
+
+            // Send audio URL to webview for internal playback
+            const webviewMessage = {
+                type: 'playAudio',
+                url: ayahUrl,
+                surah: surah,
+                ayah: this.currentAyah,
+                globalAyah: globalAyahNumber,
+                mode: mode
+            };
+
+            // Send message to webview through the message sender
+            this.sendToWebview(webviewMessage);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error playing Ayah ${nextAyah}: ${error}`);
+        }
     }
 
     /**

@@ -3,7 +3,6 @@ import * as path from 'path';
 import * as nls from 'vscode-nls';
 import { QuranPlayer } from './file/quranPlayer';
 import { ActivityBarViewProvider } from './logic/activityBarView';
-import { SettingsWebviewPanel } from './logic/settingsView';
 import { IslamicRemindersManager } from './logic/islamicReminders';
 import { WelcomeMessageManager } from './logic/welcomeMessage';
 
@@ -36,7 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Extension: Creating Activity Bar provider...');
     const activityBarProvider = new ActivityBarViewProvider(
         context.extensionUri,
-        quranPlayer
+        quranPlayer,
+        islamicRemindersManager
     );
 
     // Make Activity Bar provider globally accessible for settings webview
@@ -58,8 +58,15 @@ export function activate(context: vscode.ExtensionContext) {
             );
 
             if (surahList) {
-                await quranPlayer.play(surahList);
-                vscode.window.showInformationMessage(`Playing Quran: ${surahList}`);
+                // Extract surah number from the formatted string (e.g., "001 - الفاتحة (Al-Fatiha)" -> "001")
+                const surahNumberMatch = surahList.match(/^(\d+)/);
+                if (surahNumberMatch) {
+                    const surahNumber = surahNumberMatch[1];
+                    await quranPlayer.play(surahNumber);
+                    vscode.window.showInformationMessage(`Playing Quran: ${surahList}`);
+                } else {
+                    vscode.window.showErrorMessage('Invalid Surah selection');
+                }
             }
         }
     );
@@ -69,14 +76,6 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             quranPlayer.stop();
             vscode.window.showInformationMessage('Stopped');
-        }
-    );
-
-    // Settings command
-    const openSettingsCommand = vscode.commands.registerCommand(
-        'codeTune.openSettings',
-        () => {
-            const settingsPanel = new SettingsWebviewPanel(context.extensionUri);
         }
     );
 
@@ -92,7 +91,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         playQuranCommand,
         stopCommand,
-        openSettingsCommand,
         testActivityBarCommand
     );
 }

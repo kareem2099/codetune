@@ -6,38 +6,56 @@ class LocalizationManager {
     }
 
     getLocale() {
+        console.log('LocalizationManager: getLocale() called');
+
         // First check localStorage for user language setting (for webview persistence)
         try {
             const savedSettings = localStorage.getItem('codeTuneSettings');
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
+                console.log('LocalizationManager: localStorage settings:', settings);
                 if (settings.language && settings.language !== 'auto') {
+                    console.log('LocalizationManager: returning from localStorage:', settings.language);
                     return settings.language;
                 }
             }
         } catch (error) {
-            // Ignore errors and continue
+            console.log('LocalizationManager: error reading localStorage:', error);
         }
 
-        // Check VSCode configuration for language setting
-        if (typeof vscode !== 'undefined' && vscode.workspace) {
-            try {
-                const config = vscode.workspace.getConfiguration('codeTune');
-                const language = config.get('language');
-                if (language && language !== 'auto') {
-                    return language;
-                }
-                // If auto, fall back to VSCode's display language
-                if (language === 'auto' && vscode.env && vscode.env.language) {
-                    return vscode.env.language.startsWith('ar') ? 'ar' : 'en';
-                }
-            } catch (error) {
-                console.warn('Failed to get language from configuration:', error);
-            }
+        // Check for language in URL parameters (set by extension)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLanguage = urlParams.get('language');
+        console.log('LocalizationManager: URL language param:', urlLanguage);
+        if (urlLanguage && urlLanguage !== 'auto') {
+            console.log('LocalizationManager: returning from URL param:', urlLanguage);
+            return urlLanguage;
         }
 
-        // Fallback to English
-        return 'en';
+        // Check for language in global variable set by extension (during language change)
+        if (typeof window !== 'undefined' && window.currentLanguage && window.currentLanguage !== 'auto') {
+            console.log('LocalizationManager: returning from window.currentLanguage:', window.currentLanguage);
+            return window.currentLanguage;
+        }
+
+        // Check for VS Code language set by extension in the HTML head
+        if (typeof window !== 'undefined' && window.vsCodeLanguage) {
+            console.log('LocalizationManager: returning from window.vsCodeLanguage (set by extension):', window.vsCodeLanguage);
+            return window.vsCodeLanguage;
+        }
+
+        // When auto-detecting, check VS Code's locale via navigator.language
+        const vsCodeLocale = navigator.language || 'en';
+        console.log('LocalizationManager: auto-detecting, navigator.language:', vsCodeLocale);
+
+        // Map common locales to supported languages
+        if (vsCodeLocale.startsWith('ar')) {
+            console.log('LocalizationManager: detected Arabic locale, returning: ar');
+            return 'ar';
+        } else {
+            console.log('LocalizationManager: detected non-Arabic locale, returning: en');
+            return 'en';
+        }
     }
 
     getLocalizedStrings() {
@@ -105,6 +123,9 @@ class LocalizationManager {
                 notificationsDesc: "Display notifications for playback events",
                 language: "Language",
                 chooseLanguage: "Choose the display language for CodeTune",
+                languageAuto: "🌐",
+                languageEnglish: "EN",
+                languageArabic: "العربية",
                 islamicRemindersTitle: "Islamic Reminders",
                 enableReminders: "Enable Reminders",
                 remindersDesc: "Receive Islamic reminders and wisdom notifications",
@@ -121,6 +142,8 @@ class LocalizationManager {
                 adiaPrayers: "Adia (Islamic Prayers)",
                 ahadisSayings: "Ahadis (Prophet's Sayings)",
                 islamicWisdom: "Islamic Wisdom",
+                morningAzkar: "Morning Azkar (أذكار الصباح)",
+                eveningAzkar: "Evening Azkar (أذكار المساء)",
                 workingHoursOnly: "Working Hours Only",
                 workingHoursDesc: "Only show reminders during typical working hours (9 AM - 6 PM)",
                 advancedSettings: "Advanced Settings",
@@ -161,7 +184,14 @@ class LocalizationManager {
                 // Common
                 loading: "Loading...",
                 error: "Error",
-                success: "Success"
+                success: "Success",
+
+                // Prayer Names - for localized dynamic display
+                prayerFajr: "Fajr",
+                prayerDhuhr: "Dhuhr",
+                prayerAsr: "Asr",
+                prayerMaghrib: "Maghrib",
+                prayerIsha: "Isha"
             },
             ar: {
                 // Welcome page
@@ -222,6 +252,9 @@ class LocalizationManager {
                 notificationsDesc: "عرض الإشعارات لحدث التشغيل",
                 language: "اللغة",
                 chooseLanguage: "اختر لغة العرض لكود تيون",
+                languageAuto: "🌐",
+                languageEnglish: "EN",
+                languageArabic: "العربية",
                 islamicRemindersTitle: "التذكيرات الإسلامية",
                 enableReminders: "تفعيل التذكيرات",
                 remindersDesc: "تلقي التذكيرات الإسلامية وإشعارات الحكم",
@@ -238,6 +271,8 @@ class LocalizationManager {
                 adiaPrayers: "الأدعية (الصلوات الإسلامية)",
                 ahadisSayings: "الأحاديث (أقوال النبي)",
                 islamicWisdom: "الحكم الإسلامية",
+                morningAzkar: "أذكار الصباح (أذكار الصباح)",
+                eveningAzkar: "أذكار المساء (أذكار المساء)",
                 workingHoursOnly: "ساعات العمل فقط",
                 workingHoursDesc: "عرض التذكيرات فقط خلال ساعات العمل المعتادة (9 صباحاً - 6 مساءً)",
                 advancedSettings: "الإعدادات المتقدمة",
@@ -278,7 +313,14 @@ class LocalizationManager {
                 // Common
                 loading: "جارٍ التحميل...",
                 error: "خطأ",
-                success: "نجح"
+                success: "نجح",
+
+                // Prayer Names - for localized dynamic display
+                prayerFajr: "الفجر",
+                prayerDhuhr: "الظهر",
+                prayerAsr: "العصر",
+                prayerMaghrib: "المغرب",
+                prayerIsha: "العشاء"
             }
         };
 
@@ -313,9 +355,12 @@ class LocalizationManager {
 
     // Refresh localization when language changes
     refreshLocalization() {
+        console.log('LocalizationManager: refreshLocalization called');
         this.locale = this.getLocale();
         this.strings = this.getLocalizedStrings();
+        console.log('LocalizationManager: new locale:', this.locale);
         this.localizeElements();
+        console.log('LocalizationManager: localization elements updated');
     }
 }
 

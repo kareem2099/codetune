@@ -2,7 +2,7 @@
   "name": "codetune",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "publisher": "FreeRave",
   "repository": {
     "type": "git",
@@ -55,6 +55,16 @@
           "type": "boolean",
           "default": true,
           "description": "%config.codeTune.showWisdom%"
+        },
+        "codeTune.showMorningAzkar": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.showMorningAzkar%"
+        },
+        "codeTune.showEveningAzkar": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.showEveningAzkar%"
         },
         "codeTune.workingHoursOnly": {
           "type": "boolean",

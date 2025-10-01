@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CodeTune - Modern Quran Player</title>
+    <!-- Arabic Quranic Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran:wght@400&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{cssUri}}">
 </head>
 <body>
@@ -14,14 +18,16 @@
                 <div class="brand">
                     <div class="brand-icon">📿</div>
                     <div class="brand-text" data-localize="codeTune">CodeTune</div>
-                    <div class="brand-version">v0.0.2</div>
+                    <div class="brand-version">v0.0.4</div>
                 </div>
                 <div class="header-actions">
+                    <select class="lang-select" id="headerLanguageSelect" title="Change Language">
+                        <option value="auto" data-localize="languageAuto">🌐</option>
+                        <option value="en" data-localize="languageEnglish">EN</option>
+                        <option value="ar" data-localize="languageArabic">العربية</option>
+                    </select>
                     <button class="action-btn" id="themeToggle" title="Toggle theme">
                         <span class="icon">🌙</span>
-                    </button>
-                    <button class="action-btn" id="settingsBtn" title="Settings">
-                        <span class="icon">⚙️</span>
                     </button>
                 </div>
             </div>
@@ -48,6 +54,11 @@
             </div>
         </div>
 
+        <!-- Listening Statistics -->
+        <div class="listening-stats-card" id="listeningStats">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
         <!-- Main Player Card -->
         <div class="player-card">
             <div class="player-header">
@@ -58,7 +69,57 @@
                 <div class="status-badge" id="connectionStatus" data-localize="available">Available</div>
             </div>
 
-            <!-- Now Playing Display -->
+    <!-- Hidden Audio Element -->
+    <audio id="quranAudio" preload="none" style="display: none;"></audio>
+
+    <!-- Quran Reader Section -->
+    <div class="quran-read-card">
+        <div class="read-header">
+            <div class="reader-title">
+                <div class="reader-icon">📖</div>
+                <span data-localize="quranReader">Quran Reader</span>
+            </div>
+            <div class="reading-progress" id="readingProgress">
+                <!-- Reading progress will be shown here -->
+            </div>
+        </div>
+
+        <div class="read-grid">
+            <button class="read-surah-card" data-surah="001" title="Read Al-Fatiha (The Opening)">
+                <div class="read-surah-number">1</div>
+                <div class="read-surah-name">الفاتحة</div>
+            </button>
+            <button class="read-surah-card" data-surah="036" title="Read Ya-Sin">
+                <div class="read-surah-number">36</div>
+                <div class="read-surah-name">يس</div>
+            </button>
+            <button class="read-surah-card" data-surah="055" title="Read Ar-Rahman (The Beneficent)">
+                <div class="read-surah-number">55</div>
+                <div class="read-surah-name">الرحمن</div>
+            </button>
+            <button class="read-surah-card" data-surah="067" title="Read Al-Mulk (The Sovereignty)">
+                <div class="read-surah-number">67</div>
+                <div class="read-surah-name">الملك</div>
+            </button>
+            <button class="read-surah-card" data-surah="078" title="Read An-Naba (The Announcement)">
+                <div class="read-surah-number">78</div>
+                <div class="read-surah-name">النبأ</div>
+            </button>
+            <button class="read-surah-card" data-surah="112" title="Read Al-Ikhlas (The Sincerity)">
+                <div class="read-surah-number">112</div>
+                <div class="read-surah-name">الإخلاص</div>
+            </button>
+        </div>
+
+        <div class="read-actions">
+            <button class="browse-read-btn" id="browseReadBtn" data-localize="browseAllChaptors">
+                <span class="icon">📚</span>
+                <span data-localize="browseAllChaptors">Browse All Surahs</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Now Playing Display -->
             <div class="now-playing" id="nowPlaying" style="display: none;">
                 <div class="playing-info">
                     <div class="surah-title" id="currentSurah">Al-Fatiha</div>
@@ -143,11 +204,172 @@
 
 
 
+            <!-- Playback Settings -->
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>▶️</span>
+                    <span data-localize="playbackSettings">Playback Settings</span>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="autoPlayStartup">Auto-play on Startup</div>
+                    <div class="setting-description" data-localize="autoPlayDesc">Automatically start playing when VS Code opens</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="autoPlayStartup" onchange="updateAutoPlaySetting(this.checked)">
+                        <label for="autoPlayStartup" data-localize="enableAutoPlay">Enable auto-play</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance Settings -->
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>🎨</span>
+                    <span data-localize="appearanceSettings">Appearance Settings</span>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="compactMode">Compact Mode</div>
+                    <div class="setting-description" data-localize="compactDesc">Use a more compact layout to save space</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="compactMode" onchange="updateCompactModeSetting(this.checked)">
+                        <label for="compactMode">Enable compact mode</label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="showNotifications">Show Notifications</div>
+                    <div class="setting-description" data-localize="notificationsDesc">Display notifications for playback events</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="showNotifications" checked onchange="updateNotificationsSetting(this.checked)">
+                        <label for="showNotifications">Enable notifications</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Islamic Reminders -->
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>🕌</span>
+                    <span data-localize="islamicRemindersTitle">Islamic Reminders</span>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="enableReminders">Enable Reminders</div>
+                    <div class="setting-description" data-localize="remindersDesc">Receive Islamic reminders and wisdom notifications</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="enableReminders" checked onchange="updateEnableRemindersSetting(this.checked)">
+                        <label for="enableReminders">Enable Islamic reminders</label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="reminderInterval">Reminder Interval</div>
+                    <div class="setting-description" data-localize="reminderIntervalDesc">How often to show Islamic reminders</div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="reminderIntervalSelect">
+                            <option value="5">Every 5 minutes</option>
+                            <option value="15">Every 15 minutes</option>
+                            <option value="30" selected>Every 30 minutes</option>
+                            <option value="60">Every 1 hour</option>
+                            <option value="120">Every 2 hours</option>
+                            <option value="240">Every 4 hours</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="reminderTypes">Reminder Types</div>
+                    <div class="setting-description" data-localize="reminderTypesDesc">Choose which types of Islamic content to receive</div>
+                    <div class="setting-control">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label><input type="checkbox" id="showAdia" checked onchange="updateReminderTypeSetting('showAdia', this.checked)"> Adia (Islamic Prayers)</label>
+                            <label><input type="checkbox" id="showAhadis" checked onchange="updateReminderTypeSetting('showAhadis', this.checked)"> Ahadis (Prophet's Sayings)</label>
+                            <label><input type="checkbox" id="showWisdom" checked onchange="updateReminderTypeSetting('showWisdom', this.checked)"> Islamic Wisdom</label>
+                            <label><input type="checkbox" id="showMorningAzkar" checked onchange="updateReminderTypeSetting('showMorningAzkar', this.checked)"> 🌅 Morning Azkar (After Fajr - Sunrise)</label>
+                            <label><input type="checkbox" id="showEveningAzkar" checked onchange="updateReminderTypeSetting('showEveningAzkar', this.checked)"> 🌆 Evening Azkar (After Asr - Maghrib)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="workingHoursOnly">Working Hours Only</div>
+                    <div class="setting-description" data-localize="workingHoursDesc">Only show reminders during typical working hours (9 AM - 6 PM)</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="workingHoursOnly" onchange="updateWorkingHoursSetting(this.checked)">
+                        <label for="workingHoursOnly">Working hours only</label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="prayerReminders">Prayer Reminders</div>
+                    <div class="setting-description">Get notified before prayer times</div>
+                    <div class="setting-control">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label><input type="checkbox" id="fajrReminder" onchange="updateIslamicReminderSetting('fajrReminder', this.checked)"> Fajr Prayer</label>
+                            <label><input type="checkbox" id="duhrReminder" onchange="updateIslamicReminderSetting('duhrReminder', this.checked)"> Dhuhr Prayer</label>
+                            <label><input type="checkbox" id="asrReminder" onchange="updateIslamicReminderSetting('asrReminder', this.checked)"> Asr Prayer</label>
+                            <label><input type="checkbox" id="maghribReminder" onchange="updateIslamicReminderSetting('maghribReminder', this.checked)"> Maghrib Prayer</label>
+                            <label><input type="checkbox" id="ishaReminder" onchange="updateIslamicReminderSetting('ishaReminder', this.checked)"> Isha Prayer</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Settings -->
+            <div class="settings-section">
+                <div class="settings-title">
+                    <span>🔧</span>
+                    <span data-localize="advancedSettings">Advanced Settings</span>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="cacheSize">Cache Size</div>
+                    <div class="setting-description" data-localize="cacheSizeDesc">Maximum cache size for downloaded audio (MB)</div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="cacheSizeSelect">
+                            <option value="50">50 MB</option>
+                            <option value="100" selected>100 MB</option>
+                            <option value="200">200 MB</option>
+                            <option value="500">500 MB</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="downloadTimeout">Download Timeout</div>
+                    <div class="setting-description" data-localize="downloadTimeoutDesc">Timeout for audio downloads (seconds)</div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="downloadTimeoutSelect">
+                            <option value="10">10 seconds</option>
+                            <option value="30" selected>30 seconds</option>
+                            <option value="60">60 seconds</option>
+                            <option value="120">120 seconds</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="retryAttempts">Retry Attempts</div>
+                    <div class="setting-description" data-localize="retryAttemptsDesc">Number of retry attempts for failed downloads</div>
+                    <div class="setting-control">
+                        <select class="setting-select" id="retryAttemptsSelect">
+                            <option value="1">1 attempt</option>
+                            <option value="2">2 attempts</option>
+                            <option value="3" selected>3 attempts</option>
+                            <option value="5">5 attempts</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <!-- Status Messages -->
             <div class="status-message" id="statusMessage" data-localize="chooseSurah">
                 Choose a Surah to begin recitation
             </div>
         </div>
+
+
 
         <!-- Surah Browser Modal -->
         <div class="modal" id="surahModal" style="display: none;">
@@ -164,9 +386,122 @@
                 </div>
             </div>
         </div>
+
+        <!-- Playback Options Modal -->
+        <div class="modal" id="playbackOptionsModal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content playback-options-modal">
+                <div class="modal-header">
+                    <h3 data-localize="playbackOptions">Playback Options</h3>
+                    <button class="modal-close" id="playbackOptionsClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="surah-info-display" id="selectedSurahInfo">
+                        <!-- Selected surah info will be displayed here -->
+                    </div>
+
+                    <div class="playback-options">
+                        <div class="option-group">
+                            <label class="option-label" data-localize="playbackMode">Playback Mode</label>
+                            <div class="radio-options">
+                                <label class="radio-option">
+                                    <input type="radio" name="playbackMode" value="full-surah" checked>
+                                    <span class="radio-text" data-localize="fullSurah">Stream Full Surah</span>
+                                    <div class="radio-description" data-localize="fullSurahDesc">Play entire Surah at once</div>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="playbackMode" value="ayah-by-ayah">
+                                    <span class="radio-text" data-localize="ayahByAyah">Stream Ayah by Ayah</span>
+                                    <div class="radio-description" data-localize="ayahByAyahDesc">Play each verse individually</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="option-group">
+                            <label class="option-label" data-localize="selectReciter">Select Reciter</label>
+                            <select class="select-control" id="playbackReciterSelect">
+                                <option value="ar.alafasy">مشاري راشد العفاسي - Mishary Rashid Alafasy</option>
+                                <option value="ar.abdurrahmaansudais">عبد الرحمن السديس - Abdurrahman As-Sudais</option>
+                                <option value="ar.abdulbasitmurattal">عبد الباسط عبد الصمد - Abdul Basit Abdul Samad</option>
+                                <option value="ar.husary">محمود خليل الحصري - Mahmoud Khalil Al-Hussary</option>
+                                <option value="ar.husarymujawwad">محمود خليل الحصري (المجود) - Hussary Mujawwad</option>
+                                <option value="ar.minshawi">محمد صديق المنشاوي - Muhammad Siddiq Al-Minshawy</option>
+                                <option value="ar.minshawimujawwad">المنشاوي (المجود) - Minshawy Mujawwad</option>
+                                <option value="ar.mahermuaiqly">ماهر المعيقلي - Maher Al Muaiqly</option>
+                                <option value="ar.hudhaify">علي بن عبدالرحمن الحذيفي - Ali bin Abdulrahman Al-Hudhaify</option>
+                                <option value="ar.saoodshuraym">سعود الشريم - Saood bin Ibraaheem Ash-Shuraym</option>
+                                <option value="ar.ahmedajamy">أحمد علي العجمي - Ahmed Ibn Ali Al-Ajamy</option>
+                                <option value="ar.muhammadayyoub">محمد أيوب - Muhammad Ayyoub</option>
+                                <option value="ar.abdullahbasfar">عبد الله بصفر - Abdullah Basfar</option>
+                                <option value="ar.shaatree">أبو بكر الشاطري - Abu Bakr Ash-Shatri</option>
+                                <option value="ar.hanirifai">هاني الرفاعي - Hani Ar-Rifai</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button class="btn-secondary" id="cancelPlaybackBtn" data-localize="cancel">Cancel</button>
+                        <button class="btn-primary" id="startPlaybackBtn" data-localize="startPlayback">Start Playback</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quran Reader Modal -->
+        <div class="modal" id="quranReaderModal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content quran-reader-modal">
+                <div class="modal-header">
+                    <h3 id="readerSurahTitle">Surah Title</h3>
+                    <div class="reader-pagination">
+                        <button class="nav-btn" id="prevPageBtn">
+                            <span class="icon">⬅️</span>
+                        </button>
+                        <span class="page-info" id="pageInfo">Page 1/1</span>
+                        <button class="nav-btn" id="nextPageBtn">
+                            <span class="icon">➡️</span>
+                        </button>
+                    </div>
+                    <button class="modal-close" id="readerClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="quran-text-display" id="quranTextDisplay">
+                        <div class="loading-text">Loading Quran text...</div>
+                    </div>
+                </div>
+                <div class="reader-actions">
+                    <div class="current-page">Page <span id="currentPageNumber">1</span> of <span id="totalPages">1</span></div>
+
+                    <!-- Auto Reading Controls -->
+                    <div class="auto-reading-controls">
+                        <button class="btn-icon auto-read-toggle" id="autoReadToggle" title="Toggle Auto Reading" disabled>
+                            <span class="icon">🔄</span>
+                            <span data-localize="autoReading">Auto Reading</span>
+                        </button>
+
+                        <div class="speed-controls" id="speedControls" style="display: none;">
+                            <button class="speed-btn" data-speed="0.5" title="Slow">🐢</button>
+                            <button class="speed-btn active" data-speed="1" title="Normal">🚶</button>
+                            <button class="speed-btn" data-speed="1.5" title="Fast">🏃</button>
+                            <button class="speed-btn" data-speed="2" title="Very Fast">🐇</button>
+                        </div>
+
+                        <button class="btn-icon" id="playPauseAutoRead" title="Play/Pause Auto Reading" disabled>
+                            <span class="icon" id="autoPlayIcon">▶️</span>
+                        </button>
+                    </div>
+
+                    <button class="btn-secondary" id="closeReaderBtn" data-localize="close">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
     <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+
+    <!-- Settings files - loaded when needed -->
+    <link rel="stylesheet" href="{{settingsCssUri}}" id="settingsStylesheet" disabled>
+    <script nonce="{{nonce}}" src="{{settingsJsUri}}" id="settingsScript" defer></script>
 </body>
 </html>
