@@ -19,6 +19,54 @@ class QuranActivityBar {
         this.duration = 0;
         this.selectedSurahNumber = null; // Initialize selectedSurahNumber
 
+        // Salawat Counter properties
+        this.salawatCounter = {
+            currentCount: 0,
+            dailyTarget: 11,
+            lastResetDate: null,
+            userSetTarget: false
+        };
+
+        // Tasbih Counter properties
+        this.tasbihCounters = {
+            subhanallah: 0,
+            alhamdulillah: 0,
+            laIlahaIllaAllah: 0,
+            allahuAkbar: 0
+        };
+
+        // Istighfar Counter properties
+        this.istighfarCounters = {
+            astaghfirullah: 0,
+            subhanakallahumma: 0
+        };
+
+        // Popular Adhkar Counter properties
+        this.adhkarCounters = {
+            auzubillahi: 0,
+            rabbiGhifir: 0,
+            hasbiyallah: 0,
+            laHawla: 0
+        };
+
+        // Islamic Goals - Prayer completion tracking
+        this.prayerGoals = {
+            fajr: false,
+            dhuhr: false,
+            asr: false,
+            maghrib: false,
+            isha: false
+        };
+
+        this.loadSalawatCounter();
+        this.loadTasbihCounters();
+        this.loadIstighfarCounters();
+        this.loadAdhkarCounters();
+        this.loadPrayerGoals();
+
+        // Create Islamic reminders instance for counter integration
+        this.fridayReminders = null; // Will be initialized from extension global
+
         // Quran Reader properties
         this.currentReadingSurah = null;
         this.currentReadingPage = 1;
@@ -79,6 +127,7 @@ class QuranActivityBar {
         this.initializeAudio();
         this.startIslamicTimer();
         this.forceUpdateIslamicInfo();
+        this.updateSalawatCounterUI();
         this.listenForLanguageChanges();
         if (window.localization) {
             window.localization.localizeElements();
@@ -286,6 +335,21 @@ class QuranActivityBar {
                 }
             });
 
+            // Prayer Confirmation Modal
+            const prayerYesBtn = document.getElementById('prayerYesBtn');
+            if (prayerYesBtn) {
+                prayerYesBtn.addEventListener('click', () => {
+                    this.confirmPrayerCompleted();
+                });
+            }
+
+            const prayerNoBtn = document.getElementById('prayerNoBtn');
+            if (prayerNoBtn) {
+                prayerNoBtn.addEventListener('click', () => {
+                    this.dismissPrayerConfirmation();
+                });
+            }
+
             // Advanced settings
             const cacheSizeSelect = document.getElementById('cacheSizeSelect');
             if (cacheSizeSelect) {
@@ -398,6 +462,38 @@ class QuranActivityBar {
                 button.addEventListener('click', (e) => {
                     const speed = parseFloat(e.target.dataset.speed);
                     this.setAutoReadingSpeed(speed);
+                });
+            });
+
+            // Salawat Counter Increment Button
+            const salawatIncrementBtn = document.getElementById('salawatIncrementBtn');
+            if (salawatIncrementBtn) {
+                salawatIncrementBtn.addEventListener('click', () => {
+                    this.incrementSalawatCounter();
+                });
+            }
+
+            // Tasbih Counter Increment Buttons
+            document.querySelectorAll('.dhikr-increment').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const dhikrType = e.currentTarget.dataset.dhikr;
+                    this.incrementTasbihCounter(dhikrType);
+                });
+            });
+
+            // Istighfar Counter Increment Buttons
+            document.querySelectorAll('[data-dhikr^="istighfar-"]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const dhikrType = e.currentTarget.dataset.dhikr;
+                    this.incrementIstighfarCounter(dhikrType.replace('istighfar-', ''));
+                });
+            });
+
+            // Adhkar Counter Increment Buttons
+            document.querySelectorAll('[data-dhikr^="adhkar-"]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const dhikrType = e.currentTarget.dataset.dhikr;
+                    this.incrementAdhkarCounter(dhikrType.replace('adhkar-', ''));
                 });
             });
         } catch (error) {
@@ -1692,7 +1788,9 @@ class QuranActivityBar {
         const timeDiff = this.nextPrayerTime.getTime() - now.getTime();
 
         if (timeDiff <= 0) {
-            // Prayer time has passed, update to next prayer
+            // Prayer time has arrived!
+            this.showPrayerNotification();
+            // Update to next prayer
             this.updateNextPrayer();
             return;
         }
@@ -1703,6 +1801,110 @@ class QuranActivityBar {
 
         const countdown = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         document.getElementById('prayerCountdown').textContent = countdown;
+    }
+
+    // Prayer Notification and Modal Methods - NEW
+    showPrayerNotification() {
+        const nextPrayerElement = document.getElementById('nextPrayer');
+        const currentPrayer = nextPrayerElement ? nextPrayerElement.textContent : '';
+
+        // Show the prayer confirmation modal
+        this.showPrayerConfirmModal(currentPrayer);
+    }
+
+    showPrayerConfirmModal(prayerName) {
+        const modal = document.getElementById('prayerConfirmModal');
+        const questionText = document.getElementById('prayerQuestionText');
+        const timeNote = document.getElementById('prayerTimeNote');
+
+        // Map prayer names for localization
+        const prayerKeyMap = {
+            'Fajr': 'prayerFajr',
+            'الفجر': 'prayerFajr',
+            'Dhuhr': 'prayerDhuhr',
+            'الظهر': 'prayerDhuhr',
+            'Asr': 'prayerAsr',
+            'العصر': 'prayerAsr',
+            'Maghrib': 'prayerMaghrib',
+            'المغرب': 'prayerMaghrib',
+            'Isha': 'prayerIsha',
+            'العشاء': 'prayerIsha'
+        };
+
+        const localizedPrayerName = prayerKeyMap[prayerName] ? window.localization.getString(prayerKeyMap[prayerName]) : prayerName;
+
+        if (questionText) {
+            questionText.textContent = window.localization.getString('prayerCompletedQuestion', { prayerName: localizedPrayerName });
+        }
+        if (timeNote) {
+            timeNote.textContent = window.localization.getString('prayerTimeNotification', { prayerName: localizedPrayerName });
+        }
+
+        // Store current prayer info for confirmation
+        this.pendingPrayerConfirmation = prayerName;
+
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.animation = 'fadeIn 0.3s ease-out';
+        }
+
+        // Localize the buttons
+        if (window.localization) {
+            window.localization.localizeElements();
+        }
+    }
+
+    closePrayerConfirmModal() {
+        const modal = document.getElementById('prayerConfirmModal');
+        if (modal) {
+            modal.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+        this.pendingPrayerConfirmation = null;
+    }
+
+    confirmPrayerCompleted() {
+        if (!this.pendingPrayerConfirmation) {
+            console.warn('No pending prayer confirmation');
+            return;
+        }
+
+        const prayerName = this.pendingPrayerConfirmation;
+
+        // Map English prayer names to goal keys
+        const prayerGoalMap = {
+            'Fajr': 'fajr',
+            'الفجر': 'fajr',
+            'Dhuhr': 'dhuhr',
+            'الظهر': 'dhuhr',
+            'Asr': 'asr',
+            'العصر': 'asr',
+            'Maghrib': 'maghrib',
+            'المغرب': 'maghrib',
+            'Isha': 'isha',
+            'العشاء': 'isha'
+        };
+
+        const goalKey = prayerGoalMap[prayerName];
+        if (goalKey) {
+            // Mark this prayer as completed in goals
+            this.updatePrayerGoal(goalKey, true);
+
+            // Show success message
+            const localizedPrayerName = prayerGoalMap[prayerName] ? window.localization.getString(`prayer${prayerName.charAt(0).toUpperCase() + prayerName.slice(1).toLowerCase()}`) : prayerName;
+            this.showNotification(window.localization.getString('prayerMarkedCompleted', { prayerName: localizedPrayerName }), 'success');
+        }
+
+        // Close the modal
+        this.closePrayerConfirmModal();
+    }
+
+    dismissPrayerConfirmation() {
+        // User dismissed the prayer check, just close modal
+        this.closePrayerConfirmModal();
+        this.showNotification('Prayer check dismissed', 'info');
     }
 
     forceUpdateIslamicInfo() {
@@ -2436,6 +2638,329 @@ class QuranActivityBar {
             }
         }
         return globalAyah;
+    }
+
+    // Salawat Counter Methods
+    loadSalawatCounter() {
+        try {
+            const saved = localStorage.getItem('salawatCounter');
+            if (saved) {
+                this.salawatCounter = { ...this.salawatCounter, ...JSON.parse(saved) };
+            }
+            this.updateSalawatCounterUI();
+        } catch (error) {
+            console.warn('Failed to load salawat counter:', error);
+        }
+    }
+
+    saveSalawatCounter() {
+        try {
+            localStorage.setItem('salawatCounter', JSON.stringify(this.salawatCounter));
+        } catch (error) {
+            console.warn('Failed to save salawat counter:', error);
+        }
+    }
+
+    updateSalawatCounterUI() {
+        const currentEl = document.getElementById('currentSalawatCount');
+        const targetEl = document.getElementById('salawatTarget');
+        const statusEl = document.getElementById('salawatStatus');
+        const counterEl = document.getElementById('salawatCounter');
+
+        if (!currentEl || !targetEl || !statusEl || !counterEl) {
+            return; // Elements not found
+        }
+
+        if (this.salawatCounter.currentCount >= this.salawatCounter.dailyTarget) {
+            // Completed target
+            counterEl.classList.add('salawat-completed');
+            statusEl.textContent = window.localization.getString('salawatCompleted');
+        } else {
+            // In progress
+            counterEl.classList.remove('salawat-completed');
+            const remaining = this.salawatCounter.dailyTarget - this.salawatCounter.currentCount;
+            statusEl.textContent = window.localization.getString('salawatRemaining', { remaining: remaining });
+        }
+
+        // Update display
+        currentEl.textContent = this.salawatCounter.currentCount;
+        targetEl.textContent = this.salawatCounter.dailyTarget;
+    }
+
+    incrementSalawatCounter() {
+        // Check date reset first
+        this.checkSalawatCounterReset();
+
+        this.salawatCounter.currentCount++;
+        this.saveSalawatCounter();
+        this.updateSalawatCounterUI();
+
+        console.log(`Salawat counter incremented: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
+    }
+
+    checkSalawatCounterReset() {
+        const today = new Date().toDateString();
+        if (this.salawatCounter.lastResetDate !== today) {
+            this.salawatCounter.currentCount = 0;
+            this.salawatCounter.lastResetDate = today;
+
+            // Check if Ramadan and update target
+            const isRamadan = this.isRamadanInIslamicCalendar();
+            const isFriday = new Date().getDay() === 5;
+
+            if (isRamadan) {
+                this.salawatCounter.dailyTarget = 100; // Higher target for Ramadan
+            } else if (isFriday) {
+                this.salawatCounter.dailyTarget = 24; // Friday target
+            } else {
+                this.salawatCounter.dailyTarget = 11; // Regular target
+            }
+
+            this.saveSalawatCounter();
+        }
+    }
+
+    isRamadanInIslamicCalendar() {
+        // Simple Ramadan detection - adjust for your location
+        const now = new Date();
+        const year = now.getFullYear();
+        // Approximate Ramadan timing (this should be calculated properly)
+        // Adjust these dates based on actual Islamic calendar
+        const ramadanStart = new Date(year, 2, 1); // March 1 (approximate)
+        const ramadanEnd = new Date(year, 2, 31);   // March 31 (approximate)
+
+        if (now >= ramadanStart && now <= ramadanEnd) {
+            return true;
+        }
+
+        // If not found in March, check April (Ramadan shifts annually)
+        const altStart = new Date(year, 3, 1);
+        const altEnd = new Date(year, 3, 30);
+        return now >= altStart && now <= altEnd;
+    }
+
+    // Tasbih Counter Methods
+    loadTasbihCounters() {
+        try {
+            const saved = localStorage.getItem('tasbihCounters');
+            if (saved) {
+                this.tasbihCounters = { ...this.tasbihCounters, ...JSON.parse(saved) };
+            }
+            this.updateTasbihCountersUI();
+        } catch (error) {
+            console.warn('Failed to load tasbih counters:', error);
+        }
+    }
+
+    saveTasbihCounters() {
+        try {
+            localStorage.setItem('tasbihCounters', JSON.stringify(this.tasbihCounters));
+        } catch (error) {
+            console.warn('Failed to save tasbih counters:', error);
+        }
+    }
+
+    incrementTasbihCounter(dhikrType) {
+        if (!this.tasbihCounters[dhikrType]) {
+            this.tasbihCounters[dhikrType] = 0;
+        }
+
+        this.tasbihCounters[dhikrType]++;
+        this.saveTasbihCounters();
+        this.updateTasbihCountersUI();
+
+        console.log(`${dhikrType} counter incremented to: ${this.tasbihCounters[dhikrType]}`);
+    }
+
+    updateTasbihCountersUI() {
+        // Update each dhikr counter display
+        ['subhanallah', 'alhamdulillah', 'la-ilaha', 'allahu-akbar'].forEach(dhikrType => {
+            const elementId = this.mapDhikrTypeToElementId(dhikrType);
+            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
+
+            if (countElement) {
+                countElement.textContent = this.tasbihCounters[dhikrType] || 0;
+            }
+        });
+    }
+
+    mapDhikrTypeToElementId(dhikrType) {
+        const mapping = {
+            'subhanallah': 'dhikr-subhanallah',
+            'alhamdulillah': 'dhikr-alhamdulillah',
+            'la-ilaha': 'dhikr-la-ilaha',
+            'allahu-akbar': 'dhikr-allahu-akbar'
+        };
+        return mapping[dhikrType];
+    }
+
+    resetTasbihCounters() {
+        if (confirm(window.localization.getString('counterResetConfirm'))) {
+            this.tasbihCounters = {
+                subhanallah: 0,
+                alhamdulillah: 0,
+                laIlahaIllaAllah: 0,
+                allahuAkbar: 0
+            };
+            this.saveTasbihCounters();
+            this.updateTasbihCountersUI();
+            this.showNotification('Tasbih counters reset successfully', 'success');
+        }
+    }
+
+    // Istighfar Counter Methods
+    loadIstighfarCounters() {
+        try {
+            const saved = localStorage.getItem('istighfarCounters');
+            if (saved) {
+                this.istighfarCounters = { ...this.istighfarCounters, ...JSON.parse(saved) };
+            }
+            this.updateIstighfarCountersUI();
+        } catch (error) {
+            console.warn('Failed to load istighfar counters:', error);
+        }
+    }
+
+    saveIstighfarCounters() {
+        try {
+            localStorage.setItem('istighfarCounters', JSON.stringify(this.istighfarCounters));
+        } catch (error) {
+            console.warn('Failed to save istighfar counters:', error);
+        }
+    }
+
+    incrementIstighfarCounter(dhikrType) {
+        if (!this.istighfarCounters[dhikrType]) {
+            this.istighfarCounters[dhikrType] = 0;
+        }
+
+        this.istighfarCounters[dhikrType]++;
+        this.saveIstighfarCounters();
+        this.updateIstighfarCountersUI();
+
+        console.log(`${dhikrType} istighfar counter incremented to: ${this.istighfarCounters[dhikrType]}`);
+    }
+
+    updateIstighfarCountersUI() {
+        // Update each istighfar counter display
+        ['astaghfirullah', 'subhanakallahumma'].forEach(dhikrType => {
+            const elementId = this.mapIstighfarTypeToElementId(dhikrType);
+            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
+
+            if (countElement) {
+                countElement.textContent = this.istighfarCounters[dhikrType] || 0;
+            }
+        });
+    }
+
+    mapIstighfarTypeToElementId(dhikrType) {
+        const mapping = {
+            'astaghfirullah': 'dhikr-istighfar-astaghfirullah',
+            'subhanakallahumma': 'dhikr-istighfar-subhanakallahumma'
+        };
+        return mapping[dhikrType];
+    }
+
+    // Adhkar Counter Methods
+    loadAdhkarCounters() {
+        try {
+            const saved = localStorage.getItem('adhkarCounters');
+            if (saved) {
+                this.adhkarCounters = { ...this.adhkarCounters, ...JSON.parse(saved) };
+            }
+            this.updateAdhkarCountersUI();
+        } catch (error) {
+            console.warn('Failed to load adhkar counters:', error);
+        }
+    }
+
+    saveAdhkarCounters() {
+        try {
+            localStorage.setItem('adhkarCounters', JSON.stringify(this.adhkarCounters));
+        } catch (error) {
+            console.warn('Failed to save adhkar counters:', error);
+        }
+    }
+
+    incrementAdhkarCounter(dhikrType) {
+        if (!this.adhkarCounters[dhikrType]) {
+            this.adhkarCounters[dhikrType] = 0;
+        }
+
+        this.adhkarCounters[dhikrType]++;
+        this.saveAdhkarCounters();
+        this.updateAdhkarCountersUI();
+
+        console.log(`${dhikrType} adhkar counter incremented to: ${this.adhkarCounters[dhikrType]}`);
+    }
+
+    updateAdhkarCountersUI() {
+        // Update each adhkar counter display
+        ['auzubillahi', 'rabbiGhifir', 'hasbiyallah', 'laHawla'].forEach(dhikrType => {
+            const elementId = this.mapAdhkarTypeToElementId(dhikrType);
+            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
+
+            if (countElement) {
+                countElement.textContent = this.adhkarCounters[dhikrType] || 0;
+            }
+        });
+    }
+
+    mapAdhkarTypeToElementId(dhikrType) {
+        const mapping = {
+            'auzubillahi': 'dhikr-adhkar-auzubillahi',
+            'rabbiGhifir': 'dhikr-adhkar-rabbi-ghifir',
+            'hasbiyallah': 'dhikr-adhkar-hasbiyallah',
+            'laHawla': 'dhikr-adhkar-la-hawla'
+        };
+        return mapping[dhikrType];
+    }
+
+    // Prayer Goals Methods
+    loadPrayerGoals() {
+        try {
+            const saved = localStorage.getItem('prayerGoals');
+            if (saved) {
+                this.prayerGoals = { ...this.prayerGoals, ...JSON.parse(saved) };
+            }
+            this.updatePrayerGoalsUI();
+        } catch (error) {
+            console.warn('Failed to load prayer goals:', error);
+        }
+    }
+
+    savePrayerGoals() {
+        try {
+            localStorage.setItem('prayerGoals', JSON.stringify(this.prayerGoals));
+        } catch (error) {
+            console.warn('Failed to save prayer goals:', error);
+        }
+    }
+
+    updatePrayerGoal(prayer, completed) {
+        this.prayerGoals[prayer] = completed;
+        this.savePrayerGoals();
+        this.updatePrayerGoalsUI();
+
+        console.log(`${prayer} goal updated to: ${completed}`);
+    }
+
+    updatePrayerGoalsUI() {
+        // Update goal display percentage
+        const completedCount = Object.values(this.prayerGoals).filter(Boolean).length;
+        const goalsCompletedDisplay = document.getElementById('goalsCompletedDisplay');
+        if (goalsCompletedDisplay) {
+            const percentage = Math.round((completedCount / 5) * 100);
+            goalsCompletedDisplay.textContent = `${completedCount}/5 (${percentage}%)`;
+        }
+
+        // Update individual goal checkboxes
+        Object.keys(this.prayerGoals).forEach(prayer => {
+            const checkbox = document.getElementById(`${prayer}Goal`);
+            if (checkbox) {
+                checkbox.checked = this.prayerGoals[prayer] || false;
+            }
+        });
     }
 
     // Surah data

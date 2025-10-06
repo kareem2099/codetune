@@ -51,6 +51,152 @@
                         <div class="prayer-countdown" id="prayerCountdown">--:--:--</div>
                     </div>
                 </div>
+
+            </div>
+        </div>
+
+        <!-- Islamic Dhikr & Counters -->
+        <div class="islamic-dhikr-card">
+            <div class="islamic-header">
+                <div class="islamic-icon">🧿</div>
+                <span data-localize="islamicDhikrCounters">Islamic Dhikr & Counters</span>
+            </div>
+            <div class="dhikr-content">
+                <!-- Salawat Counter -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="salawatSectionTitle">صَلَوَات 🕊️</div>
+                    <div class="salawat-display" id="salawatCounter">
+                        <span class="count-number" id="currentSalawatCount">11</span>
+                        <span class="count-separator">/</span>
+                        <span class="target-number" id="salawatTarget">11</span>
+                        <button class="counter-increment" id="salawatIncrementBtn" title="Increment counter">⏫</button>
+                    </div>
+                    <div class="salawat-status" id="salawatStatus">Reset daily</div>
+                </div>
+
+                <!-- Tasbih Counters -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="tasbihSectionTitle">تَسْبِيح 🧿</div>
+                    <div class="dhikr-grid">
+                        <div class="dhikr-item" id="dhikr-subhanallah">
+                            <div class="dhikr-phrase" title="" data-localize="tasbihSubhanallah">سُبْحَانَ اللَّهِ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="subhanallah">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-alhamdulillah">
+                            <div class="dhikr-phrase" title="" data-localize="tasbihAlhamdulillah">الْحَمْدُ لِلَّهِ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="alhamdulillah">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-la-ilaha">
+                            <div class="dhikr-phrase" title="" data-localize="tasbihLaIlahaIllaAllah">لَا إِلَهَ إِلَّا اللَّهُ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="la-ilaha">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-allahu-akbar">
+                            <div class="dhikr-phrase" title="" data-localize="tasbihAllahuAkbar">اللَّهُ أَكْبَرُ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="allahu-akbar">➕</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dhikr-actions">
+                        <button class="dhikr-reset-btn" onclick="window.quranActivityBar.resetTasbihCounters()" data-localize="resetAllCounters">🔄 Reset All</button>
+                    </div>
+                </div>
+
+                <!-- Istighfar Counter -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="istighfarSectionTitle">أستغفار - Istighfar</div>
+                    <div class="dhikr-grid">
+                        <div class="dhikr-item" id="dhikr-istighfar-astaghfirullah">
+                            <div class="dhikr-phrase" title="" data-localize="istighfarAstaghfirullah">أَسْتَغْفِرُ اللَّهَ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="istighfar-astaghfirullah">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-istighfar-subhanakallahumma">
+                            <div class="dhikr-phrase" title="" data-localize="istighfarSubhanakallahumma">سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="istighfar-subhanakallahumma">➕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Popular Adhkar -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="adhkarSectionTitle">أذكار - Adhkar</div>
+                    <div class="dhikr-grid">
+                        <div class="dhikr-item" id="dhikr-adhkar-auzubillahi">
+                            <div class="dhikr-phrase" title="" data-localize="adhkarAuzubillahi">أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="adhkar-auzubillahi">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-adhkar-rabbi-ghifir">
+                            <div class="dhikr-phrase" title="" data-localize="adhkarRabbiGhifir">رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="adhkar-rabbi-ghifir">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-adhkar-hasbiyallah">
+                            <div class="dhikr-phrase" title="" data-localize="adhkarHasbiyallah">حَسْبِيَ اللَّهُ وَنِعْمَ الْوَكِيلُ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="adhkar-hasbiyallah">➕</button>
+                            </div>
+                        </div>
+                        <div class="dhikr-item" id="dhikr-adhkar-la-hawla">
+                            <div class="dhikr-phrase" title="" data-localize="adhkarLaHawla">لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ</div>
+                            <div class="dhikr-controls">
+                                <div class="dhikr-count">0</div>
+                                <button class="dhikr-increment" data-dhikr="adhkar-la-hawla">➕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Islamic Goals Tracker -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="islamicGoalsTitle">الأهداف الإسلامية - Islamic Goals</div>
+                    <div class="goals-progress">
+                        <div class="goals-completed-display" id="goalsCompletedDisplay">0/5 (0%)</div>
+                    </div>
+                    <div class="goals-grid">
+                        <div class="goal-item">
+                            <input type="checkbox" class="goal-checkbox" id="fajrGoal" onchange="window.quranActivityBar.updatePrayerGoal('fajr', this.checked)">
+                            <label for="fajrGoal" class="goal-label" data-localize="prayerFajr">Fajr</label>
+                        </div>
+                        <div class="goal-item">
+                            <input type="checkbox" class="goal-checkbox" id="dhuhrGoal" onchange="window.quranActivityBar.updatePrayerGoal('dhuhr', this.checked)">
+                            <label for="dhuhrGoal" class="goal-label" data-localize="prayerDhuhr">Dhuhr</label>
+                        </div>
+                        <div class="goal-item">
+                            <input type="checkbox" class="goal-checkbox" id="asrGoal" onchange="window.quranActivityBar.updatePrayerGoal('asr', this.checked)">
+                            <label for="asrGoal" class="goal-label" data-localize="prayerAsr">Asr</label>
+                        </div>
+                        <div class="goal-item">
+                            <input type="checkbox" class="goal-checkbox" id="maghribGoal" onchange="window.quranActivityBar.updatePrayerGoal('maghrib', this.checked)">
+                            <label for="maghribGoal" class="goal-label" data-localize="prayerMaghrib">Maghrib</label>
+                        </div>
+                        <div class="goal-item">
+                            <input type="checkbox" class="goal-checkbox" id="ishaGoal" onchange="window.quranActivityBar.updatePrayerGoal('isha', this.checked)">
+                            <label for="ishaGoal" class="goal-label" data-localize="prayerIsha">Isha</label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -442,6 +588,28 @@
                     <div class="modal-actions">
                         <button class="btn-secondary" id="cancelPlaybackBtn" data-localize="cancel">Cancel</button>
                         <button class="btn-primary" id="startPlaybackBtn" data-localize="startPlayback">Start Playback</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prayer Confirmation Modal - NEW -->
+        <div class="modal" id="prayerConfirmModal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content prayer-confirm-modal">
+                <div class="modal-body">
+                    <div class="prayer-confirm-content">
+                        <div class="prayer-icon">🕌</div>
+                        <div class="prayer-question" id="prayerQuestionText">Did you pray Fajr?</div>
+                        <div class="prayer-time-note" id="prayerTimeNote">Prayer time notification</div>
+                        <div class="prayer-actions">
+                            <button class="btn-prayer-yes" id="prayerYesBtn" data-localize="prayerCompletedYes">
+                                Yes, I prayed
+                            </button>
+                            <button class="btn-prayer-no" id="prayerNoBtn" data-localize="prayerCompletedNo">
+                                Not yet
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

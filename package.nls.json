@@ -15,5 +15,9 @@
   "viewsContainers.codeTune.title": "CodeTune",
   "commands.codeTune.playQuran.title": "Play Quran",
   "commands.codeTune.stop.title": "Stop",
-  "commands.codeTune.openSettings.title": "Open Settings"
+  "commands.codeTune.openSettings.title": "Open Settings",
+  "views.islamicDhikrCounters.name": "Islamic Dhikr & Counters",
+  "views.islamicDhikrCounters.contextualTitle": "Islamic Dhikr & Counters",
+  "views.quranTime.name": "Quran Time",
+  "views.quranTime.contextualTitle": "Quran Time"
 }

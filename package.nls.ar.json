@@ -15,5 +15,9 @@
   "viewsContainers.codeTune.title": "كود تيون",
   "commands.codeTune.playQuran.title": "تشغيل القرآن",
   "commands.codeTune.stop.title": "إيقاف",
-  "commands.codeTune.openSettings.title": "فتح الإعدادات"
+  "commands.codeTune.openSettings.title": "فتح الإعدادات",
+  "views.islamicDhikrCounters.name": "الذكر الإسلامي والعدادات",
+  "views.islamicDhikrCounters.contextualTitle": "الذكر الإسلامي والعدادات",
+  "views.quranTime.name": "وقت القرآن",
+  "views.quranTime.contextualTitle": "وقت القرآن"
 }

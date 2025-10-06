@@ -119,6 +119,306 @@ body::before {
     background: linear-gradient(135deg, #16a085 0%, #f39c12 100%);
 }
 
+/* Islamic Dhikr Card */
+.islamic-dhikr-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-light);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+}
+
+.islamic-dhikr-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+}
+
+.dhikr-content {
+    margin-top: var(--space-lg);
+}
+
+.dhikr-section {
+    margin-bottom: var(--space-lg);
+}
+
+.dhikr-section:last-child {
+    margin-bottom: 0;
+}
+
+.dhikr-section-title {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.dhikr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+
+.dhikr-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: var(--space-sm);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.dhikr-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-light);
+}
+
+.dhikr-phrase {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+    background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    writing-mode: horizontal-tb;
+}
+
+.dhikr-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.dhikr-count {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    min-width: 25px;
+    text-align: center;
+}
+
+.dhikr-increment {
+    width: 28px;
+    height: 28px;
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.dhikr-increment:hover {
+    background: rgba(147, 51, 234, 0.2);
+    border-color: rgba(147, 51, 234, 0.5);
+    transform: scale(1.1);
+}
+
+.dhikr-increment:active {
+    transform: scale(0.95);
+}
+
+.dhikr-actions {
+    margin-top: var(--space-md);
+    text-align: center;
+}
+
+.dhikr-reset-btn {
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: var(--border-radius-small);
+    padding: var(--space-xs) var(--space-sm);
+    color: #9333ea;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+/* Prayer Confirmation Modal - NEW */
+.prayer-confirm-modal .modal-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 2px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: var(--shadow-heavy);
+}
+
+.prayer-confirm-content {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.prayer-icon {
+    font-size: 64px;
+    margin-bottom: var(--space-lg);
+    display: block;
+    animation: gentle-bounce 0.6s ease-out;
+}
+
+@keyframes gentle-bounce {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.prayer-question {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+    line-height: 1.4;
+}
+
+.prayer-time-note {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xl);
+    font-style: italic;
+}
+
+.prayer-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: center;
+}
+
+.btn-prayer-yes,
+.btn-prayer-no {
+    flex: 1;
+    padding: var(--space-lg) var(--space-xl);
+    border: none;
+    border-radius: var(--border-radius-small);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 120px;
+}
+
+.btn-prayer-yes {
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+}
+
+.btn-prayer-yes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+.btn-prayer-no {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+}
+
+.btn-prayer-no:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    transform: translateY(-2px);
+}
+
+/* Islamic Goals Styling */
+.goals-progress {
+    margin-bottom: var(--space-md);
+    text-align: center;
+}
+
+.goals-completed-display {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+    border-radius: var(--border-radius-small);
+    padding: var(--space-xs) var(--space-md);
+    margin: var(--space-sm) 0;
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+
+.goal-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.goal-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+.goal-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #3498db;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.goal-checkbox:checked + .goal-label {
+    color: #27ae60;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.goal-checkbox:checked + .goal-label::before {
+    content: '✅ ';
+    margin-right: var(--space-xs);
+}
+
+.goal-label {
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.dhikr-reset-btn:hover {
+    background: rgba(147, 51, 234, 0.15);
+    border-color: rgba(147, 51, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+.dhikr-reset-btn:active {
+    transform: translateY(0px) scale(0.98);
+}
+
 .islamic-header {
     display: flex;
     align-items: center;
@@ -200,6 +500,141 @@ body::before {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: 1px;
+}
+
+/* Salawat Counter */
+.salawat-counter {
+    text-align: center;
+    position: relative;
+}
+
+.salawat-counter::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(135deg, #16a085 0%, #f39c12 100%);
+    border-radius: 1px;
+    opacity: 0.6;
+}
+
+.salawat-label {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: linear-gradient(135deg, #16a085 0%, #f39c12 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: var(--space-xs);
+    display: block;
+}
+
+.salawat-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 8px 16px;
+    margin: var(--space-sm) 0;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.count-number,
+.target-number {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: 'Monaco', 'Menlo', monospace;
+    min-width: 20px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.count-number {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: soft-pulse 4s ease-in-out infinite;
+}
+
+@keyframes soft-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.target-number {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.count-separator {
+    font-size: var(--font-size-lg);
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 6px;
+}
+
+.salawat-status {
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--text-muted);
+    background: linear-gradient(135deg, #16a085 0%, #f39c12 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.8;
+}
+
+.counter-increment {
+    width: 24px;
+    height: 24px;
+    background: rgba(22, 160, 133, 0.1);
+    border: 1px solid rgba(22, 160, 133, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 12px;
+    line-height: 1;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+.counter-increment:hover {
+    background: rgba(22, 160, 133, 0.2);
+    border-color: rgba(22, 160, 133, 0.5);
+    transform: scale(1.1);
+}
+
+.counter-increment:active {
+    transform: scale(0.95);
+}
+
+/* Completed counter styling - Subtle background glow instead of text color change */
+.salawat-completed .salawat-display {
+    background: rgba(39, 174, 96, 0.1);
+    border-color: rgba(39, 174, 96, 0.3);
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+}
+
+.salawat-completed .count-number {
+    text-shadow: 0 0 8px rgba(46, 204, 113, 0.3);
+}
+
+.salawat-completed .target-number {
+    text-shadow: 0 0 4px rgba(39, 174, 96, 0.4);
 }
 
 /* Header Section */

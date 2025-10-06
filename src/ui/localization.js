@@ -191,7 +191,57 @@ class LocalizationManager {
                 prayerDhuhr: "Dhuhr",
                 prayerAsr: "Asr",
                 prayerMaghrib: "Maghrib",
-                prayerIsha: "Isha"
+                prayerIsha: "Isha",
+
+                // Islamic Dhikr & Counters - NEW
+                islamicDhikrCounters: "Islamic Dhikr & Counters",
+                quranTime: "Quran Time",
+
+                // Istighfar Phrases - NEW
+                istighfarSectionTitle: "أستغفار - Istighfar",
+                istighfarAstaghfirullah: "أَسْتَغْفِرُ اللَّهَ",
+                istighfarSubhanakallahumma: "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ",
+
+                // Popular Adhkar Phrases - NEW
+                adhkarSectionTitle: "أذكار - Adhkar",
+                adhkarAuzubillahi: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+                adhkarRabbiGhifir: "رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ",
+                adhkarHasbiyallah: "حَسْبِيَ اللَّهُ وَنِعْمَ الْوَكِيلُ",
+                adhkarLaHawla: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+
+                // Tasbih Phrases
+                tasbihSectionTitle: "Tasbih - سبحة",
+                tasbihSubhanallah: "سُبْحَانَ اللَّهِ",
+                tasbihAlhamdulillah: "الْحَمْدُ لِلَّهِ",
+                tasbihLaIlahaIllaAllah: "لَا إِلَهَ إِلَّا اللَّهُ",
+                tasbihAllahuAkbar: "اللَّهُ أَكْبَرُ",
+
+                // Tasbih Phrases - English Translations
+                istighfarAstaghfirullahTranslation: "I seek Allah's forgiveness",
+                istighfarSubhanakallahummaTranslation: "Glory be to You O Allah and praise",
+
+                // Popular Adhkar Translations
+                adhkarAuzubillahiTranslation: "I seek refuge in Allah from Satan the accursed",
+                adhkarRabbiGhifirTranslation: "My Lord, forgive me and my parents",
+                adhkarHasbiyallahTranslation: "Allah is sufficient for me and the best Disposer of affairs",
+                adhkarLaHawlaTranslation: "There is no power nor strength except with Allah",
+
+                // Tasbih Phrases - English Translations
+                tasbihSubhanallahTranslation: "Glory be to Allah",
+                tasbihAlhamdulillahTranslation: "Praise be to Allah",
+                tasbihLaIlahaIllaAllahTranslation: "There is no god but Allah",
+                tasbihAllahuAkbarTranslation: "Allah is the Greatest",
+
+                // Salawat Counter
+                salawatSectionTitle: "صَلَوَات - Salawat",
+                salawatBlessings: "Blessings upon the Prophet",
+                salawatCountDisplay: "{count} / {target} Daily Blessings",
+                salawatCompleted: "Daily target completed! 🏆",
+                salawatRemaining: "Remaining: {remaining} blessings",
+
+                // Counter Actions
+                resetAllCounters: "Reset All Counters",
+                counterResetConfirm: "Reset all dhikr counters? This cannot be undone."
             },
             ar: {
                 // Welcome page
@@ -320,7 +370,75 @@ class LocalizationManager {
                 prayerDhuhr: "الظهر",
                 prayerAsr: "العصر",
                 prayerMaghrib: "المغرب",
-                prayerIsha: "العشاء"
+                prayerIsha: "العشاء",
+
+                // Islamic Dhikr & Counters - NEW
+                islamicDhikrCounters: "الذكر الإسلامي والعدادات",
+                quranTime: "وقت القرآن",
+
+                // Istighfar Phrases - NEW
+                istighfarSectionTitle: "أَسْتَغْفَار - Istighfar",
+                istighfarAstaghfirullah: "أَسْتَغْفِرُ اللَّهَ",
+                istighfarSubhanakallahumma: "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ",
+
+                // Popular Adhkar Phrases - NEW
+                adhkarSectionTitle: "أَذْكَار - Adhkar",
+                adhkarAuzubillahi: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+                adhkarRabbiGhifir: "رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ",
+                adhkarHasbiyallah: "حَسْبِيَ اللَّهُ وَنِعْمَ الْوَكِيلُ",
+                adhkarLaHawla: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+
+                // Tasbih Phrases
+                tasbihSectionTitle: "تسبيح - سبحة",
+                tasbihSubhanallah: "سُبْحَانَ اللَّهِ",
+                tasbihAlhamdulillah: "الْحَمْدُ لِلَّهِ",
+                tasbihLaIlahaIllaAllah: "لَا إِلَهَ إِلَّا اللَّهُ",
+                tasbihAllahuAkbar: "اللَّهُ أَكْبَرُ",
+
+                // Istighfar & Adhkar Translations (same as originals since they're already in Arabic)
+                istighfarAstaghfirullahTranslation: "أَسْتَغْفِرُ اللَّهَ",
+                istighfarSubhanakallahummaTranslation: "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ",
+                adhkarAuzubillahiTranslation: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+                adhkarRabbiGhifirTranslation: "رَبِّ اغْفِرْ لِي وَلِوَالِدَيَّ",
+                adhkarHasbiyallahTranslation: "حَسْبِيَ اللَّهُ وَنِعْمَ الْوَكِيلُ",
+                adhkarLaHawlaTranslation: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+
+                // Tasbih Phrases - Arabic Translations (same as originals since they're already in Arabic)
+                tasbihSubhanallahTranslation: "سُبْحَانَ اللَّهِ",
+                tasbihAlhamdulillahTranslation: "الْحَمْدُ لِلَّهِ",
+                tasbihLaIlahaIllaAllahTranslation: "لَا إِلَهَ إِلَّا اللَّهُ",
+                tasbihAllahuAkbarTranslation: "اللَّهُ أَكْبَرُ",
+
+                // Salawat Counter
+                salawatSectionTitle: "صَلَوَات - صلوات",
+                salawatBlessings: "الصلاة على النبي",
+                salawatCountDisplay: "{count} / {target} الصلوات اليومية",
+                salawatCompleted: "اكتمل الهدف اليومي! 🏆",
+                salawatRemaining: "المتبقي: {remaining} صلوات",
+
+                // Prayer Notification - NEW
+                prayerTimeNotification: "🕌 أتيت بهذه الصلاة؟ Prayer Time: {prayerName}",
+                prayerCompletedQuestion: "هل صليت ال{prayerName}؟ Did you pray {prayerName}?",
+                prayerCompletedYes: "نعم، صليت Yes, I prayed",
+                prayerCompletedNo: "ليس بعد Not yet",
+                prayerMarkedCompleted: "✅ تم تسجيل اتمام ال{prayerName}! {prayerName} marked as completed!",
+                catchupPrayers: "قضاء الصلاة الفائتة Catch up on missed prayers",
+
+                // Islamic Goals Tracker - NEW
+                islamicGoalsTitle: "الأهداف الإسلامية - Islamic Goals",
+                prayerCompletion: "إتمام الصلاة",
+                quranReadingGoal: "هدف قراءة القرآن",
+                charityReminders: "تذكيرات الصدقة",
+                goalsCompletedPercent: "{percent}% مكتمل",
+                fajrCompleted: "الفجر مكتمل",
+                dhuhrCompleted: "الظهر مكتمل",
+                asrCompleted: "العصر مكتمل",
+                maghribCompleted: "المغرب مكتمل",
+                ishaCompleted: "العشاء مكتمل",
+
+                // Counter Actions
+                resetAllCounters: "إعادة تعيين جميع العدادات",
+                counterResetConfirm: "إعادة تعيين جميع عدادات الذكر؟ لا يمكن التراجع عن هذا الإجراء."
             }
         };
 

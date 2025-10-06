@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { IslamicCalendar } from './islamicCalendar';
+import { FridayReminders, IslamicContent } from './fridayReminders';
 
 interface ReminderSettings {
     enableReminders: boolean;
@@ -12,17 +13,11 @@ interface ReminderSettings {
     workingHoursOnly: boolean;
 }
 
-interface IslamicContent {
-    type: 'adia' | 'hadis' | 'wisdom' | 'morningAzkar' | 'eveningAzkar';
-    arabic: string;
-    english: string;
-    source?: string;
-}
-
 export class IslamicRemindersManager {
     private intervalId: NodeJS.Timeout | null = null;
     private lastReminderTime: number = 0;
     private settings: ReminderSettings;
+    private fridayReminders: FridayReminders;
 
     // Islamic content database
     private adia: IslamicContent[] = [
@@ -58,36 +53,55 @@ export class IslamicRemindersManager {
         }
     ];
 
-    private ahadis: IslamicContent[] = [
+    private dailyHadiths: IslamicContent[] = [
+        // Sunday (getDay() = 0)
         {
             type: 'hadis',
             arabic: 'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ طَرِيقًا إِلَى الْجَنَّةِ',
             english: 'Whoever follows a path seeking knowledge, Allah will make easy for him a path to Paradise.',
             source: 'Sahih Muslim'
         },
+        // Monday (getDay() = 1)
         {
             type: 'hadis',
             arabic: 'الْعِلْمُ نُورٌ يَجْعَلُهُ اللَّهُ فِي الْقَلْبِ مَنْ يَشَاءُ',
             english: 'Knowledge is light that Allah places in the heart of whom He wills.',
             source: 'Sunan at-Tirmidhi'
         },
+        // Tuesday (getDay() = 2)
         {
             type: 'hadis',
             arabic: 'مَنْ يُرِدِ اللَّهُ بِهِ خَيْرًا يُفَقِّهْهُ فِي الدِّينِ',
             english: 'Whoever Allah wants good for, He gives him understanding of the religion.',
             source: 'Sahih al-Bukhari'
         },
+        // Wednesday (getDay() = 3)
         {
             type: 'hadis',
             arabic: 'طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ',
             english: 'Seeking knowledge is obligatory upon every Muslim.',
             source: 'Sunan Ibn Majah'
         },
+        // Thursday (getDay() = 4)
         {
             type: 'hadis',
             arabic: 'الصَّبْرُ مِفْتَاحُ الْفَرَجِ',
             english: 'Patience is the key to relief.',
             source: 'Sunan Ibn Majah'
+        },
+        // Friday (getDay() = 5)
+        {
+            type: 'hadis',
+            arabic: 'عَلَيْكُمْ بِالْجُمُعَةِ فَإِنَّهَا جُمْعُكُمْ مِنَ الْأَبْوَابِ الْمَكْسُورَةِ',
+            english: 'You must attend the Friday prayer, for it is the door of the broken paths of guidance.',
+            source: 'Sunan Ibn Majah (Friday Special)'
+        },
+        // Saturday (getDay() = 6)
+        {
+            type: 'hadis',
+            arabic: 'مَنْ عَلِمَ شَيْئًا فَكَتَمَهُ أَلْجَمَهُ اللَّهُ يَوْمَ الْقِيَامَةِ بِلِجَامٍ مِنْ نَارٍ',
+            english: 'Whoever knows something and conceals it, Allah will muzzle him with a muzzle of fire on the Day of Resurrection.',
+            source: 'Sunan at-Tirmidhi'
         }
     ];
 
@@ -108,7 +122,7 @@ export class IslamicRemindersManager {
             type: 'wisdom',
             arabic: 'وَاصْبِرْ فَإِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ',
             english: 'And be patient, for indeed Allah does not allow the reward of those who do good to be lost.',
-            source: 'Surah Hud 11:115'
+                source: 'Surah Hud 11:115'
         },
         {
             type: 'wisdom',
@@ -121,6 +135,12 @@ export class IslamicRemindersManager {
             arabic: 'الْيَقِينُ إِيمَانٌ كُلُّهُ',
             english: 'Certainty is all faith.',
             source: 'Hadith'
+        },
+        {
+            type: 'wisdom',
+            arabic: 'قُلِ الْحَقُّ مِنْ رَبِّكُمْ فَمَنْ شَاءَ فَلْيُؤْمِنْ وَمَنْ شَاءَ فَلْيَكْفُرْ',
+            english: 'Say, "The truth is from your Lord, so whoever wills - let him believe; and whoever wills - let him disbelieve."',
+            source: 'Surah Al-Kahf 18:29 (Friday Quranic Reading Rally)'
         }
     ];
 
@@ -201,6 +221,8 @@ export class IslamicRemindersManager {
             showEveningAzkar: true,
             workingHoursOnly: false
         };
+        // Create FridayReminders with initial settings
+        this.fridayReminders = new FridayReminders(this.settings);
         this.loadSettings();
         this.startReminders();
     }
@@ -235,10 +257,23 @@ export class IslamicRemindersManager {
         return hour >= 9 && hour < 18;
     }
 
+
+
     private getRandomContent(): IslamicContent | null {
         const availableTypes: IslamicContent[] = [];
         const now = new Date();
+        const todayIndex = now.getDay(); // 0 = Sunday, 1 = Monday, ... 6 = Saturday
 
+        // Handle Friday content from FridayReminders class
+        if (this.fridayReminders.shouldShowFridayContent()) {
+            const fridayContent = this.fridayReminders.getFridayContent();
+            if (fridayContent) {
+                return fridayContent;
+            }
+            // If no Friday content, fall through to daily hadith for Friday
+        }
+
+        // Regular days - normal logic or continuing Friday after first reminder
         // Add time-based azkar based on current time
         const prayerTimes = IslamicCalendar.calculatePrayerTimes();
         const isMorningTime = now >= prayerTimes.fajr && now < IslamicRemindersManager.calculateSunriseTime();
@@ -253,7 +288,8 @@ export class IslamicRemindersManager {
 
         // Always available content (not time-based)
         if (this.settings.showAdia) {availableTypes.push(...this.adia);}
-        if (this.settings.showAhadis) {availableTypes.push(...this.ahadis);}
+        // Show the daily hadith for today's weekday
+        if (this.settings.showAhadis) {availableTypes.push(this.dailyHadiths[todayIndex]);}
         if (this.settings.showWisdom) {availableTypes.push(...this.wisdom);}
 
         if (availableTypes.length === 0) {return null;}
@@ -278,7 +314,10 @@ export class IslamicRemindersManager {
         const content = this.getRandomContent();
         if (!content) {return;}
 
-        const typeLabel = content.type === 'adia' ? 'Adia (Prayer)' :
+        const isFridaySurah = content?.source?.includes('Surah Al-Kahf 18:29 (Friday Quranic Reading Rally)');
+
+        const typeLabel = isFridaySurah ? 'Friday Remembrance: Read Surah Al-Kahf' :
+                         content.type === 'adia' ? 'Adia (Prayer)' :
                          content.type === 'hadis' ? 'Hadis (Prophet\'s Saying)' :
                          content.type === 'morningAzkar' ? 'Morning Azkar' :
                          content.type === 'eveningAzkar' ? 'Evening Azkar' :
@@ -289,6 +328,16 @@ export class IslamicRemindersManager {
             `🕌 ${typeLabel}\n\n${content.arabic}\n\n${content.english}${content.source ? `\n\nSource: ${content.source}` : ''}`,
             'Got it'
         ).then(() => {
+            // Check if this was salawat content and increment counter
+            const isSalawatContent = content.arabic?.includes('صَلِّ عَلَى') ||
+                                   content.arabic?.includes('صلاة الله عليه وسلم') ||
+                                   content.source?.includes('Friday Evening Salawat') ||
+                                   content.source?.includes('Friday Prayer');
+
+            if (isSalawatContent) {
+                this.fridayReminders.incrementSalawatCounter();
+            }
+
             // User clicked "Got it" - could add positive reinforcement here
         });
     }
@@ -323,6 +372,8 @@ export class IslamicRemindersManager {
 
     public updateSettings(newSettings: Partial<ReminderSettings>) {
         this.settings = { ...this.settings, ...newSettings };
+        // Update FridayReminders settings too
+        this.fridayReminders.updateSettings(newSettings);
         this.startReminders(); // Restart with new settings
     }
 

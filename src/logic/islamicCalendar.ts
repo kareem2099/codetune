@@ -137,6 +137,14 @@ export class IslamicCalendar {
     }
 
     /**
+     * Check if current date is within Ramadan
+     */
+    static isRamadan(date: Date = new Date()): boolean {
+        const hijri = this.gregorianToHijri(date);
+        return hijri.month === 9; // Ramadan is the 9th month in Hijri calendar
+    }
+
+    /**
      * Format countdown time as HH:MM:SS
      */
     private static formatCountdown(milliseconds: number): string {
