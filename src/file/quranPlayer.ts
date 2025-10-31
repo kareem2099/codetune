@@ -44,7 +44,7 @@ export class QuranPlayer {
     private volume: number;
     private surahs!: Surah[];
     private editions: QuranEdition[] = [];
-    private currentEdition: string = 'ar.alafasy';
+    private currentEdition: string = 'ar.abdulbasitmurattal';
     private audioElement: any = null;
     private currentSurahNumber: number = 1;
     private isStreaming: boolean = false;
@@ -73,6 +73,7 @@ export class QuranPlayer {
      * Send a message to the webview
      */
     private sendToWebview(message: any): void {
+        console.log('QuranPlayer: Sending message to webview:', message);
         if (this.messageSender) {
             this.messageSender(message);
         } else {
@@ -381,6 +382,11 @@ export class QuranPlayer {
 
             // Send message to webview through the message sender
             this.sendToWebview(webviewMessage);
+
+            // Track surah played for review notifications
+            if ((global as any).reviewNotificationManager) {
+                (global as any).reviewNotificationManager.updateUsageMetrics('surahPlayed');
+            }
 
         } catch (error) {
             vscode.window.showErrorMessage(`Error streaming full Surah: ${error}`);

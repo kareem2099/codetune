@@ -1,0 +1,196 @@
+[
+  {
+    "task": "Clean up server configuration (remove YouTube/Spotify references)",
+    "status": "completed",
+    "completed_at": "2025-10-28T11:49:00Z"
+  },
+  {
+    "task": "Create enhanced launch.json for debugging configurations",
+    "status": "completed",
+    "completed_at": "2025-10-28T11:57:46Z"
+  },
+  {
+    "task": "Create enhanced tasks.json with build/test/server tasks",
+    "status": "completed",
+    "completed_at": "2025-10-28T11:59:43Z"
+  },
+  {
+    "task": "Fix infinite recursion bug between activityBar and settings components",
+    "status": "completed",
+    "completed_at": "2025-10-28T11:55:57Z"
+  },
+  {
+    "task": "Add missing surahModalContent element in activityBar.html",
+    "status": "completed",
+    "completed_at": "2025-10-28T12:20:25Z"
+  },
+  {
+    "task": "Register codeTune.openSettings command in package.json",
+    "status": "completed",
+    "completed_at": "2025-10-28T12:20:47Z"
+  },
+  {
+    "task": "Fix Quran reader modal controls not working",
+    "status": "completed",
+    "completed_at": "2025-10-28T12:26:01Z"
+  },
+  {
+    "task": "Implement adaptive auto-reading speed detection",
+    "status": "completed",
+    "completed_at": "2025-10-28T12:54:05Z"
+  },
+  {
+    "task": "Fix auto-reading button disabled and add debug logging",
+    "status": "completed",
+    "completed_at": "2025-10-28T13:42:54Z",
+    "details": "Added debug logging to auto-reading toggle and fixed button text update"
+  },
+  {
+    "task": "Fix package.json manifest warnings (chatParticipant, authentication providers)",
+    "status": "pending",
+    "details": "Resolve package.json manifest validation issues"
+  },
+  {
+    "task": "Add event listeners for read-surah-card buttons to open Quran Reader modal",
+    "status": "completed",
+    "completed_at": "2025-10-31T13:05:00Z",
+    "details": "Fixed Quran Reader modal not opening when clicking quick access cards in Quran Reader section"
+  },
+  {
+    "task": "Move modal close event listeners from settings.js to audioPlayer.js",
+    "status": "completed",
+    "completed_at": "2025-10-31T13:05:00Z",
+    "details": "Fixed Quran Listening modal (playback options modal) close functionality by moving event listeners to correct component"
+  },
+  {
+    "task": "Test both modal opening and closing functionality",
+    "status": "completed",
+    "completed_at": "2025-10-31T13:05:00Z",
+    "details": "Verified both Quran Reader and Quran Listening modals work correctly after fixes"
+  },
+  {
+    "task": "Fix full surah playback by changing default reciter",
+    "status": "completed",
+    "completed_at": "2025-10-31T13:10:00Z",
+    "details": "Changed default reciter from ar.alafasy to ar.abdulbasitmurattal in QuranPlayer.ts, audioPlayer.js, and settings.js to support full surah playback"
+  },
+  {
+    "task": "Optional: Integrate accurate Islamic calculations from Aladhan API",
+    "status": "pending",
+    "details": "Use server APIs or direct Aladhan API calls for precise Hijri dates and prayer times"
+  },
+  {
+    "task": "Analyze the Quran player codebase",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Analyzed the Quran player implementation to understand the architecture and identify issues"
+  },
+  {
+    "task": "Identify the issue with listener section (wrong surah number being sent)",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Found that showPlaybackOptionsModal wasn't storing the selected surah, causing playback to default to surah 1"
+  },
+  {
+    "task": "Fix showPlaybackOptionsModal to store selected surah",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Added this.currentSurah = surah; in showPlaybackOptionsModal() method"
+  },
+  {
+    "task": "Fix the playNextAyah method call and logic",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Added validation for ayah advancement data in activityBarView.ts"
+  },
+  {
+    "task": "Add better error handling and logging",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Added comprehensive console logging throughout the audio playback flow and validation checks"
+  },
+  {
+    "task": "Test both full-surah and ayah-by-ayah playback modes",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Verified both playback modes work correctly through VS Code extension debugging"
+  },
+  {
+    "task": "Add handleMessage method to AudioPlayerComponent",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:15:00Z",
+    "details": "Added handleMessage() method to AudioPlayerComponent to receive playAudio messages from extension"
+  },
+  {
+    "task": "Fix JavaScript error 'updateAutoPlaySetting is not defined'",
+    "status": "completed",
+    "completed_at": "2025-10-31T14:28:00Z",
+    "details": "Fixed 17 inline event handlers in activityBar.html that were calling settings methods globally instead of through window.quranActivityBar.settingsComponent.methodName()"
+  },
+  {
+    "task": "Implement specific auto-reading speed intervals",
+    "status": "completed",
+    "completed_at": "2025-10-31T17:23:00Z",
+    "details": "Implemented auto-reading speeds with specific intervals: slow=8s, normal=4s, fast=2s, very fast=1s, default=4x (0.5s intervals). Updated both JavaScript logic and HTML UI controls."
+  },
+  {
+    "task": "Create package.nls.ru.json with Russian translations",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created Russian translations for VS Code extension strings (commands, descriptions, etc.)"
+  },
+  {
+    "task": "Create package.nls.fr.json with French translations",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created French translations for VS Code extension strings (commands, descriptions, etc.)"
+  },
+  {
+    "task": "Create package.nls.es.json with Spanish translations",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created Spanish translations for VS Code extension strings (commands, descriptions, etc.)"
+  },
+  {
+    "task": "Create ui.nls.ru.json with UI strings",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created Russian translations for webview UI strings (settings, buttons, messages, etc.)"
+  },
+  {
+    "task": "Create ui.nls.fr.json with UI strings",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created French translations for webview UI strings (settings, buttons, messages, etc.)"
+  },
+  {
+    "task": "Create ui.nls.es.json with UI strings",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Created Spanish translations for webview UI strings (settings, buttons, messages, etc.)"
+  },
+  {
+    "task": "Update src/ui/localization.js to load JSON files",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Modified localization system to receive translation data from extension backend instead of fetching JSON files directly"
+  },
+  {
+    "task": "Update language detection logic for new locales",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Added support for Russian, French, and Spanish language detection in both extension and webview"
+  },
+  {
+    "task": "Fix undefined language parameter handling",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:40:00Z",
+    "details": "Added proper validation and fallback handling for undefined language parameters in refreshLocalization method"
+  },
+  {
+    "task": "Implement secure localization data loading",
+    "status": "completed",
+    "completed_at": "2025-10-31T21:00:00Z",
+    "details": "Moved JSON files to src/ui/ directory and implemented backend-to-webview secure data transfer to avoid 403 Forbidden errors"
+  }
+]

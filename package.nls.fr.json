@@ -1,0 +1,23 @@
+{
+  "displayName": "CodeTune - Compagnon de codage islamique",
+  "description": "Améliorez votre expérience de programmation avec des rappels islamiques, la récitation du Coran, les horaires de prière et du contenu spirituel intégré dans VS Code",
+  "config.codeTune.enableReminders": "Activer les rappels islamiques et les notifications de sagesse",
+  "config.codeTune.reminderInterval": "Intervalle entre les rappels islamiques en minutes",
+  "config.codeTune.showAdia": "Afficher les prières islamiques (Adia) dans les rappels",
+  "config.codeTune.showAhadis": "Afficher les paroles du Prophète (Ahadis) dans les rappels",
+  "config.codeTune.showWisdom": "Afficher la sagesse islamique et les versets dans les rappels",
+  "config.codeTune.showMorningAzkar": "Afficher les Azkar du matin aux moments appropriés (أذكار الصباح)",
+  "config.codeTune.showEveningAzkar": "Afficher les Azkar du soir aux moments appropriés (أذكار المساء)",
+  "config.codeTune.workingHoursOnly": "Afficher les rappels uniquement pendant les heures de travail (9h - 18h)",
+  "config.codeTune.language": "Choisissez la langue d'affichage pour CodeTune",
+  "views.codeTuneMain.name": "CodeTune",
+  "views.codeTuneMain.contextualTitle": "Lecteur musical CodeTune",
+  "viewsContainers.codeTune.title": "CodeTune",
+  "commands.codeTune.playQuran.title": "Lire le Coran",
+  "commands.codeTune.stop.title": "Arrêter",
+  "commands.codeTune.openSettings.title": "Ouvrir les paramètres",
+  "views.islamicDhikrCounters.name": "Dhikr islamique et compteurs",
+  "views.islamicDhikrCounters.contextualTitle": "Dhikr islamique et compteurs",
+  "views.quranTime.name": "Temps du Coran",
+  "views.quranTime.contextualTitle": "Temps du Coran"
+}

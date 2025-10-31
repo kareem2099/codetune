@@ -19,6 +19,8 @@ export class FridayReminders {
     private fridaySurahShown: Date | null = null;
     private fridayHadithCount: number = 0;
     private settings: ReminderSettings;
+    private fridaySurahCompleted: boolean = false;
+    private fridaySurahReadingStarted: boolean = false;
 
     // Salawat Counter State
     private salawatCounter = {
@@ -318,5 +320,196 @@ export class FridayReminders {
         this.salawatCounter.monthlyCompleted = 0;
         this.salawatCounter.lastResetDate = new Date().toDateString();
         this.saveSalawatCounter();
+    }
+
+    // ===== FRIDAY SURAH AL-KAHF ENFORCEMENT METHODS =====
+
+    /**
+     * Check if Friday Surah Al-Kahf reading has been completed today
+     */
+    public isFridaySurahCompleted(): boolean {
+        this.checkFridaySurahReset(); // Ensure we reset if it's a new day
+        return this.fridaySurahCompleted;
+    }
+
+    /**
+     * Check if Friday Surah Al-Kahf reading has been started today
+     */
+    public isFridaySurahStarted(): boolean {
+        this.checkFridaySurahReset(); // Ensure we reset if it's a new day
+        return this.fridaySurahReadingStarted;
+    }
+
+    /**
+     * Mark Friday Surah Al-Kahf reading as started
+     */
+    public markFridaySurahStarted(): void {
+        this.fridaySurahReadingStarted = true;
+        this.saveFridaySurahState();
+    }
+
+    /**
+     * Mark Friday Surah Al-Kahf reading as completed
+     */
+    public markFridaySurahCompleted(): void {
+        this.fridaySurahCompleted = true;
+        this.fridaySurahReadingStarted = true;
+        this.saveFridaySurahState();
+
+        // Show completion notification
+        vscode.window.showInformationMessage(
+            '🎉 Friday Surah Al-Kahf Reading Completed! May Allah protect you from trials and Dajjal. آمين',
+            'Alhamdulillah'
+        );
+    }
+
+    /**
+     * Force reading and listening to Surah Al-Kahf for Friday
+     * This method will be called to enforce the Friday ritual
+     */
+    public async enforceFridaySurahReading(): Promise<void> {
+        if (!this.isFriday()) {
+            console.log('Not Friday - skipping Surah Al-Kahf enforcement');
+            return;
+        }
+
+        if (this.isFridaySurahCompleted()) {
+            console.log('Friday Surah Al-Kahf already completed today');
+            return;
+        }
+
+        try {
+            // Mark as started
+            this.markFridaySurahStarted();
+
+            // Send message to UI to open Quran reader and start Surah Al-Kahf
+            const activityBarProvider = (global as any).activityBarProvider;
+            if (activityBarProvider && activityBarProvider.sendMessageToWebview) {
+                activityBarProvider.sendMessageToWebview({
+                    type: 'enforceFridaySurahKahf',
+                    surahNumber: 18, // Surah Al-Kahf
+                    message: '🕌 Friday Surah Al-Kahf Reading Time!\n\nIt is Sunnah to read Surah Al-Kahf every Friday for protection from trials and Dajjal.'
+                });
+
+                console.log('Enforced Friday Surah Al-Kahf reading session');
+            } else {
+                console.warn('Activity bar provider not available for Friday Surah enforcement');
+                // Fallback to showing notification
+                vscode.window.showInformationMessage(
+                    '🕌 Friday Reminder: Please read Surah Al-Kahf today for protection from trials and Dajjal',
+                    'Open Quran Reader'
+                ).then(selection => {
+                    if (selection === 'Open Quran Reader') {
+                        // Try to trigger Quran reader opening through commands
+                        vscode.commands.executeCommand('codeTune.playQuran');
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error('Error enforcing Friday Surah Al-Kahf reading:', error);
+            vscode.window.showErrorMessage('Failed to start Friday Surah Al-Kahf reading session');
+        }
+    }
+
+    /**
+     * Check and reset Friday Surah state if it's a new day
+     */
+    private checkFridaySurahReset(): void {
+        const today = new Date().toDateString();
+        const lastResetKey = 'fridaySurahLastReset';
+
+        try {
+            const stored = vscode.workspace.getConfiguration('codeTune').get(lastResetKey);
+            if (stored !== today) {
+                // New day - reset Friday Surah state
+                this.fridaySurahCompleted = false;
+                this.fridaySurahReadingStarted = false;
+                this.fridaySurahShown = null;
+                this.fridayHadithCount = 0;
+
+                // Save the reset
+                vscode.workspace.getConfiguration('codeTune').update(lastResetKey, today, true);
+                console.log('Reset Friday Surah Al-Kahf state for new day');
+            }
+        } catch (error) {
+            console.warn('Error checking Friday Surah reset:', error);
+        }
+    }
+
+    /**
+     * Save Friday Surah state to VS Code configuration
+     */
+    private saveFridaySurahState(): void {
+        try {
+            const state = {
+                completed: this.fridaySurahCompleted,
+                started: this.fridaySurahReadingStarted,
+                lastUpdated: new Date().toISOString()
+            };
+            vscode.workspace.getConfiguration('codeTune').update('fridaySurahState', state, true);
+        } catch (error) {
+            console.warn('Error saving Friday Surah state:', error);
+        }
+    }
+
+    /**
+     * Load Friday Surah state from VS Code configuration
+     */
+    private loadFridaySurahState(): void {
+        try {
+            const saved = vscode.workspace.getConfiguration('codeTune').get('fridaySurahState') as any;
+            if (saved && typeof saved === 'object') {
+                this.fridaySurahCompleted = saved.completed || false;
+                this.fridaySurahReadingStarted = saved.started || false;
+            }
+        } catch (error) {
+            console.warn('Error loading Friday Surah state:', error);
+        }
+    }
+
+    /**
+     * Get Friday Surah reading progress info
+     */
+    public getFridaySurahProgress(): { completed: boolean; started: boolean; isFriday: boolean } {
+        this.checkFridaySurahReset(); // Ensure fresh state
+        return {
+            completed: this.fridaySurahCompleted,
+            started: this.fridaySurahReadingStarted,
+            isFriday: this.isFriday()
+        };
+    }
+
+    /**
+     * Get Friday Surah status for UI display
+     */
+    public getFridaySurahStatus(): { status: string; message: string } {
+        this.checkFridaySurahReset(); // Ensure fresh state
+
+        if (!this.isFriday()) {
+            return {
+                status: 'not-friday',
+                message: 'Not Friday - Surah Al-Kahf reading is recommended every Friday'
+            };
+        }
+
+        if (this.fridaySurahCompleted) {
+            return {
+                status: 'completed',
+                message: 'Completed today! Alhamdulillah'
+            };
+        }
+
+        if (this.fridaySurahReadingStarted) {
+            return {
+                status: 'started',
+                message: 'Reading in progress...'
+            };
+        }
+
+        return {
+            status: 'not-started',
+            message: 'Not started today'
+        };
     }
 }

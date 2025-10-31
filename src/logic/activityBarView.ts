@@ -30,7 +30,10 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri]
+            localResourceRoots: [this._extensionUri],
+            // Disable sandbox to prevent warnings while maintaining functionality
+            enableCommandUris: false,
+            enableForms: false
         };
 
         // Add debug message listener
@@ -41,14 +44,19 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         console.log('Activity Bar: Webview HTML set');
 
-        // Send current language to webview
+        // Send current language and localization data to webview
         const config = vscode.workspace.getConfiguration('codeTune');
         const currentLanguage = config.get('language', 'auto');
+
+        // Load localization data
+        const localizationData = this.loadLocalizationData(currentLanguage);
+
         webviewView.webview.postMessage({
             type: 'languageChanged',
-            language: currentLanguage
+            language: currentLanguage,
+            localizationData: localizationData
         });
-        console.log('Activity Bar: Sent current language to webview:', currentLanguage);
+        console.log('Activity Bar: Sent current language and localization data to webview:', currentLanguage);
 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(async (data) => {
@@ -163,8 +171,10 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                     case 'ayahEnded':
                         console.log('Ayah ended, advancing to next ayah:', data);
                         // Play next ayah in ayah-by-ayah mode
-                        if (data.currentSurah && data.currentAyah) {
+                        if (data.currentSurah && typeof data.currentAyah === 'number') {
                             await this.quranPlayer.playNextAyah(data.currentSurah, data.currentAyah);
+                        } else {
+                            console.warn('Invalid ayahEnded data:', data);
                         }
                         break;
                     case 'updateLanguageSetting':
@@ -173,6 +183,116 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                         const config = vscode.workspace.getConfiguration('codeTune');
                         config.update('language', data.language, true);
                         console.log('Language setting updated to:', data.language);
+
+                        // Notify the webview to refresh localization with new language
+                        this.notifyLanguageChange(data.language);
+                        break;
+                    case 'updateReviewNotifications':
+                        console.log('Updating review notification settings:', data.settings);
+                        // Update review notification manager with new settings
+                        const reviewNotificationManager = (global as any).reviewNotificationManager;
+                        if (reviewNotificationManager) {
+                            reviewNotificationManager.updateSettings(data.settings);
+                            console.log('Review notification settings updated successfully');
+                        } else {
+                            console.warn('Review notification manager not available');
+                        }
+                        break;
+                    case 'trackDhikrIncrement':
+                        console.log('Tracking dhikr increment for review notifications');
+                        // Track dhikr increment for review notifications
+                        const rnManager = (global as any).reviewNotificationManager;
+                        if (rnManager) {
+                            rnManager.updateUsageMetrics('dhikrIncremented');
+                        }
+                        break;
+                    case 'trackSurahPlayed':
+                        console.log('Tracking surah played for review notifications');
+                        // Track surah played for review notifications
+                        const rnManager2 = (global as any).reviewNotificationManager;
+                        if (rnManager2) {
+                            rnManager2.updateUsageMetrics('surahPlayed');
+                        }
+                        break;
+                    case 'autoPlayStartup':
+                        console.log('Auto-play startup triggered:', data);
+                        // Handle auto-play on startup - send to webview
+                        this.sendMessageToWebview({
+                            type: 'autoPlayStartup',
+                            lastPlayback: data.lastPlayback,
+                            volume: data.volume
+                        });
+                        break;
+                    case 'surahFinished':
+                        console.log('Surah finished, asking user about next surah:', data.currentSurah, data.nextSurah);
+                        // Show VS Code notification asking if user wants to continue reading
+                        this.handleSurahFinished(data.currentSurah, data.nextSurah);
+                        break;
+                    case 'showConfirmDialog':
+                        console.log('Showing confirmation dialog:', data.message);
+                        // Show VS Code confirmation dialog
+                        const userChoice = await vscode.window.showInformationMessage(
+                            data.message,
+                            { modal: true },
+                            'Yes',
+                            'Cancel'
+                        );
+
+                        // Send back the result to the webview
+                        if (userChoice === 'Yes') {
+                            // Hide the current webview to avoid focus issues during modal
+                            if (this._view) {
+                                this._view.webview.postMessage({
+                                    type: 'confirmResult',
+                                    action: data.action,
+                                    confirmed: true
+                                });
+                            }
+                        }
+                        break;
+                    case 'fridaySurahStarted':
+                        console.log('Friday Surah Al-Kahf reading started:', data.surahNumber);
+                        // Mark Friday Surah as started in the Islamic reminders manager
+                        if (this.islamicRemindersManager && this.islamicRemindersManager.fridayReminders) {
+                            this.islamicRemindersManager.fridayReminders.markFridaySurahStarted();
+                        }
+                        break;
+                    case 'fridaySurahCompleted':
+                        console.log('Friday Surah Al-Kahf reading completed:', data.surahNumber);
+                        // Mark Friday Surah as completed in the Islamic reminders manager
+                        if (this.islamicRemindersManager && this.islamicRemindersManager.fridayReminders) {
+                            this.islamicRemindersManager.fridayReminders.markFridaySurahCompleted();
+                        }
+                        break;
+                    case 'enforceFridaySurahKahf':
+                        console.log('Enforcing Friday Surah Al-Kahf reading:', data);
+                        // Forward the message to the webview to trigger the Quran reader
+                        this.sendMessageToWebview({
+                            type: 'enforceFridaySurahKahf',
+                            surahNumber: data.surahNumber,
+                            message: data.message
+                        });
+                        break;
+                    case 'getFridaySurahStatus':
+                        console.log('Getting Friday Surah status');
+                        // Get current Friday Surah status from the Islamic reminders manager
+                        if (this.islamicRemindersManager && this.islamicRemindersManager.fridayReminders) {
+                            const status = this.islamicRemindersManager.fridayReminders.getFridaySurahStatus();
+                            console.log('Friday Surah status:', status);
+                            // Send status back to webview
+                            this.sendMessageToWebview({
+                                type: 'fridaySurahStatus',
+                                status: status.status,
+                                message: status.message
+                            });
+                        } else {
+                            console.warn('Islamic reminders manager not available for Friday Surah status');
+                            this.sendMessageToWebview({
+                                type: 'fridaySurahStatus',
+                                status: 'not-started',
+                                message: 'Status unavailable'
+                            });
+                        }
                         break;
                     default:
                         console.log('Unknown message type:', data.type);
@@ -193,11 +313,17 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
 
     public notifyLanguageChange(language?: string) {
         console.log('ActivityBarView: notifyLanguageChange called with language:', language);
+
+        // If no language provided, get current language from config
+        const currentLanguage = language || vscode.workspace.getConfiguration('codeTune').get('language', 'auto');
+        const localizationData = this.loadLocalizationData(currentLanguage);
+
         if (this._view) {
-            console.log('ActivityBarView: Sending languageChanged message to webview');
+            console.log('ActivityBarView: Sending languageChanged message to webview with language:', currentLanguage);
             this._view.webview.postMessage({
                 type: 'languageChanged',
-                language: language
+                language: currentLanguage,
+                localizationData: localizationData
             });
         } else {
             console.log('ActivityBarView: No webview available to notify');
@@ -220,6 +346,117 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    /**
+     * Handle when a Surah finishes reading, show notification asking to continue
+     */
+    private async handleSurahFinished(currentSurah: any, nextSurah: any): Promise<void> {
+        try {
+            const message = `📖 ${currentSurah.arabicName} (${currentSurah.name}) completed. Continue reading with ${nextSurah.arabicName} (${nextSurah.name})?`;
+
+            const userChoice = await vscode.window.showInformationMessage(
+                message,
+                { modal: false }, // Not modal so user can continue working
+                'Continue Reading',
+                'Stop'
+            );
+
+            if (userChoice === 'Continue Reading') {
+                // Start countdown timer (3-2-1) and then auto-advance to next surah
+                await this.startSurahTransitionCountdown(nextSurah);
+            } else {
+                // Show a completion message
+                vscode.window.showInformationMessage('Reading session completed ✅');
+            }
+        } catch (error) {
+            console.error('Error handling surah finished:', error);
+            vscode.window.showErrorMessage('Error handling surah transition');
+        }
+    }
+
+    /**
+     * Start countdown timer and auto-advance to next surah
+     */
+    private async startSurahTransitionCountdown(nextSurah: any): Promise<void> {
+        try {
+            // Show countdown notifications
+            for (let i = 3; i >= 1; i--) {
+                vscode.window.showInformationMessage(`Starting next Surah ${nextSurah.arabicName} in ${i}... ⏰`);
+                await this.delay(1000); // 1 second delay
+            }
+
+            // Send message to webview to open the next surah
+            if (this._view) {
+                this._view.webview.postMessage({
+                    type: 'openNextSurah',
+                    surahNumber: nextSurah.number,
+                    action: 'autoTransition'
+                });
+            }
+
+            vscode.window.showInformationMessage(`📖 Starting ${nextSurah.arabicName} (${nextSurah.name})`);
+        } catch (error) {
+            console.error('Error in surah transition countdown:', error);
+            vscode.window.showErrorMessage('Error transitioning to next Surah');
+        }
+    }
+
+    /**
+     * Load localization data for the specified language
+     */
+    private loadLocalizationData(language: string): any {
+        try {
+            let resolvedLanguage = language;
+
+            // Resolve 'auto' to actual language
+            if (resolvedLanguage === 'auto') {
+                resolvedLanguage = vscode.env.language.startsWith('ar') ? 'ar' :
+                                  vscode.env.language.startsWith('ru') ? 'ru' :
+                                  vscode.env.language.startsWith('fr') ? 'fr' :
+                                  vscode.env.language.startsWith('es') ? 'es' : 'en';
+            }
+
+            // Map language codes to file names
+            const fileMap: { [key: string]: string } = {
+                'en': 'ui.nls.json',
+                'ar': 'ui.nls.ar.json',
+                'ru': 'ui.nls.ru.json',
+                'fr': 'ui.nls.fr.json',
+                'es': 'ui.nls.es.json'
+            };
+
+            const fileName = fileMap[resolvedLanguage] || 'ui.nls.json';
+            const filePath = path.join(this._extensionUri.fsPath, 'src', 'ui', fileName);
+
+            if (fs.existsSync(filePath)) {
+                const fileContent = fs.readFileSync(filePath, 'utf8');
+                return JSON.parse(fileContent);
+            } else {
+                console.warn(`Localization file not found: ${filePath}, falling back to English`);
+                // Fallback to English
+                const fallbackPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'ui.nls.json');
+                if (fs.existsSync(fallbackPath)) {
+                    const fallbackContent = fs.readFileSync(fallbackPath, 'utf8');
+                    return JSON.parse(fallbackContent);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading localization data:', error);
+        }
+
+        // Ultimate fallback - minimal English strings
+        return {
+            loading: "Loading...",
+            error: "Error occurred while loading localization"
+        };
+    }
+
+    /**
+     * Utility method for delays
+     */
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private _getHtmlForWebview(webview: vscode.Webview): string {
         const nonce = getNonce();
 
@@ -229,6 +466,13 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
         const jsPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'activityBar.js');
         const localizationPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'localization.js');
 
+        // Component paths
+        const counterPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'components', 'counter.js');
+        const audioPlayerPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'components', 'audioPlayer.js');
+        const prayerTrackerPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'components', 'prayerTracker.js');
+        const settingsPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'components', 'settings.js');
+        const statisticsPath = path.join(this._extensionUri.fsPath, 'src', 'ui', 'components', 'statistics.js');
+
         let htmlContent = fs.readFileSync(htmlPath, 'utf8');
 
         // Replace placeholders with actual webview URIs
@@ -236,10 +480,22 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
         const jsUri = webview.asWebviewUri(vscode.Uri.file(jsPath));
         const localizationUri = webview.asWebviewUri(vscode.Uri.file(localizationPath));
 
+        // Component URIs
+        const counterUri = webview.asWebviewUri(vscode.Uri.file(counterPath));
+        const audioPlayerUri = webview.asWebviewUri(vscode.Uri.file(audioPlayerPath));
+        const prayerTrackerUri = webview.asWebviewUri(vscode.Uri.file(prayerTrackerPath));
+        const settingsUri = webview.asWebviewUri(vscode.Uri.file(settingsPath));
+        const statisticsUri = webview.asWebviewUri(vscode.Uri.file(statisticsPath));
+
         htmlContent = htmlContent
             .replace('{{cssUri}}', cssUri.toString())
             .replace('{{jsUri}}', jsUri.toString())
             .replace('{{localizationUri}}', localizationUri.toString())
+            .replace('./components/counter.js', counterUri.toString())
+            .replace('./components/audioPlayer.js', audioPlayerUri.toString())
+            .replace('./components/prayerTracker.js', prayerTrackerUri.toString())
+            .replace('./components/settings.js', settingsUri.toString())
+            .replace('./components/statistics.js', statisticsUri.toString())
             .replace(/{{nonce}}/g, nonce)
             .replace('{{settingsCssUri}}', '') // Remove settings references
             .replace('{{settingsJsUri}}', ''); // Remove settings references

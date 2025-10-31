@@ -1,0 +1,23 @@
+{
+  "displayName": "CodeTune - Исламский компаньон разработчика",
+  "description": "Улучшите свой опыт программирования с исламскими напоминаниями, чтением Корана, временем молитв и духовным контентом, интегрированным в VS Code",
+  "config.codeTune.enableReminders": "Включить исламские напоминания и уведомления мудрости",
+  "config.codeTune.reminderInterval": "Интервал между исламскими напоминаниями в минутах",
+  "config.codeTune.showAdia": "Показывать исламские молитвы (Адия) в напоминаниях",
+  "config.codeTune.showAhadis": "Показывать изречения Пророка (Ахадис) в напоминаниях",
+  "config.codeTune.showWisdom": "Показывать исламскую мудрость и стихи в напоминаниях",
+  "config.codeTune.showMorningAzkar": "Показывать утренние Азкар в соответствующее время (أذكار الصباح)",
+  "config.codeTune.showEveningAzkar": "Показывать вечерние Азкар в соответствующее время (أذكار المساء)",
+  "config.codeTune.workingHoursOnly": "Показывать напоминания только в рабочее время (9 утра - 6 вечера)",
+  "config.codeTune.language": "Выберите язык отображения для CodeTune",
+  "views.codeTuneMain.name": "CodeTune",
+  "views.codeTuneMain.contextualTitle": "Музыкальный плеер CodeTune",
+  "viewsContainers.codeTune.title": "CodeTune",
+  "commands.codeTune.playQuran.title": "Воспроизвести Коран",
+  "commands.codeTune.stop.title": "Стоп",
+  "commands.codeTune.openSettings.title": "Открыть настройки",
+  "views.islamicDhikrCounters.name": "Исламский Зикр и счетчики",
+  "views.islamicDhikrCounters.contextualTitle": "Исламский Зикр и счетчики",
+  "views.quranTime.name": "Время Корана",
+  "views.quranTime.contextualTitle": "Время Корана"
+}

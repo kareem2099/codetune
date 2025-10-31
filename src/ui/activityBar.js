@@ -1,630 +1,328 @@
-// Modern Quran Player - Activity Bar JavaScript
+/**
+ * Modern Quran Player - Clean Activity Bar Main Coordinator
+ * Uses modular components for better maintainability
+ */
 const vscode = acquireVsCodeApi();
 
 class QuranActivityBar {
     constructor() {
-        this.currentSurah = null;
-        this.currentAyah = null;
-        this.isPlaying = false;
-        this.volume = 70;
-        this.playbackMode = 'surah'; // 'surah' or 'ayah'
-        this.currentPlaybackMode = null; // Track current audio playback mode
-        this.reciter = 'ar.alafasy';
-        this.audioQuality = '128';
-        this.searchTimeout = null;
-        this.surahData = this.getSurahData();
-        this.audioElement = null;
-        this.currentAudioUrl = null;
-        this.currentTime = 0;
-        this.duration = 0;
-        this.selectedSurahNumber = null; // Initialize selectedSurahNumber
+        // Initialize all components
+        this.counterComponent = null;
+        this.audioPlayerComponent = null;
+        this.prayerTrackerComponent = null;
+        this.settingsComponent = null;
+        this.statisticsComponent = null;
 
-        // Salawat Counter properties
-        this.salawatCounter = {
-            currentCount: 0,
-            dailyTarget: 11,
-            lastResetDate: null,
-            userSetTarget: false
-        };
-
-        // Tasbih Counter properties
-        this.tasbihCounters = {
-            subhanallah: 0,
-            alhamdulillah: 0,
-            laIlahaIllaAllah: 0,
-            allahuAkbar: 0
-        };
-
-        // Istighfar Counter properties
-        this.istighfarCounters = {
-            astaghfirullah: 0,
-            subhanakallahumma: 0
-        };
-
-        // Popular Adhkar Counter properties
-        this.adhkarCounters = {
-            auzubillahi: 0,
-            rabbiGhifir: 0,
-            hasbiyallah: 0,
-            laHawla: 0
-        };
-
-        // Islamic Goals - Prayer completion tracking
-        this.prayerGoals = {
-            fajr: false,
-            dhuhr: false,
-            asr: false,
-            maghrib: false,
-            isha: false
-        };
-
-        this.loadSalawatCounter();
-        this.loadTasbihCounters();
-        this.loadIstighfarCounters();
-        this.loadAdhkarCounters();
-        this.loadPrayerGoals();
-
-        // Create Islamic reminders instance for counter integration
-        this.fridayReminders = null; // Will be initialized from extension global
-
-        // Quran Reader properties
+        // Quran Reader properties (keeping here as it's shared functionality)
         this.currentReadingSurah = null;
         this.currentReadingPage = 1;
         this.totalReadingPages = 1;
-        this.versesPerPage = 10; // Show 10 verses per page
+        this.versesPerPage = 50; // Show 50 verses per page for maximum auto-scrolling content
         this.cachedVerses = {}; // Cache for verse data
+        this.isReaderModalOpen = false; // Track modal state for reliable visibility checks
 
         // Auto Reading properties
         this.autoReadingEnabled = false;
         this.autoReadingActive = false;
-        this.autoReadingSpeed = 1; // 0.5 = slow, 1 = normal, 1.5 = fast, 2 = very fast
+        this.autoReadingSpeed = 4; // 4x speed (very fast scrolling)
         this.autoReadingInterval = null;
+        this.autoReadingState = 'idle'; // State machine: 'idle', 'starting', 'active', 'stopping'
 
-        // Additional settings properties
-        this.autoPlayStartup = false;
-        this.theme = 'auto';
-        this.compactMode = false;
-        this.showNotifications = true;
-        this.language = 'auto';
-        this.enableReminders = true;
-        this.reminderInterval = 30;
-        this.reminderTypes = {
-            showAdia: true,
-            showAhadis: true,
-            showWisdom: true,
-            showMorningAzkar: true,
-            showEveningAzkar: true
-        };
-        this.workingHoursOnly = false;
-        this.islamicReminders = {
-            fajr: false,
-            dhuhr: false,
-            asr: false,
-            maghrib: false,
-            isha: false
-        };
-        this.cacheSize = 100;
-        this.downloadTimeout = 30;
-        this.retryAttempts = 3;
+            // Adaptive reading speed properties
+        this.userReadingPatterns = []; // Track user's reading speed
+        this.adaptiveSpeedMode = true; // Auto-adjust speed based on user behavior (enabled by default)
+        this.lastPageLoadTime = Date.now();
+        this.pageReadDurations = [];
+        this.adaptiveSpeedUpdateInterval = null;
+        this.targetReadTime = 8000; // Default 8 seconds per page
+        this.adaptiveSpeedEnabled = true; // Always enabled - this learns from user
+        this.lastManualNavigationTime = Date.now();
+        this.adaptiveSpeedIndicator = null; // UI indicator for current adaptive speed
+        this.detectedReadingSpeed = 1; // Estimated reading speed (0.5-2.0 scale)
 
-        // Quran Listening Statistics
-        this.listeningStats = {
-            totalSessions: 0,
-            totalTimePlayed: 0, // in milliseconds
-            dailyStats: {},
-            dailyTimeStats: {}, // time in milliseconds per day
-            lastUpdated: null,
-            statsMode: 'sessions' // 'sessions' or 'time'
-        };
+        this.surahData = this.getSurahData();
+        this.initializeComponents();
 
-        // Time tracking
-        this.playStartTime = null;
-        this.currentSessionTime = 0; // time played in current session
-
-        // Initialize the activity bar components
-        this.loadSettings();
-        this.bindEvents();
-        this.initializeAudio();
-        this.startIslamicTimer();
-        this.forceUpdateIslamicInfo();
-        this.updateSalawatCounterUI();
-        this.listenForLanguageChanges();
-        if (window.localization) {
-            window.localization.localizeElements();
-        }
+        // Initialize remaining functionality
+        this.bindGlobalEventListeners();
+        this.startTimers();
         this.showWelcomeMessage();
+        this.initializeFridaySurahStatus();
     }
 
-    bindEvents() {
-        // Statistics mode toggle
-        const statsIcon = document.querySelector('.stats-icon');
-        if (statsIcon) {
-            statsIcon.style.cursor = 'pointer';
-            statsIcon.addEventListener('click', () => {
-                this.toggleStatisticsMode();
+    initializeComponents() {
+        // Initialize components in order with proper dependencies
+        try {
+            this.counterComponent = new CounterComponent();
+            this.audioPlayerComponent = new AudioPlayerComponent();
+            this.prayerTrackerComponent = new PrayerTrackerComponent();
+            this.settingsComponent = new SettingsComponent();
+            this.statisticsComponent = new StatisticsComponent();
+
+            // Connect components where needed
+            if (this.statisticsComponent && this.audioPlayerComponent) {
+                // Audio player will notify statistics component on play/pause/end
+                // (This happens automatically via the event handlers in each component)
+            }
+
+            console.log('✅ All components initialized successfully');
+        } catch (error) {
+            console.error('❌ Failed to initialize components:', error);
+            this.showNotification('Failed to initialize some components', 'error');
+        }
+    }
+
+    bindGlobalEventListeners() {
+        // Search functionality
+        const surahSearch = document.getElementById('surahSearch');
+        if (surahSearch) {
+            surahSearch.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
             });
         }
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('change', () => {
+                this.toggleTheme();
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            this.handleKeyboard(e);
+        });
+
+        // Browse buttons
+        const browseBtn = document.getElementById('browseBtn');
+        const browseReadBtn = document.getElementById('browseReadBtn');
+
+        if (browseBtn) {
+            browseBtn.addEventListener('click', () => {
+                this.openSurahBrowser(false);
+            });
+        }
+
+        if (browseReadBtn) {
+            browseReadBtn.addEventListener('click', () => {
+                this.openSurahBrowser(true);
+            });
+        }
+
+        // Quran Reader quick access cards
+        document.querySelectorAll('.read-surah-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const surahNumber = e.currentTarget.dataset.surah;
+                this.openQuranReader(surahNumber);
+            });
+        });
+    }
+
+    startTimers() {
+        // Any remaining timer-based functionality that's not handled by components
+        // (Most timers are now handled by individual components)
+    }
+
+    // Message handling - route to appropriate components
+    handleMessage(message) {
+        try {
+            switch (message.type) {
+                // Audio-related messages -> audioPlayerComponent
+                case 'playAudio':
+                case 'pauseAudio':
+                case 'resumeAudio':
+                case 'stopAudio':
+                case 'seekAudio':
+                case 'setAudioVolume':
+                    if (this.audioPlayerComponent && this.audioPlayerComponent.handleMessage) {
+                        this.audioPlayerComponent.handleMessage(message);
+                    }
+                    break;
+
+                // Settings-related messages -> settingsComponent
+                case 'updateLanguageSetting':
+                    if (this.settingsComponent && this.settingsComponent.updateLanguageSetting) {
+                        this.settingsComponent.updateLanguageSetting(message.language);
+                    }
+                    break;
+
+                // Activity bar view messages -> handle here or route to components
+                case 'languageChanged':
+                    // Handle language changes across components
+                    this.handleLanguageChange(message.language, message.localizationData);
+                    break;
+
+                // Playback start notification
+                case 'playbackStarted':
+                    this.showNotification('Started playing Quran surah', 'success');
+                    break;
+
+                case 'playbackError':
+                    this.showNotification('Playback error occurred', 'error');
+                    break;
+
+                case 'openNextSurah':
+                    console.log('Opening next surah:', message.surahNumber, 'action:', message.action);
+                    this.handleOpenNextSurah(message.surahNumber, message.action);
+                    break;
+
+                case 'autoPlayStartup':
+                    console.log('Auto-play startup triggered:', message);
+                    this.handleAutoPlayStartup(message.lastPlayback, message.volume);
+                    break;
+
+                case 'enforceFridaySurahKahf':
+                    console.log('Enforcing Friday Surah Al-Kahf reading:', message);
+                    this.handleEnforceFridaySurahKahf(message.surahNumber, message.message);
+                    break;
+
+                case 'fridaySurahStatus':
+                    console.log('Received Friday Surah status:', message.status);
+                    this.updateFridaySurahStatus(message.status, message.message);
+                    break;
+
+                default:
+                    console.log('Unknown message type:', message.type);
+            }
+        } catch (error) {
+            console.error('Error handling message:', message, error);
+        }
+    }
+
+    // Handle opening next surah from extension (after countdown)
+    handleOpenNextSurah(surahNumber, action) {
+        console.log('Handling open next surah:', surahNumber, 'action:', action);
+
+        // Open the Quran reader for the next surah
+        this.openQuranReader(surahNumber);
+
+        // If it was an auto-transition (from finished surah), start auto-reading after a short delay
+        if (action === 'autoTransition') {
+            setTimeout(() => {
+                if (this.autoReadingEnabled) {
+                    this.startAutoReading();
+                }
+            }, 1500); // 1.5 seconds delay to load content first
+        }
+    }
+
+    handleLanguageChange(language, localizationData) {
+        // Update all components that need language changes
+        if (window.localization) {
+            window.currentLanguage = language;
+            window.localization.refreshLocalization(language, localizationData);
+
+            // Update component-specific language handling
+            if (this.prayerTrackerComponent) {
+                // Prayer's component handles its own language updates
+            }
+        }
+    }
+
+    // Handle auto-play startup - resume from last playback position
+    handleAutoPlayStartup(lastPlayback, volume) {
+        console.log('Handling auto-play startup:', lastPlayback, 'volume:', volume);
 
         try {
-            // Quick access surah cards (audio)
-            document.querySelectorAll('.surah-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const surahNumber = e.currentTarget.dataset.surah;
-                    this.showPlaybackOptionsModal(surahNumber);
-                });
-            });
+            // Get last playback position from localStorage
+            const lastPlaybackData = JSON.parse(localStorage.getItem('lastPlaybackPosition') || 'null');
 
-            // Reader surah cards (text reading)
-            document.querySelectorAll('.read-surah-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    const surahNumber = e.currentTarget.dataset.surah;
-                    this.openQuranReader(surahNumber);
-                });
-            });
+            if (!lastPlaybackData) {
+                console.log('No last playback position found in localStorage');
+                return;
+            }
 
-            // Browse read surahs button
-            document.getElementById('browseReadBtn').addEventListener('click', () => {
-                this.openSurahBrowser(true); // true = reading mode
-            });
+            console.log('Found last playback position:', lastPlaybackData);
 
-            // Quran Reader Modal close events
-            const quranReaderModal = document.getElementById('quranReaderModal');
-            if (quranReaderModal) {
-                quranReaderModal.addEventListener('click', (e) => {
-                    if (e.target.id === 'quranReaderModal') {
-                        this.closeQuranReader();
+            // Set volume if provided
+            if (volume && this.audioPlayerComponent && this.audioPlayerComponent.setVolume) {
+                this.audioPlayerComponent.setVolume(volume);
+            }
+
+            // Start playing from the last position
+            if (this.audioPlayerComponent && this.audioPlayerComponent.playSurah) {
+                // Play the surah
+                this.audioPlayerComponent.playSurah(lastPlaybackData.surahNumber);
+
+                // Seek to the last position after a short delay to let playback start
+                setTimeout(() => {
+                    if (this.audioPlayerComponent && this.audioPlayerComponent.seekTo) {
+                        this.audioPlayerComponent.seekTo(lastPlaybackData.currentTime);
+                        console.log('Auto-play: Seeked to position:', lastPlaybackData.currentTime);
                     }
-                });
+                }, 1000); // 1 second delay
+
+                this.showNotification(`🎵 Auto-playing ${lastPlaybackData.surahName} from ${this.formatTime(lastPlaybackData.currentTime)}`, 'success');
+            } else {
+                console.warn('Audio player component not available for auto-play');
+                this.showNotification('Audio player not ready for auto-play', 'error');
             }
 
-            const readerCloseBtn = document.getElementById('readerClose');
-            if (readerCloseBtn) {
-                readerCloseBtn.addEventListener('click', () => {
-                    this.closeQuranReader();
-                });
-            }
-
-            const closeReaderBtn = document.getElementById('closeReaderBtn');
-            if (closeReaderBtn) {
-                closeReaderBtn.addEventListener('click', () => {
-                    this.closeQuranReader();
-                });
-            }
-
-            // Navigation buttons
-            const prevPageBtn = document.getElementById('prevPageBtn');
-            if (prevPageBtn) {
-                prevPageBtn.addEventListener('click', () => {
-                    this.navigatePage('prev');
-                });
-            }
-
-            const nextPageBtn = document.getElementById('nextPageBtn');
-            if (nextPageBtn) {
-                nextPageBtn.addEventListener('click', () => {
-                    this.navigatePage('next');
-                });
-            }
-
-            // Playback controls - add null checks
-            const playPauseBtn = document.getElementById('playPauseBtn');
-            if (playPauseBtn) {
-                playPauseBtn.addEventListener('click', () => {
-                    this.togglePlayback();
-                });
-            }
-
-            const prevBtn = document.getElementById('prevBtn');
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => {
-                    this.previousSurah();
-                });
-            }
-
-            const nextBtn = document.getElementById('nextBtn');
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => {
-                    this.nextSurah();
-                });
-            }
-
-            // Volume control
-            const volumeSlider = document.getElementById('volumeSlider');
-            if (volumeSlider) {
-                volumeSlider.addEventListener('input', (e) => {
-                    this.setVolume(e.target.value);
-                });
-            }
-
-            // Search functionality
-            const surahSearch = document.getElementById('surahSearch');
-            if (surahSearch) {
-                surahSearch.addEventListener('input', (e) => {
-                    this.handleSearch(e.target.value);
-                });
-            }
-
-            // Browse button
-            const browseBtn = document.getElementById('browseBtn');
-            if (browseBtn) {
-                browseBtn.addEventListener('click', () => {
-                    this.openSurahBrowser();
-                });
-            }
-
-
-
-            // Header language selector
-            const headerLanguageSelect = document.getElementById('headerLanguageSelect');
-            if (headerLanguageSelect) {
-                headerLanguageSelect.addEventListener('change', (e) => {
-                    this.updateLanguageSetting(e.target.value);
-                });
-            }
-
-            // Settings controls
-            const reciterSelect = document.getElementById('reciterSelect');
-            if (reciterSelect) {
-                reciterSelect.addEventListener('change', (e) => {
-                    this.updateReciterSetting(e.target.value);
-                });
-            }
-
-            const autoPlayStartup = document.getElementById('autoPlayStartup');
-            if (autoPlayStartup) {
-                autoPlayStartup.addEventListener('change', (e) => {
-                    this.updateAutoPlaySetting(e.target.checked);
-                });
-            }
-
-            // Playback mode and theme are no longer UI controls - kept as settings only
-
-            const compactMode = document.getElementById('compactMode');
-            if (compactMode) {
-                compactMode.addEventListener('change', (e) => {
-                    this.updateCompactModeSetting(e.target.checked);
-                });
-            }
-
-            const showNotifications = document.getElementById('showNotifications');
-            if (showNotifications) {
-                showNotifications.addEventListener('change', (e) => {
-                    this.updateNotificationsSetting(e.target.checked);
-                });
-            }
-
-            // Islamic reminders settings
-            const enableReminders = document.getElementById('enableReminders');
-            if (enableReminders) {
-                enableReminders.addEventListener('change', (e) => {
-                    this.updateEnableRemindersSetting(e.target.checked);
-                });
-            }
-
-            const reminderIntervalSelect = document.getElementById('reminderIntervalSelect');
-            if (reminderIntervalSelect) {
-                reminderIntervalSelect.addEventListener('change', (e) => {
-                    this.updateReminderIntervalSetting(e.target.value);
-                });
-            }
-
-            // Reminder types
-            ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar'].forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.addEventListener('change', (e) => {
-                        this.updateReminderTypeSetting(id, e.target.checked);
-                    });
-                }
-            });
-
-            const workingHoursOnly = document.getElementById('workingHoursOnly');
-            if (workingHoursOnly) {
-                workingHoursOnly.addEventListener('change', (e) => {
-                    this.updateWorkingHoursSetting(e.target.checked);
-                });
-            }
-
-            // Prayer reminders
-            ['fajrReminder', 'duhrReminder', 'asrReminder', 'maghribReminder', 'ishaReminder'].forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.addEventListener('change', (e) => {
-                        this.updateIslamicReminderSetting(id, e.target.checked);
-                    });
-                }
-            });
-
-            // Prayer Confirmation Modal
-            const prayerYesBtn = document.getElementById('prayerYesBtn');
-            if (prayerYesBtn) {
-                prayerYesBtn.addEventListener('click', () => {
-                    this.confirmPrayerCompleted();
-                });
-            }
-
-            const prayerNoBtn = document.getElementById('prayerNoBtn');
-            if (prayerNoBtn) {
-                prayerNoBtn.addEventListener('click', () => {
-                    this.dismissPrayerConfirmation();
-                });
-            }
-
-            // Advanced settings
-            const cacheSizeSelect = document.getElementById('cacheSizeSelect');
-            if (cacheSizeSelect) {
-                cacheSizeSelect.addEventListener('change', (e) => {
-                    this.updateCacheSizeSetting(e.target.value);
-                });
-            }
-
-            const downloadTimeoutSelect = document.getElementById('downloadTimeoutSelect');
-            if (downloadTimeoutSelect) {
-                downloadTimeoutSelect.addEventListener('change', (e) => {
-                    this.updateDownloadTimeoutSetting(e.target.value);
-                });
-            }
-
-            const retryAttemptsSelect = document.getElementById('retryAttemptsSelect');
-            if (retryAttemptsSelect) {
-                retryAttemptsSelect.addEventListener('change', (e) => {
-                    this.updateRetryAttemptsSetting(e.target.value);
-                });
-            }
-
-            // Surah Browser Modal
-            const modalClose = document.getElementById('modalClose');
-            if (modalClose) {
-                modalClose.addEventListener('click', () => {
-                    this.closeSurahBrowser();
-                });
-            }
-
-            const surahModal = document.getElementById('surahModal');
-            if (surahModal) {
-                surahModal.addEventListener('click', (e) => {
-                    if (e.target.id === 'surahModal') {
-                        this.closeSurahBrowser();
-                    }
-                });
-            }
-
-            // Playback Options Modal
-            const playbackOptionsClose = document.getElementById('playbackOptionsClose');
-            if (playbackOptionsClose) {
-                playbackOptionsClose.addEventListener('click', () => {
-                    this.closePlaybackOptionsModal();
-                });
-            }
-
-            const playbackOptionsModal = document.getElementById('playbackOptionsModal');
-            if (playbackOptionsModal) {
-                playbackOptionsModal.addEventListener('click', (e) => {
-                    if (e.target.id === 'playbackOptionsModal') {
-                        this.closePlaybackOptionsModal();
-                    }
-                });
-            }
-
-            const cancelPlaybackBtn = document.getElementById('cancelPlaybackBtn');
-            if (cancelPlaybackBtn) {
-                cancelPlaybackBtn.addEventListener('click', () => {
-                    this.closePlaybackOptionsModal();
-                });
-            }
-
-            const startPlaybackBtn = document.getElementById('startPlaybackBtn');
-            if (startPlaybackBtn) {
-                startPlaybackBtn.addEventListener('click', () => {
-                    this.startSelectedPlayback();
-                });
-            }
-
-            // Progress bar
-            const progressBar = document.querySelector('.progress-bar');
-            if (progressBar) {
-                progressBar.addEventListener('click', (e) => {
-                    this.seekToPosition(e);
-                });
-            }
-
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                this.handleKeyboard(e);
-            });
-
-            // Theme toggle
-            const themeToggle = document.getElementById('themeToggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', () => {
-                    this.toggleTheme();
-                });
-            }
-
-            // Auto reading controls
-            const autoReadToggle = document.getElementById('autoReadToggle');
-            if (autoReadToggle) {
-                autoReadToggle.addEventListener('click', () => {
-                    this.toggleAutoReading();
-                });
-            }
-
-            const playPauseAutoRead = document.getElementById('playPauseAutoRead');
-            if (playPauseAutoRead) {
-                playPauseAutoRead.addEventListener('click', () => {
-                    this.toggleAutoReadingPlayback();
-                });
-            }
-
-            // Speed control buttons
-            const speedButtons = document.querySelectorAll('.speed-btn');
-            speedButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const speed = parseFloat(e.target.dataset.speed);
-                    this.setAutoReadingSpeed(speed);
-                });
-            });
-
-            // Salawat Counter Increment Button
-            const salawatIncrementBtn = document.getElementById('salawatIncrementBtn');
-            if (salawatIncrementBtn) {
-                salawatIncrementBtn.addEventListener('click', () => {
-                    this.incrementSalawatCounter();
-                });
-            }
-
-            // Tasbih Counter Increment Buttons
-            document.querySelectorAll('.dhikr-increment').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const dhikrType = e.currentTarget.dataset.dhikr;
-                    this.incrementTasbihCounter(dhikrType);
-                });
-            });
-
-            // Istighfar Counter Increment Buttons
-            document.querySelectorAll('[data-dhikr^="istighfar-"]').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const dhikrType = e.currentTarget.dataset.dhikr;
-                    this.incrementIstighfarCounter(dhikrType.replace('istighfar-', ''));
-                });
-            });
-
-            // Adhkar Counter Increment Buttons
-            document.querySelectorAll('[data-dhikr^="adhkar-"]').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const dhikrType = e.currentTarget.dataset.dhikr;
-                    this.incrementAdhkarCounter(dhikrType.replace('adhkar-', ''));
-                });
-            });
         } catch (error) {
-            console.warn('Failed to bind some events:', error);
+            console.error('Error handling auto-play startup:', error);
+            this.showNotification('Failed to start auto-play', 'error');
         }
     }
 
-    // Core functionality
-    playSurah(surahNumber) {
-        const surah = this.surahData.find(s => s.number === parseInt(surahNumber));
-        if (!surah) {return;}
-
-        this.currentSurah = surah;
-        this.isPlaying = true;
-
-        this.updateNowPlaying();
-        this.updatePlaybackControls();
-        this.showNotification(window.localization.getString('playingSurah', {
-            surahName: surah.name,
-            arabicName: surah.arabicName
-        }));
-
-        // Send message to extension
-        this.postMessage('playQuran', { surah: surahNumber });
+    // Format time in seconds to MM:SS format
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
-    togglePlayback() {
-        if (this.isPlaying) {
-            this.pauseAudio();
-        } else {
-            this.resumeAudio();
-        }
-    }
+    // Handle Friday Surah Al-Kahf enforcement
+    handleEnforceFridaySurahKahf(surahNumber, message) {
+        console.log('Handling Friday Surah Al-Kahf enforcement:', surahNumber, message);
 
-    previousSurah() {
-        if (!this.currentSurah) {return;}
+        try {
+            // Show special Friday notification
+            this.showNotification(message, 'success');
 
-        const currentIndex = this.surahData.findIndex(s => s.number === this.currentSurah.number);
-        const prevIndex = Math.max(0, currentIndex - 1);
-        this.playSurah(this.surahData[prevIndex].number.toString());
-    }
+            // Open Quran reader for Surah Al-Kahf (18)
+            this.openQuranReader(surahNumber);
 
-    nextSurah() {
-        if (!this.currentSurah) {return;}
-
-        const currentIndex = this.surahData.findIndex(s => s.number === this.currentSurah.number);
-        const nextIndex = Math.min(this.surahData.length - 1, currentIndex + 1);
-        this.playSurah(this.surahData[nextIndex].number.toString());
-    }
-
-    setVolume(value) {
-        this.volume = parseInt(value);
-        document.getElementById('volumeValue').textContent = `${this.volume}%`;
-        // Apply volume immediately to current audio
-        if (this.audioElement) {
-            this.audioElement.volume = this.volume / 100;
-        }
-        this.postMessage('setQuranVolume', { volume: this.volume / 100 });
-        this.saveSettings();
-    }
-
-    // UI Updates
-    updateUI() {
-        this.updateNowPlaying();
-        this.updatePlaybackControls();
-        this.updateVolumeDisplay();
-    }
-
-    updateNowPlaying() {
-        const nowPlayingEl = document.getElementById('nowPlaying');
-
-        if (this.currentSurah) {
-            document.getElementById('currentSurah').textContent = this.currentSurah.name;
-            document.getElementById('currentSurahArabic').textContent = this.currentSurah.arabicName;
-            nowPlayingEl.style.display = 'block';
-
-            // Animate in
-            nowPlayingEl.style.animation = 'none';
+            // Start audio playback after a short delay to let the reader load
             setTimeout(() => {
-                nowPlayingEl.style.animation = 'slideIn 0.3s ease-out';
-            }, 10);
-        } else {
-            nowPlayingEl.style.display = 'none';
+                if (this.audioPlayerComponent && this.audioPlayerComponent.playSurah) {
+                    console.log('Starting Surah Al-Kahf audio playback for Friday enforcement');
+                    this.audioPlayerComponent.playSurah(surahNumber);
+
+                    // Mark as started in the extension
+                    vscode.postMessage({
+                        type: 'fridaySurahStarted',
+                        surahNumber: surahNumber
+                    });
+                } else {
+                    console.warn('Audio player component not available for Friday Surah enforcement');
+                }
+            }, 2000); // 2 second delay to let reader load
+
+        } catch (error) {
+            console.error('Error handling Friday Surah Al-Kahf enforcement:', error);
+            this.showNotification('Failed to start Friday Surah Al-Kahf reading session', 'error');
         }
     }
 
-    updatePlaybackControls() {
-        const playPauseIcon = document.getElementById('playPauseIcon');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-
-        if (this.isPlaying) {
-            playPauseIcon.textContent = '⏸️';
-            playPauseBtn.classList.add('playing');
-        } else {
-            playPauseIcon.textContent = '▶️';
-            playPauseBtn.classList.remove('playing');
-        }
-    }
-
-    updateVolumeDisplay() {
-        const volumeSlider = document.getElementById('volumeSlider');
-        const volumeValue = document.getElementById('volumeValue');
-
-        if (volumeSlider) {
-            volumeSlider.value = this.volume;
-        }
-        if (volumeValue) {volumeValue.textContent = `${this.volume}%`;}
-    }
-
-    // Search functionality
+    // Shared functionality across components
     handleSearch(query) {
-        clearTimeout(this.searchTimeout);
-
-        if (query.length < 2) {
+        if (!query || query.length < 2) {
             this.clearSearchHighlights();
             return;
         }
 
-        this.searchTimeout = setTimeout(() => {
-            this.performSearch(query);
-        }, 300);
-    }
+        // Use the audio player component's surah data for search
+        if (this.audioPlayerComponent && this.audioPlayerComponent.getSurahData) {
+            const surahData = this.audioPlayerComponent.getSurahData();
+            const filteredSurahs = surahData.filter(surah =>
+                surah.name.toLowerCase().includes(query.toLowerCase()) ||
+                surah.arabicName.includes(query) ||
+                surah.number.toString().includes(query)
+            );
 
-    performSearch(query) {
-        const filteredSurahs = this.surahData.filter(surah =>
-            surah.name.toLowerCase().includes(query.toLowerCase()) ||
-            surah.arabicName.includes(query) ||
-            surah.number.toString().includes(query)
-        );
-
-        this.highlightSearchResults(filteredSurahs);
+            this.highlightSearchResults(filteredSurahs);
+        }
     }
 
     highlightSearchResults(results) {
@@ -654,511 +352,126 @@ class QuranActivityBar {
         });
     }
 
-    // Modal functionality
-    openSurahBrowser() {
-        const modal = document.getElementById('surahModal');
-        const surahList = document.getElementById('surahList');
+    populateSurahModal() {
+        console.log('Populating surah modal with surahs');
 
-        // Populate surah list
-        surahList.innerHTML = '';
-        this.surahData.forEach(surah => {
-            const surahItem = document.createElement('div');
-            surahItem.className = 'surah-item';
-            surahItem.innerHTML = `
-                <div class="surah-info">
-                    <div class="surah-number">${surah.number}</div>
-                    <div class="surah-details">
-                        <div class="surah-name">${surah.name}</div>
-                        <div class="surah-meta">${surah.verses} verses • ${surah.type}</div>
-                    </div>
-                </div>
-                <div class="surah-arabic">${surah.arabicName}</div>
+        const surahModalContent = document.getElementById('surahModalContent');
+        if (!surahModalContent) {
+            console.error('Surah modal content element not found');
+            return;
+        }
+
+        // Clear existing content
+        surahModalContent.innerHTML = '';
+
+        // Create search input
+        const searchContainer = document.createElement('div');
+        searchContainer.className = 'search-container';
+        searchContainer.innerHTML = `
+            <input type="text" id="surahSearch" placeholder="Search surahs..." class="search-input">
+        `;
+
+        // Create surahs grid
+        const surahsGrid = document.createElement('div');
+        surahsGrid.className = 'surahs-grid';
+        surahsGrid.id = 'surahsGrid';
+
+        // Populate surahs
+        const surahs = this.surahData;
+        surahs.forEach(surah => {
+            const surahCard = document.createElement('div');
+            surahCard.className = 'surah-card';
+            surahCard.dataset.surah = surah.number;
+            surahCard.onclick = () => this.selectSurah(surah.number);
+
+            surahCard.innerHTML = `
+                <div class="surah-number">${surah.number}</div>
+                <div class="surah-name-arabic">${surah.arabicName}</div>
+                <div class="surah-name-english">${surah.name}</div>
+                <div class="surah-info">${surah.verses} verses • ${surah.type}</div>
             `;
 
-            surahItem.addEventListener('click', () => {
-                this.showPlaybackOptionsModal(surah.number.toString());
-                this.closeSurahBrowser();
-            });
-
-            surahList.appendChild(surahItem);
+            surahsGrid.appendChild(surahCard);
         });
 
-        modal.style.display = 'flex';
-        modal.style.animation = 'fadeIn 0.3s ease-out';
+        // Assemble modal
+        surahModalContent.appendChild(searchContainer);
+        surahModalContent.appendChild(surahsGrid);
 
         // Focus search input
-        document.getElementById('surahSearch').focus();
-    }
-
-    closeSurahBrowser() {
-        const modal = document.getElementById('surahModal');
-        modal.style.animation = 'fadeOut 0.3s ease-out';
-
         setTimeout(() => {
+            const searchInput = document.getElementById('surahSearch');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }, 100);
+    }
+
+    selectSurah(surahNumber) {
+        console.log('Selected surah:', surahNumber, 'reading mode:', this.currentReadingMode);
+
+        // Close the surah browser modal
+        const modal = document.getElementById('surahModal');
+        if (modal) {
             modal.style.display = 'none';
-        }, 300);
-    }
-
-    // View switching functionality
-    showMainView() {
-        const playerCard = document.getElementById('player-card');
-        const islamicCard = document.getElementById('islamic-info-card');
-        const settingsView = document.getElementById('settingsActivityBarView');
-
-        if (playerCard) {
-            playerCard.style.display = 'block';
-        }
-        if (islamicCard) {
-            islamicCard.style.display = 'block';
-        }
-        if (settingsView) {
-            settingsView.style.display = 'none';
         }
 
-        // Disable settings stylesheet when going back to main view
-        const settingsStylesheet = document.getElementById('settingsStylesheet');
-        if (settingsStylesheet) {
-            settingsStylesheet.disabled = true;
-        }
-    }
-
-    showSettingsView() {
-        const playerCard = document.getElementById('player-card');
-        const islamicCard = document.getElementById('islamic-info-card');
-        const settingsView = document.getElementById('settingsActivityBarView');
-
-        if (playerCard) {playerCard.style.display = 'none';}
-        if (islamicCard) {islamicCard.style.display = 'none';}
-        if (settingsView) {settingsView.style.display = 'block';}
-
-        // Enable settings stylesheet and script
-        const settingsStylesheet = document.getElementById('settingsStylesheet');
-        if (settingsStylesheet) {
-            settingsStylesheet.disabled = false;
-        }
-
-        // Settings content is already loaded by the HTML template
-        // Initialize settings if needed
-        this.initializeSettings();
-    }
-
-    openSettingsPopup() {
-        // Execute VS Code command to open settings popup
-        this.postMessage('executeCommand', { command: 'codeTune.openSettings' });
-    }
-
-    initializeSettings() {
-        // Settings JavaScript is loaded by the HTML template
-        // Ensure the settings manager is ready
-        if (typeof window.initializeSettingsActivityBar === 'function') {
-            window.initializeSettingsActivityBar();
-        }
-    }
-
-    // Progress and seeking
-    seekToPosition(event) {
-        const progressBar = event.currentTarget;
-        const rect = progressBar.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const percentage = clickX / rect.width;
-
-        document.querySelector('.progress-fill').style.width = `${percentage * 100}%`;
-
-        // Send seek message to extension
-        this.postMessage('seek', { position: percentage });
-    }
-
-    // Keyboard shortcuts
-    handleKeyboard(event) {
-        // Only handle if not typing in input
-        if (event.target.tagName === 'INPUT' && event.target.type !== 'radio') {return;}
-
-        // Don't handle keyboard shortcuts when modals are open
-        const playbackModal = document.getElementById('playbackOptionsModal');
-        const surahModal = document.getElementById('surahModal');
-        const quranReaderModal = document.getElementById('quranReaderModal');
-
-        // Handle Quran Reader modal keyboard navigation
-        if (quranReaderModal && quranReaderModal.style.display === 'flex') {
-            switch(event.key) {
-                case 'ArrowUp':
-                    event.preventDefault();
-                    this.scrollQuranReaderPage('up');
-                    break;
-                case 'ArrowDown':
-                    event.preventDefault();
-                    this.scrollQuranReaderPage('down');
-                    break;
-                case 'ArrowLeft':
-                    event.preventDefault();
-                    this.navigatePage('prev');
-                    break;
-                case 'ArrowRight':
-                    event.preventDefault();
-                    this.navigatePage('next');
-                    break;
-                case 'Escape':
-                    event.preventDefault();
-                    this.closeQuranReader();
-                    break;
-                case 'Home':
-                    event.preventDefault();
-                    // Scroll to top of current page
-                    const displayEl = document.getElementById('quranTextDisplay');
-                    if (displayEl) {displayEl.scrollTop = 0;}
-                    break;
-                case 'End':
-                    event.preventDefault();
-                    // Scroll to bottom of current page
-                    const displayEl2 = document.getElementById('quranTextDisplay');
-                    if (displayEl2) {displayEl2.scrollTop = displayEl2.scrollHeight;}
-                    break;
-            }
-            return;
-        }
-
-        // Handle other modals (playback, surah browser)
-        if ((playbackModal && playbackModal.style.display === 'flex') ||
-            (surahModal && surahModal.style.display === 'flex')) {
-            // Only handle Escape for modals
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                this.closePlaybackOptionsModal();
-                this.closeSurahBrowser();
-            }
-            return;
-        }
-
-        switch(event.key) {
-            case ' ':
-                event.preventDefault();
-                this.togglePlayback();
-                break;
-            case 'ArrowLeft':
-                if (event.ctrlKey || event.metaKey) {
-                    event.preventDefault();
-                    this.previousSurah();
-                }
-                break;
-            case 'ArrowRight':
-                if (event.ctrlKey || event.metaKey) {
-                    event.preventDefault();
-                    this.nextSurah();
-                }
-                break;
-            case 'ArrowUp':
-                event.preventDefault();
-                this.setVolume(Math.min(100, this.volume + 5));
-                break;
-            case 'ArrowDown':
-                event.preventDefault();
-                this.setVolume(Math.max(0, this.volume - 5));
-                break;
-            case 'Escape':
-                this.closeSurahBrowser();
-                this.closePlaybackOptionsModal();
-                break;
-        }
-    }
-
-    // Settings persistence
-    saveSettings() {
-        const settings = {
-            volume: this.volume,
-            playbackMode: this.playbackMode,
-            reciter: this.reciter,
-            audioQuality: this.audioQuality,
-            autoPlayStartup: this.autoPlayStartup,
-            theme: this.theme,
-            compactMode: this.compactMode,
-            showNotifications: this.showNotifications,
-            language: this.language,
-            enableReminders: this.enableReminders,
-            reminderInterval: this.reminderInterval,
-            reminderTypes: this.reminderTypes,
-            workingHoursOnly: this.workingHoursOnly,
-            islamicReminders: this.islamicReminders,
-            cacheSize: this.cacheSize,
-            downloadTimeout: this.downloadTimeout,
-            retryAttempts: this.retryAttempts
-        };
-
-        localStorage.setItem('quranPlayerSettings', JSON.stringify(settings));
-    }
-
-    updateLanguageSetting(language) {
-        this.language = language;
-
-        // Update localStorage immediately to ensure localization system knows about the change
-        try {
-            const tuneSettings = JSON.parse(localStorage.getItem('codeTuneSettings') || '{}');
-            tuneSettings.language = language;
-            localStorage.setItem('codeTuneSettings', JSON.stringify(tuneSettings));
-            console.log('Updated codeTuneSettings to:', tuneSettings);
-        } catch (error) {
-            console.warn('Failed to update localStorage:', error);
-        }
-
-        // Tell extension to update the global configuration
-        this.postMessage('updateLanguageSetting', { language: language });
-
-        // Update the UI selector immediately
-        const headerLanguageSelect = document.getElementById('headerLanguageSelect');
-        if (headerLanguageSelect) {
-            headerLanguageSelect.value = language;
-        }
-
-        // Ensure localization is updated
-        if (window.localization) {
-            window.localization.refreshLocalization();
-        }
-
-        // Localize notification message
-        const notificationMessage = window.localization ? window.localization.getString('language', 'Language updated successfully') : 'Language updated successfully';
-        this.showNotification(notificationMessage, 'success');
-        this.saveSettings();
-    }
-
-    updateReciterSetting(reciter) {
-        this.reciter = reciter;
-        this.postMessage('updateReciter', { reciter: reciter });
-        this.showNotification('Quran reciter updated successfully', 'success');
-        this.saveSettings();
-    }
-
-    updateAutoPlaySetting(enabled) {
-        this.autoPlayStartup = enabled;
-        this.showNotification(enabled ? 'Auto-play on startup enabled' : 'Auto-play on startup disabled', 'success');
-        this.saveSettings();
-    }
-
-    updateCompactModeSetting(enabled) {
-        this.compactMode = enabled;
-        this.showNotification(enabled ? 'Compact mode enabled' : 'Compact mode disabled', 'success');
-        this.saveSettings();
-    }
-
-    updateNotificationsSetting(enabled) {
-        this.showNotifications = enabled;
-        this.showNotification(enabled ? 'Notifications enabled' : 'Notifications disabled', 'success');
-        this.saveSettings();
-    }
-
-    updateEnableRemindersSetting(enabled) {
-        this.enableReminders = enabled;
-
-        // Update Islamic reminders manager
-        this.postMessage('updateIslamicReminders', {
-            settings: this.getIslamicRemindersSettings()
-        });
-
-        this.showNotification(enabled ? 'Islamic reminders enabled' : 'Islamic reminders disabled', 'success');
-        this.saveSettings();
-    }
-
-    updateReminderIntervalSetting(interval) {
-        this.reminderInterval = parseInt(interval);
-
-        // Update Islamic reminders manager
-        this.postMessage('updateIslamicReminders', {
-            settings: this.getIslamicRemindersSettings()
-        });
-
-        this.showNotification(`Reminder interval set to ${interval} minutes`, 'success');
-        this.saveSettings();
-    }
-
-    updateReminderTypeSetting(type, enabled) {
-        this.reminderTypes[type] = enabled;
-
-        // Update Islamic reminders manager
-        this.postMessage('updateIslamicReminders', {
-            settings: this.getIslamicRemindersSettings()
-        });
-
-        const typeName = type === 'showAdia' ? 'Adia' :
-                        type === 'showAhadis' ? 'Ahadis' :
-                        type === 'showMorningAzkar' ? 'Morning Azkar' :
-                        type === 'showEveningAzkar' ? 'Evening Azkar' :
-                        'Islamic Wisdom';
-        this.showNotification(`${typeName} ${enabled ? 'enabled' : 'disabled'}`, 'success');
-        this.saveSettings();
-    }
-
-    updateWorkingHoursSetting(enabled) {
-        this.workingHoursOnly = enabled;
-
-        // Update Islamic reminders manager
-        this.postMessage('updateIslamicReminders', {
-            settings: this.getIslamicRemindersSettings()
-        });
-
-        this.showNotification(enabled ? 'Working hours only enabled' : 'Working hours only disabled', 'success');
-        this.saveSettings();
-    }
-
-    updateIslamicReminderSetting(id, checked) {
-        const reminderKey = id.replace('Reminder', '').toLowerCase();
-        this.islamicReminders[reminderKey] = checked;
-
-        // Update Islamic reminders manager
-        this.postMessage('updateIslamicReminders', { settings: this.islamicReminders });
-
-        this.saveSettings();
-    }
-
-    updateCacheSizeSetting(size) {
-        this.cacheSize = parseInt(size);
-        this.showNotification(`Cache size set to ${size} MB`, 'success');
-        this.saveSettings();
-    }
-
-    updateDownloadTimeoutSetting(timeout) {
-        this.downloadTimeout = parseInt(timeout);
-        this.showNotification(`Download timeout set to ${timeout} seconds`, 'success');
-        this.saveSettings();
-    }
-
-    updateRetryAttemptsSetting(attempts) {
-        this.retryAttempts = parseInt(attempts);
-        this.showNotification(`Retry attempts set to ${attempts}`, 'success');
-        this.saveSettings();
-    }
-
-    getIslamicRemindersSettings() {
-        return {
-            enableReminders: this.enableReminders,
-            reminderInterval: this.reminderInterval,
-            showAdia: this.reminderTypes.showAdia,
-            showAhadis: this.reminderTypes.showAhadis,
-            showWisdom: this.reminderTypes.showWisdom,
-            showMorningAzkar: this.reminderTypes.showMorningAzkar,
-            showEveningAzkar: this.reminderTypes.showEveningAzkar,
-            workingHoursOnly: this.workingHoursOnly
-        };
-    }
-
-    // Send current settings to extension for QuranPlayer initialization
-    sendSettingsToExtension() {
-        try {
-            const settings = JSON.parse(localStorage.getItem('quranPlayerSettings') || '{}');
-            const reciter = settings.reciter || 'ar.alafasy';
-
-            // Send the current reciter setting to extension to update QuranPlayer
-            this.postMessage('updateReciter', { reciter: reciter });
-            console.log('Sent initial reciter setting to extension:', reciter);
-        } catch (error) {
-            console.warn('Failed to send settings to extension:', error);
-        }
-    }
-
-    loadSettings() {
-        try {
-            const settings = JSON.parse(localStorage.getItem('quranPlayerSettings') || '{}');
-
-            // Migration: Convert old 'default' reciter to 'ar.alafasy'
-            if (settings.reciter === 'default') {
-                settings.reciter = 'ar.alafasy';
-                localStorage.setItem('quranPlayerSettings', JSON.stringify(settings));
-                console.log('Migrated old reciter setting from default to ar.alafasy');
-            }
-
-            // Load all settings with defaults
-            this.volume = settings.volume || 70;
-            this.playbackMode = settings.playbackMode || 'surah';
-            this.reciter = settings.reciter || 'ar.alafasy';
-            this.audioQuality = settings.audioQuality || '128';
-            this.autoPlayStartup = settings.autoPlayStartup || false;
-            this.theme = settings.theme || 'auto';
-            this.compactMode = settings.compactMode || false;
-            this.showNotifications = settings.showNotifications !== false; // Default true
-            this.language = settings.language || 'auto';
-            this.enableReminders = settings.enableReminders !== false; // Default true
-            this.reminderInterval = settings.reminderInterval || 30;
-            this.reminderTypes = settings.reminderTypes || {
-                showAdia: true,
-                showAhadis: true,
-                showWisdom: true,
-                showMorningAzkar: true,
-                showEveningAzkar: true
-            };
-            this.workingHoursOnly = settings.workingHoursOnly || false;
-            this.islamicReminders = settings.islamicReminders || {
-                fajr: false,
-                dhuhr: false,
-                asr: false,
-                maghrib: false,
-                isha: false
-            };
-            this.cacheSize = settings.cacheSize || 100;
-            this.downloadTimeout = settings.downloadTimeout || 30;
-            this.retryAttempts = settings.retryAttempts || 3;
-
-            // Load listening statistics
-            this.loadListeningStats();
-
-            // Set theme
-            if (this.theme === 'light') {
-                document.body.classList.add('light-theme');
-                document.body.classList.remove('dark-theme');
-            } else if (this.theme === 'dark') {
-                document.body.classList.add('dark-theme');
-                document.body.classList.remove('light-theme');
+        // Either start playing audio or open reader based on mode
+        if (this.currentReadingMode) {
+            // Reading mode - open Quran reader
+            this.openQuranReader(surahNumber);
+        } else {
+            // Audio mode - start audio playback
+            if (this.audioPlayerComponent && this.audioPlayerComponent.playSurah) {
+                this.audioPlayerComponent.playSurah(surahNumber);
             } else {
-                // Auto theme
-                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.body.classList.toggle('dark-theme', isDark);
-                document.body.classList.toggle('light-theme', !isDark);
+                console.warn('Audio player component not available');
+                this.showNotification('Audio player not ready', 'error');
             }
-
-            // Set UI elements
-            this.updateSettingsUI();
-            this.updateListeningStatsDisplay();
-
-            this.updateUI();
-        } catch (error) {
-            console.warn('Failed to load settings:', error);
         }
     }
 
-    updateReadingProgress() {
-        // Load reading progress from localStorage
-        try {
-            const readingProgress = JSON.parse(localStorage.getItem('quranReadingProgress') || '{}');
-            const lastSurah = readingProgress.lastSurah;
-            const lastPage = readingProgress.lastPage;
+    openSurahBrowser(readingMode = false) {
+        console.log('Opening surah browser, reading mode:', readingMode);
 
-            if (lastSurah) {
-                const surah = this.surahData.find(s => s.number === lastSurah);
-                if (surah) {
-                    const progressEl = document.getElementById('readingProgress');
-                    if (progressEl) {
-                        progressEl.innerHTML = `
-                            <div class="last-read">
-                                Last read: ${surah.name} (Page ${lastPage || 1})
-                            </div>
-                            <button class="continue-reading-btn" onclick="window.quranActivityBar.continueReading()">
-                                Continue Reading
-                            </button>
-                        `;
-                    }
-                }
-            }
-        } catch (error) {
-            console.warn('Failed to load reading progress:', error);
+        // Populate the modal with surahs
+        this.populateSurahModal();
+
+        // Show the modal
+        const modal = document.getElementById('surahModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.animation = 'fadeIn 0.3s ease-out';
         }
+
+        // Store the mode for later use when a surah is selected
+        this.currentReadingMode = readingMode;
     }
 
+    // Quran Reader methods (keeping here as shared)
     openQuranReader(surahNumber) {
         console.log('Opening Quran reader for surah:', surahNumber);
+
+        // Check if any other modals are open and close them
+        const modals = ['surahModal', 'playbackOptionsModal', 'prayerConfirmModal'];
+        modals.forEach(modalId => {
+            const modal = document.getElementById(modalId);
+            if (modal && modal.style.display === 'flex') {
+                console.log('Closing conflicting modal:', modalId);
+                modal.style.display = 'none';
+            }
+        });
 
         this.currentReadingSurah = parseInt(surahNumber);
         const surah = this.surahData.find(s => s.number === this.currentReadingSurah);
 
         if (!surah) {
+            console.error('Surah not found:', surahNumber);
             this.showNotification('Surah not found', 'error');
             return;
         }
+
+        console.log('Found surah:', surah);
 
         // Load reading position from localStorage
         try {
@@ -1175,18 +488,749 @@ class QuranActivityBar {
         // Calculate total pages for this surah
         this.totalReadingPages = Math.ceil(surah.verses / this.versesPerPage);
 
+        console.log('Calculated total pages:', this.totalReadingPages);
+
         // Update modal title
-        document.getElementById('readerSurahTitle').textContent = `${surah.arabicName} (${surah.name})`;
+        const titleElement = document.getElementById('readerSurahTitle');
+        if (titleElement) {
+            titleElement.textContent = `${surah.arabicName} (${surah.name})`;
+            console.log('Updated modal title to:', titleElement.textContent);
+        } else {
+            console.error('readerSurahTitle element not found');
+        }
 
         // Show modal
-        document.getElementById('quranReaderModal').style.display = 'flex';
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.zIndex = '10000'; // Ensure it's on top
+            console.log('Modal display set to flex, z-index set to 10000');
+            this.isReaderModalOpen = true; // Track modal state
+        } else {
+            console.error('quranReaderModal element not found');
+            return;
+        }
+
+        // Set up modal event listeners
+        this.setupReaderModalControls();
 
         // Load and display verses for current page
         this.loadReaderPage(this.currentReadingPage);
     }
 
+
+
+    updateReaderNavigation(pageNumber) {
+        // Update page info
+        document.getElementById('pageInfo').textContent = `Page ${pageNumber}/${this.totalReadingPages}`;
+        document.getElementById('currentPageNumber').textContent = pageNumber;
+        document.getElementById('totalPages').textContent = this.totalReadingPages;
+
+        // Update navigation buttons
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+
+        if (prevBtn) {
+            prevBtn.style.opacity = pageNumber === 1 ? '0.5' : '1';
+            prevBtn.disabled = pageNumber === 1;
+        }
+
+        if (nextBtn) {
+            nextBtn.style.opacity = pageNumber === this.totalReadingPages ? '0.5' : '1';
+            nextBtn.disabled = pageNumber === this.totalReadingPages;
+        }
+    }
+
+    navigatePage(direction) {
+        let newPage = this.currentReadingPage;
+
+        if (direction === 'prev' && this.currentReadingPage > 1) {
+            newPage = this.currentReadingPage - 1;
+        } else if (direction === 'next' && this.currentReadingPage < this.totalReadingPages) {
+            newPage = this.currentReadingPage + 1;
+        }
+
+        if (newPage !== this.currentReadingPage) {
+            this.currentReadingPage = newPage;
+            this.loadReaderPage(newPage);
+        }
+    }
+
+    saveReadingProgress(surah, page) {
+        try {
+            const readingProgress = {
+                lastSurah: surah,
+                lastPage: page,
+                lastUpdated: new Date().toISOString()
+            };
+            localStorage.setItem('quranReadingProgress', JSON.stringify(readingProgress));
+        } catch (error) {
+            console.warn('Failed to save reading progress:', error);
+        }
+    }
+
+    closeQuranReader() {
+        // Record final page reading time
+        this.recordPageReadingTime();
+
+        // Check if this was a Friday Surah Al-Kahf reading session
+        if (this.currentReadingSurah === 18) {
+            console.log('Friday Surah Al-Kahf reading session completed');
+            // Mark as completed in the extension
+            vscode.postMessage({
+                type: 'fridaySurahCompleted',
+                surahNumber: 18
+            });
+        }
+
+        // Close the modal directly
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+
+        // Update modal state
+        this.isReaderModalOpen = false;
+
+        // Stop any auto reading
+        this.stopAutoReading();
+
+        this.currentReadingSurah = null;
+        this.currentReadingPage = 1;
+        this.totalReadingPages = 1;
+    }
+
+    // Set up event listeners for reader modal controls
+    setupReaderModalControls() {
+        console.log('Setting up reader modal controls');
+
+        // Close buttons
+        const readerCloseBtn = document.getElementById('readerClose');
+        if (readerCloseBtn) {
+            readerCloseBtn.onclick = () => this.closeQuranReader();
+        }
+
+        const closeReaderBtn = document.getElementById('closeReaderBtn');
+        if (closeReaderBtn) {
+            closeReaderBtn.onclick = () => this.closeQuranReader();
+        }
+
+        // Navigation buttons
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        if (prevPageBtn) {
+            prevPageBtn.onclick = () => this.navigatePage('prev');
+        }
+
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        if (nextPageBtn) {
+            nextPageBtn.onclick = () => this.navigatePage('next');
+        }
+
+        // Auto reading controls
+        const autoReadToggle = document.getElementById('autoReadToggle');
+        if (autoReadToggle) {
+            autoReadToggle.onclick = () => this.toggleAutoReading();
+        }
+
+        const playPauseAutoRead = document.getElementById('playPauseAutoRead');
+        if (playPauseAutoRead) {
+            playPauseAutoRead.onclick = (e) => {
+                // Prevent click if button is disabled
+                if (playPauseAutoRead.disabled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                this.toggleAutoReadingPlayback();
+            };
+        }
+
+        // Speed control buttons
+        document.querySelectorAll('.speed-btn').forEach(button => {
+            button.onclick = (e) => {
+                const speed = parseFloat(e.target.dataset.speed);
+                this.setAutoReadingSpeed(speed);
+            };
+        });
+
+        // Modal click outside to close
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.onclick = (e) => {
+                if (e.target.id === 'quranReaderModal') {
+                    this.closeQuranReader();
+                }
+            };
+        }
+    }
+
+    // Auto Reading methods (keeping here as shared)
+    toggleAutoReading() {
+        console.log('Toggle auto reading called, current state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled);
+
+        // State machine: prevent operations during transitions
+        if (this.autoReadingState === 'starting' || this.autoReadingState === 'stopping') {
+            console.log('🔍 DEBUG: Operation in progress, ignoring toggle');
+            return;
+        }
+
+        // Don't allow toggling if modal is not open - show warning
+        if (!this.isReaderModalOpen) {
+            console.log('🔍 DEBUG: Modal not visible for auto-reading toggle');
+            this.showNotification('Please open Quran Reader first to enable auto-reading', 'error');
+            return;
+        }
+
+        this.autoReadingEnabled = !this.autoReadingEnabled;
+
+        const toggleBtn = document.getElementById('autoReadToggle');
+        const speedControls = document.getElementById('speedControls');
+        const playBtn = document.getElementById('playPauseAutoRead');
+
+        console.log('Button found:', !!toggleBtn);
+        console.log('Speed controls found:', !!speedControls);
+        console.log('Play button found:', !!playBtn);
+
+        if (this.autoReadingEnabled) {
+            toggleBtn?.classList.add('active');
+            const textSpan = toggleBtn?.querySelector('[data-localize="autoReading"]') || toggleBtn?.querySelectorAll('span')[1];
+            console.log('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
+            if (textSpan) {textSpan.innerText = 'Auto Reading: ON';}
+            if (speedControls) {speedControls.style.display = 'flex';}
+            if (playBtn) {
+                playBtn.disabled = false;
+                playBtn.classList.remove('disabled');
+                const icon = playBtn.querySelector('.icon');
+                if (icon) {icon.textContent = '⏸️';} // Already playing
+            }
+            console.log('Auto reading mode enabled');
+
+            // Show the speed indicator in main activity bar
+            this.showAutoReadingIndicator();
+
+            // Auto-start scrolling when toggled on - this is what the user expects
+            this.startAutoReading();
+        } else {
+            // Stop any current scrolling and disable the mode
+            this.stopAutoReading();
+
+            toggleBtn?.classList.remove('active');
+            const textSpan = toggleBtn?.querySelector('[data-localize="autoReading"]') || toggleBtn?.querySelectorAll('span')[1];
+            console.log('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
+            if (textSpan) {textSpan.innerText = 'Auto Reading';}
+            if (speedControls) {speedControls.style.display = 'none';}
+            if (playBtn) {
+                playBtn.disabled = true;
+                playBtn.classList.add('disabled');
+                const icon = playBtn.querySelector('.icon');
+                if (icon) {icon.textContent = '▶️';}
+            }
+            console.log('Auto reading mode disabled');
+
+            // Hide the speed indicator in main activity bar
+            this.hideAutoReadingIndicator();
+
+            this.showNotification('Auto-reading mode disabled', 'info');
+        }
+    }
+
+    setAutoReadingSpeed(speed) {
+        this.autoReadingSpeed = parseFloat(speed);
+
+        // Update speed button states in modal
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (parseFloat(btn.dataset.speed) === speed) {
+                btn.classList.add('active');
+            }
+        });
+
+        // Update the indicator display in main activity bar
+        this.updateSpeedIndicatorDisplay();
+    }
+
+    toggleAutoReadingPlayback() {
+        console.log('toggleAutoReadingPlayback called - state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled, 'active:', this.autoReadingActive);
+
+        // State machine: prevent operations during transitions
+        if (this.autoReadingState === 'starting' || this.autoReadingState === 'stopping') {
+            console.log('🔍 DEBUG: Operation in progress, ignoring playback toggle');
+            return;
+        }
+
+        if (!this.autoReadingEnabled) {
+            console.log('Auto reading not enabled - cannot start');
+            return;
+        }
+
+        if (this.autoReadingActive) {
+            console.log('Stopping auto reading');
+            this.stopAutoReading();
+        } else {
+            console.log('Starting auto reading');
+            this.startAutoReading();
+        }
+    }
+
+
+
+    stopAutoReading() {
+        if (!this.autoReadingActive) {return;}
+
+        console.log('Stopping auto reading');
+
+        // Set state to stopping
+        this.autoReadingState = 'stopping';
+
+        this.autoReadingActive = false;
+
+        // Remove CSS class from modal
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.classList.remove('auto-reading-active');
+
+            // Remove any residue current-reading classes
+            const currentReadingVerses = modal.querySelectorAll('.current-reading');
+            currentReadingVerses.forEach(verse => {
+                verse.classList.remove('current-reading');
+            });
+        }
+
+        if (this.autoReadingInterval) {
+            clearInterval(this.autoReadingInterval);
+            this.autoReadingInterval = null;
+        }
+
+        // Stop adaptive speed adjustment
+        this.stopAdaptiveSpeedAdjustment();
+
+        // Reset state to idle
+        this.autoReadingState = 'idle';
+
+        this.updateAutoReadingUI(false);
+        this.showNotification('Auto reading stopped', 'info');
+    }
+
+    performAutoScroll() {
+        // Comprehensive safety checks with debug logging
+        console.log('🔍 DEBUG: performAutoScroll called', {
+            autoReadingActive: this.autoReadingActive,
+            autoReadingEnabled: this.autoReadingEnabled,
+            speed: this.autoReadingSpeed
+        });
+
+        if (!this.autoReadingActive) {
+            console.log('performAutoScroll: Auto reading not active, exiting');
+            return;
+        }
+
+        if (!this.autoReadingEnabled) {
+            console.log('performAutoScroll: Auto reading not enabled, stopping');
+            this.stopAutoReading();
+            return;
+        }
+
+        // Simple modal state check using our state flag
+        if (!this.isReaderModalOpen) {
+            console.log('performAutoScroll: Quran reader modal not visible, stopping auto-reading');
+            this.stopAutoReading();
+            return;
+        }
+
+        try {
+            const displayEl = document.getElementById('quranTextDisplay');
+            console.log('🔍 DEBUG: Display element check', {
+                elementExists: !!displayEl,
+                scrollHeight: displayEl?.scrollHeight,
+                clientHeight: displayEl?.clientHeight,
+                canScroll: displayEl ? (displayEl.scrollHeight > displayEl.clientHeight) : false,
+                innerHTML: displayEl?.innerHTML?.substring(0, 100) + '...'
+            });
+
+            if (!displayEl) {
+                console.error('performAutoScroll: quranTextDisplay element not found');
+                this.stopAutoReading(); // Stop if element doesn't exist
+                return;
+            }
+
+            // Enhanced scrollability validation
+            const canScroll = displayEl.scrollHeight > displayEl.clientHeight + 10; // 10px buffer
+            console.log('🔍 DEBUG: Scrollability check', {
+                scrollHeight: displayEl.scrollHeight,
+                clientHeight: displayEl.clientHeight,
+                canScroll: canScroll,
+                difference: displayEl.scrollHeight - displayEl.clientHeight
+            });
+
+            if (!canScroll) {
+                console.log('Auto-scroll: Content not scrollable, advancing to next page');
+                this.advanceToNextReaderPage();
+                return;
+            }
+
+            // Check if content is still loading or failed to load
+            if (displayEl.innerHTML.includes('Loading Quran text...') ||
+                displayEl.innerHTML.includes('Failed to load Quran text')) {
+                console.log('Content still loading or failed to load, skipping auto-scroll');
+                return;
+            }
+
+            // Check if there are verses to scroll through
+            const verses = displayEl.querySelectorAll('.arabic-verse');
+            if (verses.length === 0) {
+                console.log('No verses found, cannot auto-scroll');
+                this.stopAutoReading();
+                return;
+            }
+
+            // Ensure element has valid dimensions
+            if (displayEl.clientHeight === 0 || displayEl.scrollHeight === 0) {
+                console.log('Element has invalid dimensions, skipping scroll');
+                return;
+            }
+
+            // Force reflow to ensure accurate measurements
+            displayEl.offsetHeight;
+
+            const currentScroll = Math.max(0, Math.floor(displayEl.scrollTop));
+            const maxScroll = Math.max(0, displayEl.scrollHeight - displayEl.clientHeight);
+            const hasScrollableContent = maxScroll > 5; // Must have at least 5px to scroll
+
+            console.log('AutoScroll Debug:', {
+                currentScroll,
+                maxScroll,
+                hasScrollableContent,
+                scrollHeight: displayEl.scrollHeight,
+                clientHeight: displayEl.clientHeight,
+                versesCount: verses.length,
+                remaining: maxScroll - currentScroll
+            });
+
+            // If no scrollable content exists, try to scroll anyway for a short time
+            if (!hasScrollableContent || maxScroll <= 0) {
+                console.log('Minimal scrollable content, attempting slow scroll anyway');
+                // Force a small scroll increment even with minimal content
+                const forcedScrollIncrement = Math.max(1, Math.floor(displayEl.clientHeight * 0.05)); // 5% of container height
+                const newScrollTop = Math.min(currentScroll + forcedScrollIncrement, maxScroll);
+
+                if (newScrollTop > currentScroll) {
+                    displayEl.scrollTop = newScrollTop;
+                    console.log('Forced scroll performed:', {
+                        increment: forcedScrollIncrement,
+                        oldScroll: currentScroll,
+                        newScroll: newScrollTop
+                    });
+                    return; // Continue scrolling on next interval
+                } else {
+                    // If we still can't scroll, advance to next page
+                    console.log('Cannot force scroll, advancing to next page');
+                    this.advanceToNextReaderPage();
+                    return;
+                }
+            }
+
+            // Improved bottom detection with multiple safety checks
+            const containerHeight = displayEl.clientHeight;
+            const bottomBuffer = Math.max(50, containerHeight * 0.2); // 20% of container or 50px minimum
+            const isNearBottom = currentScroll >= Math.max(0, maxScroll - bottomBuffer);
+
+            // Additional check: if we're within 10% of the bottom
+            const isVeryNearBottom = currentScroll >= Math.max(0, maxScroll - Math.max(20, containerHeight * 0.1));
+
+            if (isNearBottom || isVeryNearBottom) {
+                console.log('Reached bottom threshold, advancing to next page');
+                this.advanceToNextReaderPage();
+                return;
+            }
+
+            // Calculate smart scroll increment with improved logic
+            let scrollIncrement = 1;
+
+            // Validate reading speed with better bounds
+            const safeSpeed = Math.max(0.3, Math.min(3.0, this.autoReadingSpeed));
+
+            // Calculate base increment using a more sophisticated formula
+            // Higher speed = more pixels per scroll, but with diminishing returns
+            const baseIncrement = Math.max(1, Math.floor(safeSpeed * 2));
+
+            // Adjust based on content density (verses per pixel height)
+            if (verses.length > 0) {
+                const contentDensity = displayEl.scrollHeight / verses.length;
+                const availableScroll = maxScroll - currentScroll;
+
+                // Adaptive increment based on content and remaining scroll
+                if (contentDensity > 120) { // Very dense content (many verses)
+                    scrollIncrement = Math.max(1, Math.min(baseIncrement, 3)); // Conservative scrolling
+                } else if (contentDensity < 40) { // Sparse content (few verses)
+                    scrollIncrement = Math.max(1, Math.min(baseIncrement + 1, 5)); // More aggressive
+                } else {
+                    scrollIncrement = Math.max(1, Math.min(baseIncrement, 4)); // Balanced
+                }
+
+                // Reduce increment near bottom to prevent overshooting
+                if (availableScroll < 100) { // Less than 100px remaining
+                    scrollIncrement = Math.max(1, Math.floor(scrollIncrement * 0.7));
+                }
+            } else {
+                // Fallback if no verses found
+                scrollIncrement = Math.max(1, Math.min(baseIncrement, 3));
+            }
+
+            // Final bounds checking - ensure reasonable scroll amounts
+            scrollIncrement = Math.max(1, Math.min(scrollIncrement, 8)); // Max 8px per step for smoothness
+
+            console.log('🔍 DEBUG: Scroll increment calculation', {
+                safeSpeed: safeSpeed,
+                baseIncrement: baseIncrement,
+                contentDensity: verses.length > 0 ? displayEl.scrollHeight / verses.length : 'N/A',
+                availableScroll: maxScroll - currentScroll,
+                finalIncrement: scrollIncrement
+            });
+
+            // Smooth scroll to new position with bounds checking
+            const newScrollTop = Math.min(currentScroll + scrollIncrement, maxScroll);
+
+            // Only scroll if it would actually move us
+            if (newScrollTop > currentScroll) {
+                displayEl.scrollTop = newScrollTop;
+
+                console.log('Performed auto-scroll:', {
+                    increment: scrollIncrement,
+                    oldScroll: currentScroll,
+                    newScroll: newScrollTop,
+                    maxScroll: maxScroll,
+                    speed: safeSpeed
+                });
+            } else {
+                // If we can't scroll further, advance to next page
+                console.log('Cannot scroll further, advancing to next page');
+                this.advanceToNextReaderPage();
+            }
+
+        } catch (error) {
+            console.error('Error during auto-scroll:', error);
+            // On any error, safely stop auto-reading to prevent infinite loops
+            this.stopAutoReading();
+            this.showNotification('Auto-reading stopped due to an error', 'error');
+        }
+    }
+
+    advanceToNextReaderPage() {
+        if (this.currentReadingPage < this.totalReadingPages) {
+            this.stopAutoReading();
+
+            const nextPage = this.currentReadingPage + 1;
+            this.loadReaderPage(nextPage);
+
+            setTimeout(() => {
+                if (this.autoReadingEnabled) {
+                    this.startAutoReading();
+                }
+            }, 1500);
+        } else {
+            this.askAboutNextReaderSurah();
+        }
+    }
+
+    askAboutNextReaderSurah() {
+        this.stopAutoReading();
+
+        const nextSurahNum = this.currentReadingSurah + 1;
+
+        if (nextSurahNum <= 114) {
+            const nextSurah = this.surahData.find(s => s.number === nextSurahNum);
+            const currentSurah = this.surahData.find(s => s.number === this.currentReadingSurah);
+
+            // Send message to extension to show VS Code notification (non-blocking)
+            vscode.postMessage({
+                type: 'surahFinished',
+                currentSurah: currentSurah,
+                nextSurah: nextSurah,
+                action: 'askContinueReading'
+            });
+        } else {
+            this.showNotification('🎉 Completed reading the entire Quran!', 'success');
+        }
+    }
+
+    // Keyboard shortcuts
+    handleKeyboard(event) {
+        // Only handle if not typing in input
+        if (event.target.tagName === 'INPUT' && event.target.type !== 'radio') {return;}
+
+        // Don't handle keyboard shortcuts when modals are open
+        const modals = ['playbackOptionsModal', 'surahModal', 'quranReaderModal', 'prayerConfirmModal'];
+        const modalOpen = modals.some(id => {
+            const modal = document.getElementById(id);
+            return modal && modal.style.display === 'flex';
+        });
+
+        if (modalOpen) {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                this.closeAllModals();
+            }
+            return;
+        }
+
+        switch(event.key) {
+            case ' ':
+                event.preventDefault();
+                if (this.audioPlayerComponent && this.audioPlayerComponent.togglePlayback) {
+                    this.audioPlayerComponent.togglePlayback();
+                }
+                break;
+            case 'ArrowLeft':
+                if (event.ctrlKey || event.metaKey) {
+                    event.preventDefault();
+                    if (this.audioPlayerComponent && this.audioPlayerComponent.previousSurah) {
+                        this.audioPlayerComponent.previousSurah();
+                    }
+                }
+                break;
+            case 'ArrowRight':
+                if (event.ctrlKey || event.metaKey) {
+                    event.preventDefault();
+                    if (this.audioPlayerComponent && this.audioPlayerComponent.nextSurah) {
+                        this.audioPlayerComponent.nextSurah();
+                    }
+                }
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                if (this.audioPlayerComponent && this.audioPlayerComponent.setVolume) {
+                    this.audioPlayerComponent.setVolume(
+                        Math.min(100, (this.audioPlayerComponent.volume || 70) + 5)
+                    );
+                }
+                break;
+            case 'ArrowDown':
+                event.preventDefault();
+                if (this.audioPlayerComponent && this.audioPlayerComponent.setVolume) {
+                    this.audioPlayerComponent.setVolume(
+                        Math.max(0, (this.audioPlayerComponent.volume || 70) - 5)
+                    );
+                }
+                break;
+        }
+    }
+
+    closeAllModals() {
+        // Close each modal type
+        if (this.audioPlayerComponent && this.audioPlayerComponent.closePlaybackOptionsModal) {
+            this.audioPlayerComponent.closePlaybackOptionsModal();
+        }
+        // Close surah browser modal
+        const surahModal = document.getElementById('surahModal');
+        if (surahModal) {
+            surahModal.style.display = 'none';
+        }
+        this.closeQuranReader();
+        if (this.prayerTrackerComponent && this.prayerTrackerComponent.closePrayerConfirmModal) {
+            this.prayerTrackerComponent.closePrayerConfirmModal();
+        }
+    }
+
+    // Theme toggle
+    toggleTheme() {
+        const body = document.body;
+        const isDark = body.classList.contains('dark-theme') || (!body.classList.contains('light-theme'));
+
+        if (isDark) {
+            body.classList.remove('dark-theme');
+            body.classList.add('light-theme');
+            this.postMessage('showNotification', {
+                message: 'Switched to light theme',
+                type: 'info'
+            });
+        } else {
+            body.classList.remove('light-theme');
+            body.classList.add('dark-theme');
+            this.postMessage('showNotification', {
+                message: 'Switched to dark theme',
+                type: 'info'
+            });
+        }
+
+        // Save theme preference
+        if (this.settingsComponent) {
+            this.settingsComponent.saveSettings();
+        }
+    }
+
+    // Adaptive Reading Speed Detection
+    recordPageReadingTime() {
+        if (!this.adaptiveSpeedEnabled) {return;}
+
+        const pageTime = Date.now() - this.lastPageLoadTime;
+        if (pageTime > 1000) { // Only record if page was viewed for more than 1 second
+            this.pageReadDurations.push(pageTime);
+            this.updateAdaptiveSpeed();
+        }
+    }
+
+    updateAdaptiveSpeed() {
+        if (this.pageReadDurations.length < 2) {return;} // Need at least 2 page reads
+
+        // Calculate average time per page
+        const avgTime = this.pageReadDurations.reduce((a, b) => a + b, 0) / this.pageReadDurations.length;
+        const targetSpeed = this.targetReadTime / avgTime; // Speed multiplier
+
+        // Clamp speed between 0.3 and 2.5
+        this.detectedReadingSpeed = Math.max(0.3, Math.min(2.5, targetSpeed));
+
+        console.log(`Adaptive speed: ${this.detectedReadingSpeed.toFixed(2)} (avg page time: ${avgTime}ms)`);
+
+        // Update UI indicator if we have one
+        this.updateAdaptiveSpeedIndicator();
+
+        // Keep only last 10 page readings for recent relevance
+        if (this.pageReadDurations.length > 10) {
+            this.pageReadDurations = this.pageReadDurations.slice(-10);
+        }
+    }
+
+    updateAdaptiveSpeedIndicator() {
+        if (!this.adaptiveSpeedIndicator) {
+            // Create indicator element
+            this.adaptiveSpeedIndicator = document.createElement('div');
+            this.adaptiveSpeedIndicator.id = 'adaptiveSpeedIndicator';
+            this.adaptiveSpeedIndicator.className = 'adaptive-speed-indicator';
+            this.adaptiveSpeedIndicator.innerHTML = `
+                <span class="adaptive-speed-icon">🎯</span>
+                <span class="adaptive-speed-text">Auto Speed</span>
+            `;
+            document.body.appendChild(this.adaptiveSpeedIndicator);
+        }
+
+        const indicator = this.adaptiveSpeedIndicator;
+        const speedNames = {
+            0.5: 'Slow',
+            0.7: 'Medium-Slow',
+            1: 'Normal',
+            1.3: 'Medium-Fast',
+            1.8: 'Fast',
+            2: 'Very Fast'
+        };
+
+        const closestSpeed = Object.keys(speedNames).reduce((a, b) =>
+            Math.abs(b - this.detectedReadingSpeed) < Math.abs(a - this.detectedReadingSpeed) ? b : a
+        );
+
+        indicator.querySelector('.adaptive-speed-text').textContent = `Auto Speed: ${speedNames[closestSpeed]}`;
+
+        // Show indicator briefly
+        indicator.style.opacity = '1';
+        setTimeout(() => {
+            indicator.style.opacity = '0';
+        }, 3000);
+    }
+
     async loadReaderPage(pageNumber) {
         console.log('Loading reader page:', pageNumber, 'for surah:', this.currentReadingSurah);
+
+        // Record time for previous page
+        this.recordPageReadingTime();
 
         const displayEl = document.getElementById('quranTextDisplay');
         if (!displayEl) {
@@ -1241,27 +1285,12 @@ class QuranActivityBar {
 
             displayEl.innerHTML = html;
 
-            // Update page info
-            document.getElementById('pageInfo').textContent = `Page ${pageNumber}/${this.totalReadingPages}`;
-            document.getElementById('currentPageNumber').textContent = pageNumber;
-            document.getElementById('totalPages').textContent = this.totalReadingPages;
-
-            // Update navigation buttons
-            const prevBtn = document.getElementById('prevPageBtn');
-            const nextBtn = document.getElementById('nextPageBtn');
-
-            if (prevBtn) {
-                prevBtn.style.opacity = pageNumber === 1 ? '0.5' : '1';
-                prevBtn.disabled = pageNumber === 1;
-            }
-
-            if (nextBtn) {
-                nextBtn.style.opacity = pageNumber === this.totalReadingPages ? '0.5' : '1';
-                nextBtn.disabled = pageNumber === this.totalReadingPages;
-            }
-
-            // Save current reading position
+            // Update page info and navigation
+            this.updateReaderNavigation(pageNumber);
             this.saveReadingProgress(this.currentReadingSurah, pageNumber);
+
+            // Reset page load time for new page
+            this.lastPageLoadTime = Date.now();
 
         } catch (error) {
             console.error('Failed to load Quran text:', error);
@@ -1269,7 +1298,17 @@ class QuranActivityBar {
         }
     }
 
+    // Improved manual navigation detection
+    wasManualNavigation() {
+        const timeSinceNav = Date.now() - this.lastManualNavigationTime;
+        return timeSinceNav < 750; // Increased to 750ms for better detection
+    }
+
+    // Enhance navigation to detect manual vs automatic
     navigatePage(direction) {
+        // Record that this was manual navigation
+        this.lastManualNavigationTime = Date.now();
+
         let newPage = this.currentReadingPage;
 
         if (direction === 'prev' && this.currentReadingPage > 1) {
@@ -1284,131 +1323,61 @@ class QuranActivityBar {
         }
     }
 
-    saveReadingProgress(surah, page) {
-        try {
-            const readingProgress = {
-                lastSurah: surah,
-                lastPage: page,
-                lastUpdated: new Date().toISOString()
-            };
-            localStorage.setItem('quranReadingProgress', JSON.stringify(readingProgress));
-            console.log('Saved reading progress:', readingProgress);
-        } catch (error) {
-            console.warn('Failed to save reading progress:', error);
-        }
-    }
-
-    continueReading() {
-        try {
-            const readingProgress = JSON.parse(localStorage.getItem('quranReadingProgress') || '{}');
-            if (readingProgress.lastSurah) {
-                this.openQuranReader(readingProgress.lastSurah);
-            } else {
-                this.showNotification('No reading progress found', 'info');
-            }
-        } catch (error) {
-            console.warn('Failed to continue reading:', error);
-            this.showNotification('Unable to continue reading', 'error');
-        }
-    }
-
-    closeQuranReader() {
-        document.getElementById('quranReaderModal').style.display = 'none';
-        this.currentReadingSurah = null;
-        this.currentReadingPage = 1;
-        this.totalReadingPages = 1;
-    }
-
-    scrollQuranReaderPage(direction) {
-        const displayEl = document.getElementById('quranTextDisplay');
-        if (!displayEl) {return;}
-
-        const scrollAmount = 200; // Scroll 200px at a time
-
-        if (direction === 'up') {
-            displayEl.scrollTop -= scrollAmount;
-        } else if (direction === 'down') {
-            displayEl.scrollTop += scrollAmount;
-        }
-    }
-
-    // Auto Reading Methods
-    toggleAutoReading() {
-        this.autoReadingEnabled = !this.autoReadingEnabled;
-
-        const toggleBtn = document.getElementById('autoReadToggle');
-        const speedControls = document.getElementById('speedControls');
-        const playBtn = document.getElementById('playPauseAutoRead');
-
-        if (this.autoReadingEnabled) {
-            toggleBtn?.classList.add('active');
-            toggleBtn.querySelector('span').innerText = '🔄 Auto Reading: ON';
-            speedControls.style.display = 'flex';
-            playBtn.disabled = false;
-            playBtn.classList.remove('disabled');
-        } else {
-            toggleBtn?.classList.remove('active');
-            toggleBtn.querySelector('span').innerText = '🔄 Auto Reading: OFF';
-            speedControls.style.display = 'none';
-            playBtn.disabled = true;
-            playBtn.classList.add('disabled');
-            this.stopAutoReading();
-        }
-    }
-
-    setAutoReadingSpeed(speed) {
-        this.autoReadingSpeed = parseFloat(speed);
-
-        // Update speed button states
-        const buttons = document.querySelectorAll('.speed-btn');
-        buttons.forEach(btn => {
-            btn.classList.remove('active');
-            if (parseFloat(btn.dataset.speed) === speed) {
-                btn.classList.add('active');
-            }
-        });
-
-        console.log('Auto reading speed set to:', this.autoReadingSpeed);
-
-        // If currently auto-reading, adjust the interval
-        if (this.autoReadingActive) {
-            this.stopAutoReading();
-            this.startAutoReading();
-        }
-    }
-
-    toggleAutoReadingPlayback() {
-        if (!this.autoReadingEnabled) {return;}
-
-        if (this.autoReadingActive) {
-            this.stopAutoReading();
-        } else {
-            this.startAutoReading();
-        }
-    }
-
+    // Start adaptive speed updating when auto-reading begins
     startAutoReading() {
-        if (!this.autoReadingEnabled || this.autoReadingActive) {return;}
+        if (!this.autoReadingEnabled || this.autoReadingActive || this.autoReadingState !== 'idle') {return;}
 
-        console.log('Starting auto reading at speed:', this.autoReadingSpeed);
+        console.log('Starting auto reading at speed:', this.autoReadingSpeed, '(adaptive:', this.detectedReadingSpeed, ')');
+
+        // Set state to starting
+        this.autoReadingState = 'starting';
+
+        // Clear any existing interval to prevent conflicts
+        if (this.autoReadingInterval) {
+            clearInterval(this.autoReadingInterval);
+            this.autoReadingInterval = null;
+        }
 
         this.autoReadingActive = true;
 
-        // Update play button
-        const playBtn = document.getElementById('playPauseAutoRead');
-        if (playBtn) {
-            playBtn.innerHTML = '<span class="icon">⏸️</span>';
+        // Add CSS class to modal for visual enhancements
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.classList.add('auto-reading-active');
         }
 
-        // Calculate interval based on speed (lower speed = slower scrolling)
-        // Speed 0.5 = slow, 1 = normal, 1.5 = fast, 2 = very fast
-        const intervalMs = Math.max(50, 2000 / this.autoReadingSpeed); // Min 50ms interval
+        this.updateAutoReadingUI(true);
 
-        this.autoReadingInterval = setInterval(() => {
-            this.performAutoScroll();
-        }, intervalMs);
+        // Apply adaptive speed
+        this.autoReadingSpeed = Math.max(0.5, Math.min(2, this.detectedReadingSpeed));
 
-        this.showNotification('Auto reading started', 'success');
+        // Add a small delay to ensure modal is fully ready before starting interval
+        setTimeout(() => {
+            if (!this.autoReadingActive || this.autoReadingState !== 'starting') {return;} // Check if still active after delay
+
+            const intervalMs = Math.max(100, (2 / this.autoReadingSpeed) * 1000);
+            console.log('🔍 DEBUG: Setting up auto-scroll interval with', intervalMs, 'ms delay');
+
+            this.autoReadingInterval = setInterval(() => {
+                // Double-check modal state before each scroll attempt
+                if (!this.isReaderModalOpen) {
+                    console.log('🔍 DEBUG: Modal not visible during interval, stopping auto-reading');
+                    this.stopAutoReading();
+                    return;
+                }
+
+                this.performAutoScroll();
+            }, intervalMs);
+
+            // Transition to active state
+            this.autoReadingState = 'active';
+            console.log('🔍 DEBUG: Auto-scroll interval started, state now active');
+        }, 200); // 200ms delay to let modal settle
+
+        // Start adaptive speed adjustment (ensure only one)
+        this.startAdaptiveSpeedAdjustment();
+
+        this.showNotification(`Auto reading started (Adapted: ${this.autoReadingSpeed.toFixed(1)}x)`, 'success');
     }
 
     stopAutoReading() {
@@ -1416,193 +1385,228 @@ class QuranActivityBar {
 
         console.log('Stopping auto reading');
 
+        // Set state to stopping
+        this.autoReadingState = 'stopping';
+
         this.autoReadingActive = false;
 
+        // Remove CSS class from modal
+        const modal = document.getElementById('quranReaderModal');
+        if (modal) {
+            modal.classList.remove('auto-reading-active');
+
+            // Remove any residue current-reading classes
+            const currentReadingVerses = modal.querySelectorAll('.current-reading');
+            currentReadingVerses.forEach(verse => {
+                verse.classList.remove('current-reading');
+            });
+        }
+
+        // Clear any existing interval
         if (this.autoReadingInterval) {
             clearInterval(this.autoReadingInterval);
             this.autoReadingInterval = null;
         }
 
-        // Update play button
-        const playBtn = document.getElementById('playPauseAutoRead');
-        if (playBtn) {
-            playBtn.innerHTML = '<span class="icon">▶️</span>';
-        }
+        // Stop adaptive speed adjustment
+        this.stopAdaptiveSpeedAdjustment();
 
+        // Reset state to idle
+        this.autoReadingState = 'idle';
+
+        this.updateAutoReadingUI(false);
         this.showNotification('Auto reading stopped', 'info');
     }
 
-    performAutoScroll() {
-        if (!this.autoReadingActive) {return;}
+    startAdaptiveSpeedAdjustment() {
+        this.stopAdaptiveSpeedAdjustment(); // Clear any existing
 
-        const displayEl = document.getElementById('quranTextDisplay');
-        if (!displayEl) {return;}
-
-        const currentScroll = displayEl.scrollTop;
-        const maxScroll = displayEl.scrollHeight - displayEl.clientHeight;
-        const isAtBottom = currentScroll >= maxScroll - 100; // 100px buffer
-
-        if (isAtBottom) {
-            // End of page reached - advance to next page or surah
-            this.advanceToNextPage();
-        } else {
-            // Continue scrolling down
-            const scrollBatch = Math.max(10, Math.min(50, this.autoReadingSpeed * 10));
-            displayEl.scrollTop += scrollBatch;
+        // Only start adaptive adjustment if we have enough data (at least 2 page readings)
+        if (this.pageReadDurations.length < 2) {
+            console.log('Not enough data for adaptive speed adjustment yet');
+            return;
         }
-    }
 
-    advanceToNextPage() {
-        const currentPage = this.currentReadingPage;
-        const totalPages = this.totalReadingPages;
-        const currentSurah = this.currentReadingSurah;
+        this.adaptiveSpeedUpdateInterval = setInterval(() => {
+            // Only adjust if auto-reading is active and we have new page data
+            if (this.adaptiveSpeedEnabled && this.autoReadingActive && this.pageReadDurations.length >= 2) {
+                const previousSpeed = this.detectedReadingSpeed;
 
-        if (currentPage < totalPages) {
-            // Next page in same surah
-            const nextPage = currentPage + 1;
-            console.log(`Auto-advancing to page ${nextPage} of surah ${currentSurah}`);
+                this.updateAdaptiveSpeed();
 
-            // Stop auto-reading temporarily
-            this.stopAutoReading();
-
-            // Load next page
-            this.loadReaderPage(nextPage);
-
-            // Resume auto-reading after a delay to allow page load
-            setTimeout(() => {
-                if (this.autoReadingEnabled) {
-                    this.startAutoReading();
+                // Only adjust if speed changed significantly (prevent jittery changes)
+                if (Math.abs(this.detectedReadingSpeed - previousSpeed) >= 0.2) {
+                    this.adjustAutoReadingSpeed(this.detectedReadingSpeed);
+                    this.updateAdaptiveSpeedIndicator();
                 }
-            }, 1500);
-        } else {
-            // Last page of surah reached - ask about next surah
-            this.askAboutNextSurah();
+            }
+        }, 15000); // Check every 15 seconds instead of 10 to prevent over-adjustment
+    }
+
+    stopAdaptiveSpeedAdjustment() {
+        if (this.adaptiveSpeedUpdateInterval) {
+            clearInterval(this.adaptiveSpeedUpdateInterval);
+            this.adaptiveSpeedUpdateInterval = null;
         }
     }
 
-    askAboutNextSurah() {
-        console.log('Reached end of surah, asking user about next surah');
+    adjustAutoReadingSpeed(newSpeed) {
+        this.autoReadingSpeed = Math.max(0.5, Math.min(2, newSpeed));
 
-        // Stop auto-reading
-        this.stopAutoReading();
+        // Restart interval with new speed
+        if (this.autoReadingActive) {
+            this.stopAutoReading();
+            this.startAutoReading();
+        }
+    }
 
-        const nextSurahNum = this.currentReadingSurah + 1;
+    // Consolidated UI state management for auto-reading
+    updateAutoReadingUI(isActive) {
+        try {
+            const toggleBtn = document.getElementById('autoReadToggle');
+            const speedControls = document.getElementById('speedControls');
+            const playBtn = document.getElementById('playPauseAutoRead');
+            const modal = document.getElementById('quranReaderModal');
 
-        if (nextSurahNum <= 114) {
-            const nextSurah = this.surahData.find(s => s.number === nextSurahNum);
-            const shouldContinue = confirm(`You've reached the end of the current Surah.\n\nContinue reading with the next Surah:\n"${nextSurah.arabicName} (${nextSurah.name})"?\n\nNote: This action cannot be automatically reversed once started.`);
-
-            if (shouldContinue) {
-                console.log('User chose to continue with next surah');
-                this.openQuranReader(nextSurahNum);
-
-                // Resume auto-reading after a delay to allow page load
-                setTimeout(() => {
-                    if (this.autoReadingEnabled) {
-                        this.startAutoReading();
+            // Update toggle button (mode enable/disable)
+            if (toggleBtn) {
+                if (this.autoReadingEnabled) {
+                    toggleBtn.classList.add('active');
+                    const textSpan = toggleBtn.querySelector('[data-localize="autoReading"]') ||
+                                   toggleBtn.querySelectorAll('span')[1];
+                    if (textSpan) {
+                        textSpan.innerText = 'Auto Reading: ON';
                     }
-                }, 2000);
-            } else {
-                console.log('User chose not to continue');
-                this.showNotification('Auto reading stopped at surah end', 'info');
+                } else {
+                    toggleBtn.classList.remove('active');
+                    const textSpan = toggleBtn.querySelector('[data-localize="autoReading"]') ||
+                                   toggleBtn.querySelectorAll('span')[1];
+                    if (textSpan) {
+                        textSpan.innerText = 'Auto Reading';
+                    }
+                }
             }
-        } else {
-            // End of Quran reached
-            console.log('End of Quran reached');
-            this.showNotification('🎉 You have completed the entire Quran! Congratulatory messages here.', 'success');
+
+            // Show/hide speed controls based on enabled state
+            if (speedControls) {
+                speedControls.style.display = this.autoReadingEnabled ? 'flex' : 'none';
+            }
+
+            // Update play/pause button (actual scrolling state)
+            if (playBtn) {
+                playBtn.disabled = !this.autoReadingEnabled;
+
+                if (!this.autoReadingEnabled) {
+                    playBtn.classList.add('disabled');
+                    const icon = playBtn.querySelector('.icon');
+                    if (icon) {
+                        icon.textContent = '▶️';
+                    }
+                } else {
+                    playBtn.classList.remove('disabled');
+                    const icon = playBtn.querySelector('.icon');
+                    if (icon) {
+                        icon.textContent = isActive ? '⏸️' : '▶️';
+                    }
+                }
+            }
+
+            // Update modal state
+            if (modal) {
+                if (isActive) {
+                    modal.classList.add('auto-reading-active');
+                } else {
+                    modal.classList.remove('auto-reading-active');
+                    // Clear any current reading markers
+                    const readingMarkers = modal.querySelectorAll('.current-reading');
+                    readingMarkers.forEach(marker => marker.classList.remove('current-reading'));
+                }
+            }
+
+        } catch (error) {
+            console.error('Error updating auto-reading UI:', error);
         }
     }
 
-    updateSettingsUI() {
-        // Header language selector
-        const headerLanguageSelect = document.getElementById('headerLanguageSelect');
-        if (headerLanguageSelect) {
-            headerLanguageSelect.value = this.language || 'auto';
-        }
-
-        // Reciter select
-        const reciterSelect = document.getElementById('reciterSelect');
-        if (reciterSelect) {reciterSelect.value = this.reciter;}
-
-        // Auto play checkbox
-        const autoPlayStartup = document.getElementById('autoPlayStartup');
-        if (autoPlayStartup) {autoPlayStartup.checked = this.autoPlayStartup;}
-
-        // Compact mode checkbox
-        const compactMode = document.getElementById('compactMode');
-        if (compactMode) {compactMode.checked = this.compactMode;}
-
-        // Show notifications checkbox
-        const showNotifications = document.getElementById('showNotifications');
-        if (showNotifications) {showNotifications.checked = this.showNotifications;}
-
-        // Enable reminders checkbox
-        const enableReminders = document.getElementById('enableReminders');
-        if (enableReminders) {enableReminders.checked = this.enableReminders;}
-
-        // Reminder interval select
-        const reminderIntervalSelect = document.getElementById('reminderIntervalSelect');
-        if (reminderIntervalSelect) {reminderIntervalSelect.value = this.reminderInterval;}
-
-        // Reminder types checkboxes
-        ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar'].forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) {checkbox.checked = this.reminderTypes[id] !== false;} // Default true
-        });
-
-        // Working hours checkbox
-        const workingHoursOnly = document.getElementById('workingHoursOnly');
-        if (workingHoursOnly) {workingHoursOnly.checked = this.workingHoursOnly;}
-
-        // Prayer reminders checkboxes
-        ['fajrReminder', 'duhrReminder', 'asrReminder', 'maghribReminder', 'ishaReminder'].forEach(id => {
-            const checkbox = document.getElementById(id);
-            if (checkbox) {
-                const reminderKey = id.replace('Reminder', '').toLowerCase();
-                checkbox.checked = this.islamicReminders[reminderKey] || false;
-            }
-        });
-
-        // Advanced settings
-        const cacheSizeSelect = document.getElementById('cacheSizeSelect');
-        if (cacheSizeSelect) {cacheSizeSelect.value = this.cacheSize;}
-
-        const downloadTimeoutSelect = document.getElementById('downloadTimeoutSelect');
-        if (downloadTimeoutSelect) {downloadTimeoutSelect.value = this.downloadTimeout;}
-
-        const retryAttemptsSelect = document.getElementById('retryAttemptsSelect');
-        if (retryAttemptsSelect) {retryAttemptsSelect.value = this.retryAttempts;}
-    }
-
-    // Theme toggle
-    toggleTheme() {
-        const body = document.body;
-        const isDark = body.classList.contains('dark-theme') || (!body.classList.contains('light-theme'));
-
-        if (isDark) {
-            body.classList.remove('dark-theme');
-            body.classList.add('light-theme');
-            // Use VS Code notification system instead of webview notification
-            this.postMessage('showNotification', {
-                message: window.localization.getString('switchedToLightTheme'),
-                type: 'info'
-            });
-        } else {
-            body.classList.remove('light-theme');
-            body.classList.add('dark-theme');
-            // Use VS Code notification system instead of webview notification
-            this.postMessage('showNotification', {
-                message: window.localization.getString('switchedToDarkTheme'),
-                type: 'info'
+    // Clear content reading highlights
+    clearCurrentReadingVerses() {
+        const displayEl = document.getElementById('quranTextDisplay');
+        if (displayEl) {
+            const currentReadingVerses = displayEl.querySelectorAll('.current-reading');
+            currentReadingVerses.forEach(verse => {
+                verse.classList.remove('current-reading');
             });
         }
-
-        this.saveSettings();
     }
 
-    // Notifications
+    // Show auto reading indicator in main activity bar
+    showAutoReadingIndicator() {
+        console.log('showAutoReadingIndicator called');
+        const indicator = document.getElementById('autoReadingIndicator');
+        console.log('Indicator element found:', !!indicator);
+        if (indicator) {
+            indicator.style.display = 'block';
+            this.updateSpeedIndicatorDisplay();
+            this.bindSpeedButtonEvents();
+            console.log('Auto reading indicator shown');
+        } else {
+            console.error('Auto reading indicator element not found');
+        }
+    }
+
+    // Hide auto reading indicator in main activity bar
+    hideAutoReadingIndicator() {
+        console.log('hideAutoReadingIndicator called');
+        const indicator = document.getElementById('autoReadingIndicator');
+        console.log('Indicator element found:', !!indicator);
+        if (indicator) {
+            indicator.style.display = 'none';
+            console.log('Auto reading indicator hidden');
+        } else {
+            console.error('Auto reading indicator element not found');
+        }
+    }
+
+    // Update the speed display in the indicator
+    updateSpeedIndicatorDisplay() {
+        const speedValueEl = document.getElementById('currentSpeedValue');
+        if (speedValueEl) {
+            speedValueEl.textContent = `${this.autoReadingSpeed.toFixed(1)}x`;
+        }
+
+        // Update active speed button
+        document.querySelectorAll('.speed-btn-bar').forEach(btn => {
+            btn.classList.remove('active');
+            if (parseFloat(btn.dataset.speed) === this.autoReadingSpeed) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // Bind click events to speed buttons in the indicator
+    bindSpeedButtonEvents() {
+        document.querySelectorAll('.speed-btn-bar').forEach(button => {
+            // Remove existing event listeners to avoid duplicates
+            button.removeEventListener('click', this.handleSpeedButtonClick);
+            // Add new event listener
+            button.addEventListener('click', this.handleSpeedButtonClick.bind(this));
+        });
+    }
+
+    // Handle speed button clicks from the indicator
+    handleSpeedButtonClick(event) {
+        const speed = parseFloat(event.target.dataset.speed);
+        this.setAutoReadingSpeed(speed);
+        this.updateSpeedIndicatorDisplay();
+    }
+
+    // Utility methods
+    postMessage(type, data = {}) {
+        vscode.postMessage({ type, ...data });
+    }
+
     showNotification(message, type = 'info') {
-        // Create notification element
+        // Main notification method - components can delegate to this
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
@@ -1612,15 +1616,12 @@ class QuranActivityBar {
             <span class="notification-text">${message}</span>
         `;
 
-        // Add to body
         document.body.appendChild(notification);
 
-        // Animate in
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
 
-        // Remove after 3 seconds
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => {
@@ -1633,1337 +1634,142 @@ class QuranActivityBar {
 
     showWelcomeMessage() {
         setTimeout(() => {
-            this.showNotification(window.localization.getString('welcomeMessage'), 'success');
+            this.showNotification('Welcome to CodeTune! 🕌', 'success');
         }, 1000);
     }
 
-    // Islamic Calendar & Prayer Times
-    startIslamicTimer() {
-        // Wait for DOM to be fully ready, then update Islamic information
-        setTimeout(() => {
-            console.log('Starting Islamic timer...');
-            this.updateIslamicInfo();
-        }, 500); // Longer delay to ensure DOM is ready
-
-        // Update Islamic information every minute
-        setInterval(() => {
-            this.updateIslamicInfo();
-        }, 60000); // Update every minute
-
-        // Update prayer countdown every second
-        setInterval(() => {
-            this.updatePrayerCountdown();
-        }, 1000); // Update every second
-    }
-
-    updateIslamicInfo() {
-        try {
-            // Update Hijri date using IslamicCalendar utility
-            const hijriDate = this.getHijriDate();
-            const hijriElement = document.getElementById('hijriDate');
-            if (hijriElement) {
-                hijriElement.textContent = hijriDate;
-                console.log('Updated Hijri date:', hijriDate);
-            } else {
-                console.warn('Hijri date element not found');
-            }
-
-            // Update next prayer info
-            this.updateNextPrayer();
-        } catch (error) {
-            console.warn('Failed to update Islamic information:', error);
-            const hijriElement = document.getElementById('hijriDate');
-            const prayerElement = document.getElementById('nextPrayer');
-            const countdownElement = document.getElementById('prayerCountdown');
-
-            if (hijriElement) {
-                hijriElement.textContent = 'Error loading date';
-            }
-            if (prayerElement) {
-                prayerElement.textContent = 'Error';
-            }
-            if (countdownElement) {
-                countdownElement.textContent = 'Error';
-            }
-        }
-    }
-
-    getHijriDate() {
-        // Use IslamicCalendar utility for accurate calculation
-        const now = new Date();
-
-        // Simplified Hijri calculation (for webview compatibility)
-        const gregorianYear = now.getFullYear();
-        const gregorianMonth = now.getMonth() + 1;
-        const gregorianDay = now.getDate();
-
-        // Approximate conversion (Hijri calendar is lunar)
-        const hijriEpoch = 1948440; // Approximate Julian day
-        const gregorianEpoch = new Date(622, 6, 16);
-
-        const daysSinceEpoch = Math.floor((now.getTime() - gregorianEpoch.getTime()) / (1000 * 60 * 60 * 24));
-        const hijriYear = Math.floor(daysSinceEpoch / 354.367) + 1;
-        const yearStart = Math.floor((hijriYear - 1) * 354.367);
-        const daysInYear = daysSinceEpoch - yearStart;
-
-        const hijriMonths = [
-            'Muharram', 'Safar', 'Rabi\' al-awwal', 'Rabi\' al-thani',
-            'Jumada al-awwal', 'Jumada al-thani', 'Rajab', 'Sha\'ban',
-            'Ramadan', 'Shawwal', 'Dhu al-Qi\'dah', 'Dhu al-Hijjah'
-        ];
-
-        let month = 1;
-        let day = daysInYear + 1;
-        const monthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-
-        for (let i = 0; i < monthLengths.length; i++) {
-            if (day <= monthLengths[i]) {
-                month = i + 1;
-                break;
-            }
-            day -= monthLengths[i];
-        }
-
-        return `${day} ${hijriMonths[month - 1]} ${hijriYear} AH`;
-    }
-
-    updateNextPrayer() {
-        const now = new Date();
-
-        // Use more accurate prayer times (adjust for your location)
-        // These are approximate times for Cairo, Egypt - you may want to calculate based on location
-        const prayerTimes = {
-            fajr: { hour: 4, minute: 45, key: 'prayerFajr' },      // Fajr: ~4:45 AM
-            dhuhr: { hour: 12, minute: 15, key: 'prayerDhuhr' },    // Dhuhr: ~12:15 PM
-            asr: { hour: 15, minute: 45, key: 'prayerAsr' },      // Asr: ~3:45 PM
-            maghrib: { hour: 18, minute: 15, key: 'prayerMaghrib' },  // Maghrib: ~6:15 PM
-            isha: { hour: 19, minute: 45, key: 'prayerIsha' }      // Isha: ~7:45 PM
-        };
-
-        // Get localized prayer names
-        const prayers = [
-            { name: window.localization.getString(prayerTimes.fajr.key), time: prayerTimes.fajr },
-            { name: window.localization.getString(prayerTimes.dhuhr.key), time: prayerTimes.dhuhr },
-            { name: window.localization.getString(prayerTimes.asr.key), time: prayerTimes.asr },
-            { name: window.localization.getString(prayerTimes.maghrib.key), time: prayerTimes.maghrib },
-            { name: window.localization.getString(prayerTimes.isha.key), time: prayerTimes.isha }
-        ];
-
-        // Find next prayer
-        let nextPrayer = null;
-        let nextPrayerTime = null;
-
-        for (const prayer of prayers) {
-            const prayerTime = new Date();
-            prayerTime.setHours(prayer.time.hour, prayer.time.minute, 0, 0);
-
-            if (prayerTime > now) {
-                nextPrayer = prayer.name;
-                nextPrayerTime = prayerTime;
-                break;
-            }
-        }
-
-        // If all prayers have passed today, next prayer is tomorrow's Fajr
-        if (!nextPrayer) {
-            nextPrayer = window.localization.getString(prayerTimes.fajr.key);
-            nextPrayerTime = new Date(now);
-            nextPrayerTime.setDate(nextPrayerTime.getDate() + 1);
-            nextPrayerTime.setHours(prayerTimes.fajr.hour, prayerTimes.fajr.minute, 0, 0);
-        }
-
-        const prayerElement = document.getElementById('nextPrayer');
-        if (prayerElement) {
-            prayerElement.textContent = nextPrayer;
-        }
-
-        this.nextPrayerTime = nextPrayerTime;
-        this.updatePrayerCountdown();
-    }
-
-    updatePrayerCountdown() {
-        if (!this.nextPrayerTime) {return;}
-
-        const now = new Date();
-        const timeDiff = this.nextPrayerTime.getTime() - now.getTime();
-
-        if (timeDiff <= 0) {
-            // Prayer time has arrived!
-            this.showPrayerNotification();
-            // Update to next prayer
-            this.updateNextPrayer();
-            return;
-        }
-
-        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
-
-        const countdown = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        document.getElementById('prayerCountdown').textContent = countdown;
-    }
-
-    // Prayer Notification and Modal Methods - NEW
-    showPrayerNotification() {
-        const nextPrayerElement = document.getElementById('nextPrayer');
-        const currentPrayer = nextPrayerElement ? nextPrayerElement.textContent : '';
-
-        // Show the prayer confirmation modal
-        this.showPrayerConfirmModal(currentPrayer);
-    }
-
-    showPrayerConfirmModal(prayerName) {
-        const modal = document.getElementById('prayerConfirmModal');
-        const questionText = document.getElementById('prayerQuestionText');
-        const timeNote = document.getElementById('prayerTimeNote');
-
-        // Map prayer names for localization
-        const prayerKeyMap = {
-            'Fajr': 'prayerFajr',
-            'الفجر': 'prayerFajr',
-            'Dhuhr': 'prayerDhuhr',
-            'الظهر': 'prayerDhuhr',
-            'Asr': 'prayerAsr',
-            'العصر': 'prayerAsr',
-            'Maghrib': 'prayerMaghrib',
-            'المغرب': 'prayerMaghrib',
-            'Isha': 'prayerIsha',
-            'العشاء': 'prayerIsha'
-        };
-
-        const localizedPrayerName = prayerKeyMap[prayerName] ? window.localization.getString(prayerKeyMap[prayerName]) : prayerName;
-
-        if (questionText) {
-            questionText.textContent = window.localization.getString('prayerCompletedQuestion', { prayerName: localizedPrayerName });
-        }
-        if (timeNote) {
-            timeNote.textContent = window.localization.getString('prayerTimeNotification', { prayerName: localizedPrayerName });
-        }
-
-        // Store current prayer info for confirmation
-        this.pendingPrayerConfirmation = prayerName;
-
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.style.animation = 'fadeIn 0.3s ease-out';
-        }
-
-        // Localize the buttons
-        if (window.localization) {
-            window.localization.localizeElements();
-        }
-    }
-
-    closePrayerConfirmModal() {
-        const modal = document.getElementById('prayerConfirmModal');
-        if (modal) {
-            modal.style.animation = 'fadeOut 0.3s ease-out';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-        this.pendingPrayerConfirmation = null;
-    }
-
-    confirmPrayerCompleted() {
-        if (!this.pendingPrayerConfirmation) {
-            console.warn('No pending prayer confirmation');
-            return;
-        }
-
-        const prayerName = this.pendingPrayerConfirmation;
-
-        // Map English prayer names to goal keys
-        const prayerGoalMap = {
-            'Fajr': 'fajr',
-            'الفجر': 'fajr',
-            'Dhuhr': 'dhuhr',
-            'الظهر': 'dhuhr',
-            'Asr': 'asr',
-            'العصر': 'asr',
-            'Maghrib': 'maghrib',
-            'المغرب': 'maghrib',
-            'Isha': 'isha',
-            'العشاء': 'isha'
-        };
-
-        const goalKey = prayerGoalMap[prayerName];
-        if (goalKey) {
-            // Mark this prayer as completed in goals
-            this.updatePrayerGoal(goalKey, true);
-
-            // Show success message
-            const localizedPrayerName = prayerGoalMap[prayerName] ? window.localization.getString(`prayer${prayerName.charAt(0).toUpperCase() + prayerName.slice(1).toLowerCase()}`) : prayerName;
-            this.showNotification(window.localization.getString('prayerMarkedCompleted', { prayerName: localizedPrayerName }), 'success');
-        }
-
-        // Close the modal
-        this.closePrayerConfirmModal();
-    }
-
-    dismissPrayerConfirmation() {
-        // User dismissed the prayer check, just close modal
-        this.closePrayerConfirmModal();
-        this.showNotification('Prayer check dismissed', 'info');
-    }
-
-    forceUpdateIslamicInfo() {
-        console.log('Force updating Islamic info...');
-        // Try multiple times with increasing delays
-        setTimeout(() => this.updateIslamicInfo(), 100);
-        setTimeout(() => this.updateIslamicInfo(), 500);
-        setTimeout(() => this.updateIslamicInfo(), 1000);
-    }
-
-    // Listen for VSCode configuration changes
-    listenForLanguageChanges() {
-        if (vscode.workspace) {
-            vscode.workspace.onDidChangeConfiguration(event => {
-                if (event.affectsConfiguration('codeTune.language')) {
-                    const config = vscode.workspace.getConfiguration('codeTune');
-                    const language = config.get('language');
-                    if (language && language !== 'auto') {
-                        console.log('ActivityBar: Language configuration changed to:', language);
-                        // Update localStorage
-                        try {
-                            const settings = JSON.parse(localStorage.getItem('codeTuneSettings') || '{}');
-                            settings.language = language;
-                            localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
-                        } catch (error) {
-                            console.warn('Failed to update language in localStorage:', error);
-                        }
-                        // Update localization
-                        if (window.localization) {
-                            window.localization = new LocalizationManager();
-                            window.localization.localizeElements();
-                            console.log('ActivityBar: Localization updated for language:', language);
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // Message handling
-    postMessage(type, data = {}) {
-        vscode.postMessage({ type, ...data });
-    }
-
-    // Audio handling
-    initializeAudio() {
-        this.audioElement = document.getElementById('quranAudio');
-        if (!this.audioElement) {
-            console.error('Audio element not found');
-            return;
-        }
-
-        // Set initial volume
-        this.audioElement.volume = this.volume / 100;
-
-        // Audio event listeners
-        this.audioElement.addEventListener('loadstart', () => {
-            console.log('Audio loading started');
-        });
-
-        this.audioElement.addEventListener('canplay', () => {
-            console.log('Audio can play');
-            this.duration = this.audioElement.duration;
-            this.updateTimeDisplay();
-            // Ensure volume is applied to new audio
-            if (this.audioElement) {
-                this.audioElement.volume = this.volume / 100;
-            }
-        });
-
-        this.audioElement.addEventListener('play', () => {
-            console.log('Audio started playing');
-            this.isPlaying = true;
-            this.updatePlaybackControls();
-
-            // Start time tracking
-            this.startTimeTracking();
-
-            // Increment listening counter (for session mode)
-            if (this.listeningStats.statsMode === 'sessions') {
-                this.incrementListeningCounter();
-            }
-        });
-
-        this.audioElement.addEventListener('pause', () => {
-            console.log('Audio paused');
-            this.isPlaying = false;
-            this.updatePlaybackControls();
-
-            // Stop time tracking and accumulate time
-            this.stopTimeTracking();
-        });
-
-        this.audioElement.addEventListener('ended', () => {
-            console.log('Audio ended');
-            this.isPlaying = false;
-            this.updatePlaybackControls();
-
-            // Stop time tracking and accumulate time
-            this.stopTimeTracking();
-
-            // Check if we need to advance to next ayah in ayah-by-ayah mode
-            if (this.currentPlaybackMode === 'ayah-by-ayah') {
-                console.log('Ayah ended, requesting next ayah');
-                this.postMessage('ayahEnded', {
-                    currentSurah: this.currentSurah,
-                    currentAyah: this.currentAyah
-                });
-            } else {
-                console.log('Full surah or single ayah playback completed');
-                // Handle end of surah - could auto-advance to next surah here
-            }
-        });
-
-        this.audioElement.addEventListener('timeupdate', () => {
-            this.currentTime = this.audioElement.currentTime;
-            this.updateProgressBar();
-            this.updateTimeDisplay();
-        });
-
-        this.audioElement.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
-            // Try fallback: switch to default reciter and retry with new URL
-            if (this.reciter !== 'ar.alafasy') {
-                console.log('Trying fallback to default reciter ar.alafasy');
-
-                // Calculate global ayah number from current surah and ayah
-                const globalAyah = this.calculateGlobalAyahNumber(this.currentSurah.number, this.currentAyah);
-
-                // Construct new URL with fallback reciter
-                const fallbackUrl = `https://cdn.islamic.network/quran/audio/${this.audioQuality}/ar.alafasy/${globalAyah}.mp3`;
-                console.log('Fallback URL:', fallbackUrl);
-
-                // Update reciter setting
-                this.reciter = 'ar.alafasy';
-                this.saveSettings();
-
-                // Set new source and retry playback
-                this.audioElement.src = fallbackUrl;
-                this.currentAudioUrl = fallbackUrl;
-
-                const playPromise = this.audioElement.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        console.log('Fallback audio started successfully');
-                    }).catch(fallbackError => {
-                        console.error('Fallback audio play failed:', fallbackError);
-                        this.showNotification('Audio playback failed even with fallback reciter.', 'error');
-                    });
-                }
-
-                // Show notification about fallback attempt
-                this.showNotification('Audio not available for this reciter. Trying with default reciter...', 'warning');
-            } else {
-                this.showNotification('Audio playback failed. Try a different reciter or check your internet connection.', 'error');
-            }
-        });
-    }
-
-    playAudio(url, surah, mode = 'full-surah', message = null) {
-        if (!this.audioElement) {
-            console.error('Audio element not initialized');
-            return;
-        }
-
-        // Stop current audio if playing
-        this.audioElement.pause();
-
-        // Set new source
-        this.audioElement.src = url;
-        this.currentAudioUrl = url;
-        this.currentSurah = surah;
-        this.currentPlaybackMode = mode;
-
-        // Extract ayah number if present in message
-        console.log('playAudio: Extracting ayah from message - surah:', surah, 'mode:', mode, 'ayah:', message.ayah);
-        if (message.ayah) {
-            this.currentAyah = message.ayah;
-            console.log('Setting currentAyah from message.ayah:', this.currentAyah);
-        } else if (mode === 'ayah-by-ayah') {
-            // For ayah-by-ayah mode, calculate from globalAyah
-            if (typeof surah === 'object' && surah.globalAyah) {
-                const surahInfo = this.getSurahData().find(s => s.number === surah.number);
-                if (surahInfo) {
-                    let cumulativeVerses = 0;
-                    for (let s = 1; s < surah.number; s++) {
-                        const prevSurah = this.getSurahData().find(ts => ts.number === s);
-                        if (prevSurah) {cumulativeVerses += prevSurah.verses;}
-                    }
-                    this.currentAyah = surah.globalAyah - cumulativeVerses;
-                    console.log('Calculated currentAyah for ayah-by-ayah:', this.currentAyah, 'from globalAyah:', surah.globalAyah, 'surah:', surah.number);
-                }
-            }
-        } else if (mode === 'single-ayah' && surah && typeof surah === 'object' && surah.number) {
-            // For single-ayah mode, calculate from globalAyah
-            if (typeof surah.globalAyah === 'number') {
-                const surahInfo = this.getSurahData().find(s => s.number === surah.number);
-                if (surahInfo) {
-                    // Calculate local ayah number from global ayah
-                    let cumulativeVerses = 0;
-                    for (let s = 1; s < surah.number; s++) {
-                        const prevSurah = this.getSurahData().find(ts => ts.number === s);
-                        if (prevSurah) {cumulativeVerses += prevSurah.verses;}
-                    }
-                    this.currentAyah = surah.globalAyah - cumulativeVerses;
-                    console.log('Calculated currentAyah for single-ayah:', this.currentAyah);
-                }
-            }
-        } else {
-            this.currentAyah = null; // Reset for full surah mode
-        }
-
-        // Update UI
-        this.updateNowPlaying();
-
-        // Start playing
-        const playPromise = this.audioElement.play();
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                console.log('Audio started successfully');
-            }).catch(error => {
-                console.error('Audio play failed:', error);
-                this.showNotification('Failed to start audio playback', 'error');
-            });
-        }
-    }
-
-    pauseAudio() {
-        if (this.audioElement) {
-            this.audioElement.pause();
-        }
-    }
-
-    resumeAudio() {
-        if (this.audioElement && this.currentAudioUrl) {
-            this.audioElement.play().catch(error => {
-                console.error('Resume audio failed:', error);
-            });
-        }
-    }
-
-    stopAudio() {
-        if (this.audioElement) {
-            this.audioElement.pause();
-            this.audioElement.currentTime = 0;
-            this.isPlaying = false;
-            this.updatePlaybackControls();
-        }
-    }
-
-    setAudioVolume(volume) {
-        if (!isFinite(volume) || volume < 0 || volume > 1) {
-            console.warn('Invalid volume value:', volume);
-            return;
-        }
-        this.volume = Math.max(0, Math.min(100, volume * 100));
-        if (this.audioElement) {
-            this.audioElement.volume = volume;
-        }
-        this.updateVolumeDisplay();
-        this.saveSettings();
-    }
-
-    seekAudio(position) {
-        if (this.audioElement && this.duration) {
-            const time = position * this.duration;
-            this.audioElement.currentTime = time;
-        }
-    }
-
-    updateProgressBar() {
-        if (this.audioElement && this.duration) {
-            const progress = (this.audioElement.currentTime / this.duration) * 100;
-            document.querySelector('.progress-fill').style.width = `${progress}%`;
-        }
-    }
-
-    updateTimeDisplay() {
-        const currentTimeEl = document.getElementById('currentTime');
-        const totalTimeEl = document.getElementById('totalTime');
-
-        if (currentTimeEl && totalTimeEl) {
-            const current = this.formatTime(this.currentTime);
-            const total = this.formatTime(this.duration);
-            currentTimeEl.textContent = current;
-            totalTimeEl.textContent = total;
-        }
-    }
-
-    formatTime(seconds) {
-        if (isNaN(seconds)) {
-            return '0:00:00';
-        }
-        const hours = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    // Handle messages from extension
-    handleMessage(message) {
-        switch (message.type) {
-            case 'playAudio':
-                console.log('Received playAudio message:', message);
-                // Pass the message for ayah extraction
-                this.playAudio(message.url, message.surah, message.mode, message);
-                break;
-            case 'pauseAudio':
-                this.pauseAudio();
-                break;
-            case 'resumeAudio':
-                this.resumeAudio();
-                break;
-            case 'stopAudio':
-                this.stopAudio();
-                break;
-            case 'setAudioVolume':
-                if (message.volume !== undefined && message.volume !== null) {
-                    this.setAudioVolume(message.volume);
-                }
-                break;
-            case 'seekAudio':
-                this.seekAudio(message.position);
-                break;
-            case 'updateState':
-                if (message.quranState) {
-                    this.isPlaying = message.quranState.isPlaying;
-                    if (message.quranState.currentSurah) {
-                        this.currentSurah = this.surahData.find(s =>
-                            s.number.toString() === message.quranState.currentSurah
-                        );
-                    }
-                    this.updateUI();
-                }
-                break;
-            case 'languageChanged':
-                console.log('ActivityBar JS: Received languageChanged message', message);
-                // Update localStorage with the new language setting
-                if (message.language) {
-                    try {
-                        const settings = JSON.parse(localStorage.getItem('codeTuneSettings') || '{}');
-                        settings.language = message.language;
-                        localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
-                        console.log('ActivityBar JS: Updated localStorage to:', settings);
-                    } catch (error) {
-                        console.warn('Failed to update language in localStorage:', error);
-                    }
-
-                    // Set global language variable for localization system
-                    window.currentLanguage = message.language;
-                    console.log('ActivityBar JS: Set window.currentLanguage to:', window.currentLanguage);
-
-                    // Re-localize the activity bar when language changes
-                    if (window.localization) {
-                        console.log('ActivityBar JS: Refreshing localization for language:', message.language);
-                        window.localization.refreshLocalization();
-                        console.log('ActivityBar JS: Localization updated');
-                    } else {
-                        console.log('ActivityBar JS: Creating new localization manager');
-                        window.localization = new LocalizationManager();
-                        window.localization.localizeElements();
-                    }
-                }
-                break;
-            case 'playbackStarted':
-                this.showNotification(window.localization.getString('startedPlaying', { surahName: message.surahName }), 'success');
-                break;
-            case 'playbackError':
-                this.showNotification(window.localization.getString('playbackError'), 'error');
-                break;
-        }
-    }
-
-    // Playback Options Modal
-    showPlaybackOptionsModal(surahNumber) {
-        this.selectedSurahNumber = surahNumber;
-
-        // Get surah data
-        const surah = this.surahData.find(s => s.number === parseInt(surahNumber));
-        if (!surah) {return;}
-
-        // Update surah info display
-        const surahInfoEl = document.getElementById('selectedSurahInfo');
-        if (surahInfoEl) {
-            surahInfoEl.innerHTML = `
-                <div class="surah-display">
-                    <div class="surah-number">${surah.number}</div>
-                    <div class="surah-details">
-                        <div class="surah-name">${surah.name}</div>
-                        <div class="surah-translation">${surah.arabicName}</div>
-                        <div class="surah-meta">${surah.verses} verses • ${surah.type}</div>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Set default reciter from saved settings
-        const reciterSelect = document.getElementById('playbackReciterSelect');
-        if (reciterSelect) {
-            reciterSelect.value = this.reciter;
-        }
-
-        // Show modal
-        const modal = document.getElementById('playbackOptionsModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.style.animation = 'fadeIn 0.3s ease-out';
-        }
-    }
-
-    closePlaybackOptionsModal() {
-        const modal = document.getElementById('playbackOptionsModal');
-        if (modal) {
-            modal.style.animation = 'fadeOut 0.3s ease-out';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 300);
-        }
-
-        // Clear selected surah
-        this.selectedSurahNumber = null;
-    }
-
-    startSelectedPlayback() {
-        console.log('startSelectedPlayback called, selectedSurahNumber:', this.selectedSurahNumber);
-
-        if (!this.selectedSurahNumber || this.selectedSurahNumber === null || this.selectedSurahNumber === undefined) {
-            console.log('startSelectedPlayback: selectedSurahNumber is null/undefined, showing error');
-            this.showNotification('Please select a Surah first', 'error');
-            return;
-        }
-
-        // Get selected options
-        const playbackModeElement = document.querySelector('input[name="playbackMode"]:checked');
-        const playbackMode = playbackModeElement ? playbackModeElement.value : 'full-surah';
-        const reciterElement = document.getElementById('playbackReciterSelect');
-        const reciter = reciterElement ? reciterElement.value : this.reciter;
-
-        console.log('startSelectedPlayback: sending message with surah:', this.selectedSurahNumber, 'mode:', playbackMode, 'reciter:', reciter);
-
-        // Update current reciter if different
-        if (reciter !== this.reciter) {
-            this.updateReciterSetting(reciter);
-        }
-
-        // Capture surah number before closing modal
-        const surahToPlay = this.selectedSurahNumber;
-
-        // Close modal
-        this.closePlaybackOptionsModal();
-
-        // Send playback request with options
-        this.postMessage('playQuran', {
-            surah: surahToPlay,
-            mode: playbackMode,
-            reciter: reciter
-        });
-    }
-
-    // Quran Listening Statistics
-    incrementListeningCounter() {
-        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-        const now = new Date().getTime(); // Timestamp for last update
-
-        // Initialize today's count if it doesn't exist
-        if (!this.listeningStats.dailyStats[today]) {
-            this.listeningStats.dailyStats[today] = 0;
-        }
-
-        // Increment counters
-        this.listeningStats.totalSessions++;
-        this.listeningStats.dailyStats[today]++;
-        this.listeningStats.lastUpdated = now;
-
-        // Save to localStorage
-        this.saveListeningStats();
-
-        // Update UI
-        this.updateListeningStatsDisplay();
-
-        console.log('Listening counter incremented:', this.listeningStats);
-    }
-
-    loadListeningStats() {
-        try {
-            const savedStats = localStorage.getItem('quranListeningStats');
-            if (savedStats) {
-                const parsed = JSON.parse(savedStats);
-                this.listeningStats = {
-                    totalSessions: parsed.totalSessions || 0,
-                    totalTimePlayed: parsed.totalTimePlayed || 0,
-                    dailyStats: parsed.dailyStats || {},
-                    dailyTimeStats: parsed.dailyTimeStats || {},
-                    lastUpdated: parsed.lastUpdated || null,
-                    statsMode: parsed.statsMode || 'sessions'
-                };
-            }
-            console.log('Loaded listening stats:', this.listeningStats);
-        } catch (error) {
-            console.warn('Failed to load listening stats:', error);
-            // Use defaults
-        }
-    }
-
-    saveListeningStats() {
-        try {
-            localStorage.setItem('quranListeningStats', JSON.stringify(this.listeningStats));
-        } catch (error) {
-            console.warn('Failed to save listening stats:', error);
-        }
-    }
-
-    calculateWeeklyStats() {
-        const today = new Date();
-        let weekTotal = 0;
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const dateKey = date.toISOString().split('T')[0];
-
-            weekTotal += this.listeningStats.dailyStats[dateKey] || 0;
-        }
-
-        return weekTotal;
-    }
-
-    calculateMonthlyStats() {
-        const today = new Date();
-        // Start of current month (e.g., October 1st if today is October 1st)
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        let monthTotal = 0;
-
-        for (const [dateKey, count] of Object.entries(this.listeningStats.dailyStats)) {
-            const date = new Date(dateKey);
-            // Only count days from start of month to today (inclusive)
-            if (date >= startOfMonth && date <= today) {
-                monthTotal += count;
-            }
-        }
-
-        return monthTotal;
-    }
-
-
-
-    // Time tracking methods
-    startTimeTracking() {
-        this.playStartTime = Date.now();
-        console.log('Started time tracking at:', this.playStartTime);
-    }
-
-    stopTimeTracking() {
-        if (!this.playStartTime) {
-            return; // Not currently tracking
-        }
-
-        const now = Date.now();
-        const elapsedTime = now - this.playStartTime;
-        this.currentSessionTime += elapsedTime;
-
-        console.log('Stopped time tracking. Elapsed time:', elapsedTime, 'ms');
-
-        // Accumulate to total and daily time
-        const today = new Date().toISOString().split('T')[0];
-
-        // Initialize daily time if not exists
-        if (!this.listeningStats.dailyTimeStats[today]) {
-            this.listeningStats.dailyTimeStats[today] = 0;
-        }
-
-        // Add time to totals
-        this.listeningStats.totalTimePlayed += elapsedTime;
-        this.listeningStats.dailyTimeStats[today] += elapsedTime;
-        this.listeningStats.lastUpdated = now;
-
-        // Save and reset tracking
-        this.saveListeningStats();
-        this.playStartTime = null;
-        this.currentSessionTime = 0;
-        this.updateListeningStatsDisplay();
-    }
-
-    // Format milliseconds to HH:MM:SS
-    formatDuration(milliseconds) {
-        if (!milliseconds || milliseconds < 1000) {
-            return '0:00:00';
-        }
-
-        const seconds = Math.floor(milliseconds / 1000) % 60;
-        const minutes = Math.floor(milliseconds / (1000 * 60)) % 60;
-        const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-
-        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    // Toggle between sessions and time statistics
-    toggleStatisticsMode() {
-        this.listeningStats.statsMode = this.listeningStats.statsMode === 'sessions' ? 'time' : 'sessions';
-        this.saveListeningStats();
-        this.updateListeningStatsDisplay();
-        console.log('Toggled stats mode to:', this.listeningStats.statsMode);
-    }
-
-    updateListeningStatsDisplay() {
-        const statsContainer = document.getElementById('listeningStats');
-        if (!statsContainer) {
-            console.log('Listening stats container not found');
-            return;
-        }
-
-        const today = new Date().toISOString().split('T')[0];
-        const mode = this.listeningStats.statsMode;
-
-        let icon, title;
-        if (mode === 'time') {
-            icon = '⏰';
-            title = 'Quran Time';
-        } else {
-            icon = '📊';
-            title = 'Quran Listening';
-        }
-
-        let totalValue, todayValue, weekValue, monthValue;
-
-        if (mode === 'time') {
-            // Time mode - show time in HH:MM:SS
-            todayValue = this.formatDuration(this.listeningStats.dailyTimeStats[today] || 0);
-            weekValue = this.formatDuration(this.calculateWeeklyTimeStats());
-            monthValue = this.formatDuration(this.calculateMonthlyTimeStats());
-        } else {
-            // Session mode - show counts
-            todayValue = this.listeningStats.dailyStats[today] || 0;
-            weekValue = this.calculateWeeklyStats();
-            monthValue = this.calculateMonthlyStats();
-
-            // Format large numbers with commas
-            todayValue = todayValue.toLocaleString();
-            weekValue = weekValue.toLocaleString();
-            monthValue = monthValue.toLocaleString();
-        }
-
-        const html = `
-            <div class="stats-header">
-                <span class="stats-icon">${icon}</span>
-                <span class="stats-title">${title}</span>
-                <span class="stats-reset" onclick="this.getRootNode().host.resetStats()" title="Reset all statistics">🔄</span>
-            </div>
-            <div class="stats-content">
-                <div class="stat-item">
-                    <span class="stat-label">${mode === 'time' ? 'Total Time' : 'Total Sessions'}</span>
-                    <span class="stat-value">${mode === 'time' ? this.formatDuration(this.listeningStats.totalTimePlayed) : this.listeningStats.totalSessions.toLocaleString()}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Today</span>
-                    <span class="stat-value">${todayValue}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">This Week</span>
-                    <span class="stat-value">${weekValue}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">This Month</span>
-                    <span class="stat-value">${monthValue}</span>
-                </div>
-            </div>
-        `;
-
-        statsContainer.innerHTML = html;
-        statsContainer.style.display = 'block';
-    }
-
-    // Calculate weekly time stats (in milliseconds)
-    calculateWeeklyTimeStats() {
-        const today = new Date();
-        let weekTotal = 0;
-
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const dateKey = date.toISOString().split('T')[0];
-
-            weekTotal += this.listeningStats.dailyTimeStats[dateKey] || 0;
-        }
-
-        return weekTotal;
-    }
-
-    // Calculate monthly time stats (in milliseconds) - from start of month to today
-    calculateMonthlyTimeStats() {
-        const today = new Date();
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        let monthTotal = 0;
-
-        for (const [dateKey, time] of Object.entries(this.listeningStats.dailyTimeStats)) {
-            const date = new Date(dateKey);
-            if (date >= startOfMonth && date <= today) {
-                monthTotal += time;
-            }
-        }
-
-        return monthTotal;
-    }
-
-    resetStats() {
-        const modeText = this.listeningStats.statsMode === 'time' ? 'listening time' : 'session';
-        if (confirm(`Are you sure you want to reset all listening ${modeText} statistics? This cannot be undone.`)) {
-            this.listeningStats = {
-                totalSessions: 0,
-                totalTimePlayed: 0,
-                dailyStats: {},
-                dailyTimeStats: {},
-                lastUpdated: null,
-                statsMode: this.listeningStats.statsMode || 'sessions'
-            };
-            this.saveListeningStats();
-            this.updateListeningStatsDisplay();
-            this.showNotification('Statistics reset successfully', 'success');
-        }
-    }
-
-    // Helper method to calculate global ayah number from surah and ayah numbers
-    calculateGlobalAyahNumber(surahNumber, ayahNumber) {
-        let globalAyah = 0;
-        for (let surah of this.surahData) {
-            if (surah.number < surahNumber) {
-                globalAyah += surah.verses;
-            } else if (surah.number === surahNumber) {
-                globalAyah += ayahNumber;
-                break;
-            }
-        }
-        return globalAyah;
-    }
-
-    // Salawat Counter Methods
-    loadSalawatCounter() {
-        try {
-            const saved = localStorage.getItem('salawatCounter');
-            if (saved) {
-                this.salawatCounter = { ...this.salawatCounter, ...JSON.parse(saved) };
-            }
-            this.updateSalawatCounterUI();
-        } catch (error) {
-            console.warn('Failed to load salawat counter:', error);
-        }
-    }
-
-    saveSalawatCounter() {
-        try {
-            localStorage.setItem('salawatCounter', JSON.stringify(this.salawatCounter));
-        } catch (error) {
-            console.warn('Failed to save salawat counter:', error);
-        }
-    }
-
-    updateSalawatCounterUI() {
-        const currentEl = document.getElementById('currentSalawatCount');
-        const targetEl = document.getElementById('salawatTarget');
-        const statusEl = document.getElementById('salawatStatus');
-        const counterEl = document.getElementById('salawatCounter');
-
-        if (!currentEl || !targetEl || !statusEl || !counterEl) {
-            return; // Elements not found
-        }
-
-        if (this.salawatCounter.currentCount >= this.salawatCounter.dailyTarget) {
-            // Completed target
-            counterEl.classList.add('salawat-completed');
-            statusEl.textContent = window.localization.getString('salawatCompleted');
-        } else {
-            // In progress
-            counterEl.classList.remove('salawat-completed');
-            const remaining = this.salawatCounter.dailyTarget - this.salawatCounter.currentCount;
-            statusEl.textContent = window.localization.getString('salawatRemaining', { remaining: remaining });
-        }
-
-        // Update display
-        currentEl.textContent = this.salawatCounter.currentCount;
-        targetEl.textContent = this.salawatCounter.dailyTarget;
-    }
-
-    incrementSalawatCounter() {
-        // Check date reset first
-        this.checkSalawatCounterReset();
-
-        this.salawatCounter.currentCount++;
-        this.saveSalawatCounter();
-        this.updateSalawatCounterUI();
-
-        console.log(`Salawat counter incremented: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
-    }
-
-    checkSalawatCounterReset() {
-        const today = new Date().toDateString();
-        if (this.salawatCounter.lastResetDate !== today) {
-            this.salawatCounter.currentCount = 0;
-            this.salawatCounter.lastResetDate = today;
-
-            // Check if Ramadan and update target
-            const isRamadan = this.isRamadanInIslamicCalendar();
-            const isFriday = new Date().getDay() === 5;
-
-            if (isRamadan) {
-                this.salawatCounter.dailyTarget = 100; // Higher target for Ramadan
-            } else if (isFriday) {
-                this.salawatCounter.dailyTarget = 24; // Friday target
-            } else {
-                this.salawatCounter.dailyTarget = 11; // Regular target
-            }
-
-            this.saveSalawatCounter();
-        }
-    }
-
-    isRamadanInIslamicCalendar() {
-        // Simple Ramadan detection - adjust for your location
-        const now = new Date();
-        const year = now.getFullYear();
-        // Approximate Ramadan timing (this should be calculated properly)
-        // Adjust these dates based on actual Islamic calendar
-        const ramadanStart = new Date(year, 2, 1); // March 1 (approximate)
-        const ramadanEnd = new Date(year, 2, 31);   // March 31 (approximate)
-
-        if (now >= ramadanStart && now <= ramadanEnd) {
-            return true;
-        }
-
-        // If not found in March, check April (Ramadan shifts annually)
-        const altStart = new Date(year, 3, 1);
-        const altEnd = new Date(year, 3, 30);
-        return now >= altStart && now <= altEnd;
-    }
-
-    // Tasbih Counter Methods
-    loadTasbihCounters() {
-        try {
-            const saved = localStorage.getItem('tasbihCounters');
-            if (saved) {
-                this.tasbihCounters = { ...this.tasbihCounters, ...JSON.parse(saved) };
-            }
-            this.updateTasbihCountersUI();
-        } catch (error) {
-            console.warn('Failed to load tasbih counters:', error);
-        }
-    }
-
-    saveTasbihCounters() {
-        try {
-            localStorage.setItem('tasbihCounters', JSON.stringify(this.tasbihCounters));
-        } catch (error) {
-            console.warn('Failed to save tasbih counters:', error);
-        }
-    }
-
-    incrementTasbihCounter(dhikrType) {
-        if (!this.tasbihCounters[dhikrType]) {
-            this.tasbihCounters[dhikrType] = 0;
-        }
-
-        this.tasbihCounters[dhikrType]++;
-        this.saveTasbihCounters();
-        this.updateTasbihCountersUI();
-
-        console.log(`${dhikrType} counter incremented to: ${this.tasbihCounters[dhikrType]}`);
-    }
-
-    updateTasbihCountersUI() {
-        // Update each dhikr counter display
-        ['subhanallah', 'alhamdulillah', 'la-ilaha', 'allahu-akbar'].forEach(dhikrType => {
-            const elementId = this.mapDhikrTypeToElementId(dhikrType);
-            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
-
-            if (countElement) {
-                countElement.textContent = this.tasbihCounters[dhikrType] || 0;
-            }
-        });
-    }
-
-    mapDhikrTypeToElementId(dhikrType) {
-        const mapping = {
-            'subhanallah': 'dhikr-subhanallah',
-            'alhamdulillah': 'dhikr-alhamdulillah',
-            'la-ilaha': 'dhikr-la-ilaha',
-            'allahu-akbar': 'dhikr-allahu-akbar'
-        };
-        return mapping[dhikrType];
-    }
-
+    // Counter reset method (called from HTML)
     resetTasbihCounters() {
-        if (confirm(window.localization.getString('counterResetConfirm'))) {
-            this.tasbihCounters = {
-                subhanallah: 0,
-                alhamdulillah: 0,
-                laIlahaIllaAllah: 0,
-                allahuAkbar: 0
-            };
-            this.saveTasbihCounters();
-            this.updateTasbihCountersUI();
-            this.showNotification('Tasbih counters reset successfully', 'success');
+        if (this.counterComponent && this.counterComponent.resetTasbihCounters) {
+            this.counterComponent.resetTasbihCounters();
         }
     }
 
-    // Istighfar Counter Methods
-    loadIstighfarCounters() {
-        try {
-            const saved = localStorage.getItem('istighfarCounters');
-            if (saved) {
-                this.istighfarCounters = { ...this.istighfarCounters, ...JSON.parse(saved) };
-            }
-            this.updateIstighfarCountersUI();
-        } catch (error) {
-            console.warn('Failed to load istighfar counters:', error);
-        }
+    // Friday Surah Al-Kahf reading method
+    startFridaySurahReading() {
+        console.log('Starting Friday Surah Al-Kahf reading session');
+
+        // Send message to extension to trigger the Friday Surah enforcement
+        vscode.postMessage({
+            type: 'enforceFridaySurahKahf',
+            surahNumber: 18,
+            message: '🕌 Starting Friday Surah Al-Kahf Reading Session'
+        });
+
+        // Update UI to show it's in progress
+        this.updateFridaySurahStatus('started', 'Reading in progress...');
     }
 
-    saveIstighfarCounters() {
-        try {
-            localStorage.setItem('istighfarCounters', JSON.stringify(this.istighfarCounters));
-        } catch (error) {
-            console.warn('Failed to save istighfar counters:', error);
-        }
-    }
+    // Initialize Friday Surah status on load
+    initializeFridaySurahStatus() {
+        console.log('Initializing Friday Surah status');
 
-    incrementIstighfarCounter(dhikrType) {
-        if (!this.istighfarCounters[dhikrType]) {
-            this.istighfarCounters[dhikrType] = 0;
-        }
-
-        this.istighfarCounters[dhikrType]++;
-        this.saveIstighfarCounters();
-        this.updateIstighfarCountersUI();
-
-        console.log(`${dhikrType} istighfar counter incremented to: ${this.istighfarCounters[dhikrType]}`);
-    }
-
-    updateIstighfarCountersUI() {
-        // Update each istighfar counter display
-        ['astaghfirullah', 'subhanakallahumma'].forEach(dhikrType => {
-            const elementId = this.mapIstighfarTypeToElementId(dhikrType);
-            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
-
-            if (countElement) {
-                countElement.textContent = this.istighfarCounters[dhikrType] || 0;
-            }
+        // Request current Friday Surah status from extension
+        vscode.postMessage({
+            type: 'getFridaySurahStatus'
         });
     }
 
-    mapIstighfarTypeToElementId(dhikrType) {
-        const mapping = {
-            'astaghfirullah': 'dhikr-istighfar-astaghfirullah',
-            'subhanakallahumma': 'dhikr-istighfar-subhanakallahumma'
-        };
-        return mapping[dhikrType];
-    }
+    // Update Friday Surah status display
+    updateFridaySurahStatus(status, message) {
+        const statusIcon = document.getElementById('fridayStatusIcon');
+        const statusText = document.getElementById('fridayStatusText');
+        const statusContainer = document.getElementById('fridaySurahStatus');
 
-    // Adhkar Counter Methods
-    loadAdhkarCounters() {
-        try {
-            const saved = localStorage.getItem('adhkarCounters');
-            if (saved) {
-                this.adhkarCounters = { ...this.adhkarCounters, ...JSON.parse(saved) };
+        if (statusIcon && statusText && statusContainer) {
+            // Remove existing status classes
+            statusContainer.classList.remove('completed', 'started', 'not-started');
+
+            // Update based on status
+            switch (status) {
+                case 'completed':
+                    statusContainer.classList.add('completed');
+                    statusIcon.textContent = '✅';
+                    // Use localized text
+                    if (window.localization) {
+                        statusText.textContent = window.localization.getString('fridaySurahCompleted');
+                    } else {
+                        statusText.textContent = 'Completed today! Alhamdulillah';
+                    }
+                    break;
+                case 'started':
+                    statusContainer.classList.add('started');
+                    statusIcon.textContent = '📖';
+                    // Use localized text
+                    if (window.localization) {
+                        statusText.textContent = window.localization.getString('fridaySurahInProgress');
+                    } else {
+                        statusText.textContent = message || 'Reading in progress...';
+                    }
+                    break;
+                case 'not-started':
+                default:
+                    statusContainer.classList.add('not-started');
+                    statusIcon.textContent = '⏳';
+                    // Use localized text
+                    if (window.localization) {
+                        statusText.textContent = window.localization.getString('fridaySurahNotStarted');
+                    } else {
+                        statusText.textContent = message || 'Not started today';
+                    }
+                    break;
             }
-            this.updateAdhkarCountersUI();
-        } catch (error) {
-            console.warn('Failed to load adhkar counters:', error);
         }
     }
 
-    saveAdhkarCounters() {
-        try {
-            localStorage.setItem('adhkarCounters', JSON.stringify(this.adhkarCounters));
-        } catch (error) {
-            console.warn('Failed to save adhkar counters:', error);
-        }
-    }
-
-    incrementAdhkarCounter(dhikrType) {
-        if (!this.adhkarCounters[dhikrType]) {
-            this.adhkarCounters[dhikrType] = 0;
-        }
-
-        this.adhkarCounters[dhikrType]++;
-        this.saveAdhkarCounters();
-        this.updateAdhkarCountersUI();
-
-        console.log(`${dhikrType} adhkar counter incremented to: ${this.adhkarCounters[dhikrType]}`);
-    }
-
-    updateAdhkarCountersUI() {
-        // Update each adhkar counter display
-        ['auzubillahi', 'rabbiGhifir', 'hasbiyallah', 'laHawla'].forEach(dhikrType => {
-            const elementId = this.mapAdhkarTypeToElementId(dhikrType);
-            const countElement = elementId ? document.querySelector(`#${elementId} .dhikr-count`) : null;
-
-            if (countElement) {
-                countElement.textContent = this.adhkarCounters[dhikrType] || 0;
-            }
-        });
-    }
-
-    mapAdhkarTypeToElementId(dhikrType) {
-        const mapping = {
-            'auzubillahi': 'dhikr-adhkar-auzubillahi',
-            'rabbiGhifir': 'dhikr-adhkar-rabbi-ghifir',
-            'hasbiyallah': 'dhikr-adhkar-hasbiyallah',
-            'laHawla': 'dhikr-adhkar-la-hawla'
-        };
-        return mapping[dhikrType];
-    }
-
-    // Prayer Goals Methods
-    loadPrayerGoals() {
-        try {
-            const saved = localStorage.getItem('prayerGoals');
-            if (saved) {
-                this.prayerGoals = { ...this.prayerGoals, ...JSON.parse(saved) };
-            }
-            this.updatePrayerGoalsUI();
-        } catch (error) {
-            console.warn('Failed to load prayer goals:', error);
-        }
-    }
-
-    savePrayerGoals() {
-        try {
-            localStorage.setItem('prayerGoals', JSON.stringify(this.prayerGoals));
-        } catch (error) {
-            console.warn('Failed to save prayer goals:', error);
-        }
-    }
-
+    // Prayer goal update method (called from HTML)
     updatePrayerGoal(prayer, completed) {
-        this.prayerGoals[prayer] = completed;
-        this.savePrayerGoals();
-        this.updatePrayerGoalsUI();
-
-        console.log(`${prayer} goal updated to: ${completed}`);
+        if (this.counterComponent && this.counterComponent.updatePrayerGoal) {
+            this.counterComponent.updatePrayerGoal(prayer, completed);
+        }
     }
 
-    updatePrayerGoalsUI() {
-        // Update goal display percentage
-        const completedCount = Object.values(this.prayerGoals).filter(Boolean).length;
-        const goalsCompletedDisplay = document.getElementById('goalsCompletedDisplay');
-        if (goalsCompletedDisplay) {
-            const percentage = Math.round((completedCount / 5) * 100);
-            goalsCompletedDisplay.textContent = `${completedCount}/5 (${percentage}%)`;
+    // Dispose method for proper cleanup
+    dispose() {
+        console.log('Disposing QuranActivityBar...');
+
+        // Stop all auto-reading functionality
+        this.stopAutoReading();
+        this.stopAdaptiveSpeedAdjustment();
+
+        // Clear all intervals
+        if (this.autoReadingInterval) {
+            clearInterval(this.autoReadingInterval);
+            this.autoReadingInterval = null;
+        }
+        if (this.adaptiveSpeedUpdateInterval) {
+            clearInterval(this.adaptiveSpeedUpdateInterval);
+            this.adaptiveSpeedUpdateInterval = null;
         }
 
-        // Update individual goal checkboxes
-        Object.keys(this.prayerGoals).forEach(prayer => {
-            const checkbox = document.getElementById(`${prayer}Goal`);
-            if (checkbox) {
-                checkbox.checked = this.prayerGoals[prayer] || false;
-            }
-        });
+        // Dispose components
+        if (this.counterComponent && this.counterComponent.dispose) {
+            this.counterComponent.dispose();
+        }
+        if (this.audioPlayerComponent && this.audioPlayerComponent.dispose) {
+            this.audioPlayerComponent.dispose();
+        }
+        if (this.prayerTrackerComponent && this.prayerTrackerComponent.dispose) {
+            this.prayerTrackerComponent.dispose();
+        }
+        if (this.settingsComponent && this.settingsComponent.dispose) {
+            this.settingsComponent.dispose();
+        }
+        if (this.statisticsComponent && this.statisticsComponent.dispose) {
+            this.statisticsComponent.dispose();
+        }
+
+        // Clear references
+        this.counterComponent = null;
+        this.audioPlayerComponent = null;
+        this.prayerTrackerComponent = null;
+        this.settingsComponent = null;
+        this.statisticsComponent = null;
+
+        console.log('QuranActivityBar disposed successfully');
     }
 
-    // Surah data
+    // Surah data for components
     getSurahData() {
         return [
             { number: 1, name: "Al-Fatiha", arabicName: "الفاتحة", verses: 7, type: "Meccan" },

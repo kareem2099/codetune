@@ -307,7 +307,7 @@ export class IslamicRemindersManager {
         return sunriseEstimate;
     }
 
-    private showReminder() {
+    private async showReminder() {
         if (!this.settings.enableReminders) {return;}
         if (!this.isWorkingHours()) {return;}
 
@@ -315,6 +315,13 @@ export class IslamicRemindersManager {
         if (!content) {return;}
 
         const isFridaySurah = content?.source?.includes('Surah Al-Kahf 18:29 (Friday Quranic Reading Rally)');
+
+        // If this is the Friday Surah Al-Kahf reminder, enforce reading instead of just showing notification
+        if (isFridaySurah && !this.fridayReminders.isFridaySurahCompleted()) {
+            console.log('Friday Surah Al-Kahf reminder triggered - enforcing reading');
+            await this.fridayReminders.enforceFridaySurahReading();
+            return; // Don't show the regular notification
+        }
 
         const typeLabel = isFridaySurah ? 'Friday Remembrance: Read Surah Al-Kahf' :
                          content.type === 'adia' ? 'Adia (Prayer)' :

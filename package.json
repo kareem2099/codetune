@@ -2,7 +2,7 @@
   "name": "codetune",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "publisher": "FreeRave",
   "repository": {
     "type": "git",
@@ -74,13 +74,31 @@
         "codeTune.language": {
           "type": "string",
           "default": "auto",
-          "enum": ["auto", "en", "ar"],
+          "enum": ["auto", "en", "ar", "ru", "fr", "es"],
           "enumDescriptions": [
             "Auto (Follow VS Code)",
             "English",
-            "العربية (Arabic)"
+            "العربية (Arabic)",
+            "Русский (Russian)",
+            "Français (French)",
+            "Español (Spanish)"
           ],
           "description": "Choose the display language for CodeTune"
+        },
+        "codeTune.enableReviewNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show occasional notifications asking users to leave reviews for CodeTune on VS Code Marketplace"
+        },
+        "codeTune.enableSponsorNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show occasional notifications encouraging users to support CodeTune development"
+        },
+        "codeTune.salawatCounter": {
+          "type": "number",
+          "default": 0,
+          "description": "Current count of Salawat (praises to Prophet Muhammad)"
         }
       }
     },
@@ -115,7 +133,7 @@
       },
       {
         "command": "codeTune.openSettings",
-        "title": "%commands.codeTune.openSettings.title%"
+        "title": "Open CodeTune Settings"
       }
     ],
     "keybindings": [

@@ -25,6 +25,9 @@
                         <option value="auto" data-localize="languageAuto">🌐</option>
                         <option value="en" data-localize="languageEnglish">EN</option>
                         <option value="ar" data-localize="languageArabic">العربية</option>
+                        <option value="ru" data-localize="languageRussian">Русский</option>
+                        <option value="fr" data-localize="languageFrench">Français</option>
+                        <option value="es" data-localize="languageSpanish">Español</option>
                     </select>
                     <button class="action-btn" id="themeToggle" title="Toggle theme">
                         <span class="icon">🌙</span>
@@ -168,6 +171,24 @@
                     </div>
                 </div>
 
+                <!-- Friday Surah Al-Kahf Reading -->
+                <div class="dhikr-section">
+                    <div class="dhikr-section-title" data-localize="fridaySurahTitle">🕌 Friday Surah Al-Kahf</div>
+                    <div class="friday-surah-status" id="fridaySurahStatus">
+                        <div class="friday-surah-info">
+                            <div class="friday-surah-text" data-localize="fridaySurahDescription">Read Surah Al-Kahf for protection from trials and Dajjal</div>
+                            <div class="friday-surah-progress" id="fridaySurahProgress">
+                                <span class="friday-status-icon" id="fridayStatusIcon">⏳</span>
+                                <span class="friday-status-text" id="fridayStatusText" data-localize="fridaySurahNotStarted">Not started today</span>
+                            </div>
+                        </div>
+                        <button class="friday-surah-btn" id="fridaySurahBtn" onclick="window.quranActivityBar.startFridaySurahReading()">
+                            <span class="icon">📖</span>
+                            <span data-localize="fridaySurahBtnText">Read Surah Al-Kahf</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Islamic Goals Tracker -->
                 <div class="dhikr-section">
                     <div class="dhikr-section-title" data-localize="islamicGoalsTitle">الأهداف الإسلامية - Islamic Goals</div>
@@ -263,6 +284,24 @@
                 <span data-localize="browseAllChaptors">Browse All Surahs</span>
             </button>
         </div>
+
+        <!-- Auto Reading Speed Indicator -->
+        <div class="auto-reading-indicator" id="autoReadingIndicator" style="display: none;">
+            <div class="indicator-header">
+                <span class="indicator-icon">🚶</span>
+                <span class="indicator-title" data-localize="autoReadingActive">Auto Reading Active</span>
+            </div>
+            <div class="speed-display">
+                <span class="speed-label" data-localize="readingSpeed">Speed:</span>
+                <span class="speed-value" id="currentSpeedValue">1.0x</span>
+            </div>
+            <div class="speed-controls-bar">
+                <button class="speed-btn-bar" data-speed="2" title="Slow">🐢 1s</button>
+                <button class="speed-btn-bar" data-speed="1" title="Normal">🚶 2s</button>
+                <button class="speed-btn-bar" data-speed="0.5" title="Fast">🏃 4s</button>
+                <button class="speed-btn-bar active" data-speed="4" title="Very Fast">🐇 0.5s</button>
+            </div>
+        </div>
     </div>
 
     <!-- Now Playing Display -->
@@ -295,7 +334,7 @@
 
             <!-- Quick Access Grid -->
             <div class="quick-access">
-                <div class="quick-access-title" data-localize="quickAccess">Quick Access</div>
+                <div class="quick-access-title" data-localize="quickAccess">Quran listening</div>
                 <div class="surah-grid">
                     <button class="surah-card" data-surah="001" title="Al-Fatiha (The Opening)">
                         <div class="surah-number">1</div>
@@ -357,11 +396,11 @@
                     <span data-localize="playbackSettings">Playback Settings</span>
                 </div>
 
-                <div class="setting-item">
+                    <div class="setting-item">
                     <div class="setting-label" data-localize="autoPlayStartup">Auto-play on Startup</div>
                     <div class="setting-description" data-localize="autoPlayDesc">Automatically start playing when VS Code opens</div>
                     <div class="setting-control">
-                        <input type="checkbox" id="autoPlayStartup" onchange="updateAutoPlaySetting(this.checked)">
+                        <input type="checkbox" id="autoPlayStartup" onchange="window.quranActivityBar.settingsComponent.updateAutoPlaySetting(this.checked)">
                         <label for="autoPlayStartup" data-localize="enableAutoPlay">Enable auto-play</label>
                     </div>
                 </div>
@@ -378,7 +417,7 @@
                     <div class="setting-label" data-localize="compactMode">Compact Mode</div>
                     <div class="setting-description" data-localize="compactDesc">Use a more compact layout to save space</div>
                     <div class="setting-control">
-                        <input type="checkbox" id="compactMode" onchange="updateCompactModeSetting(this.checked)">
+                        <input type="checkbox" id="compactMode" onchange="window.quranActivityBar.settingsComponent.updateCompactModeSetting(this.checked)">
                         <label for="compactMode">Enable compact mode</label>
                     </div>
                 </div>
@@ -387,7 +426,7 @@
                     <div class="setting-label" data-localize="showNotifications">Show Notifications</div>
                     <div class="setting-description" data-localize="notificationsDesc">Display notifications for playback events</div>
                     <div class="setting-control">
-                        <input type="checkbox" id="showNotifications" checked onchange="updateNotificationsSetting(this.checked)">
+                        <input type="checkbox" id="showNotifications" checked onchange="window.quranActivityBar.settingsComponent.updateNotificationsSetting(this.checked)">
                         <label for="showNotifications">Enable notifications</label>
                     </div>
                 </div>
@@ -404,7 +443,7 @@
                     <div class="setting-label" data-localize="enableReminders">Enable Reminders</div>
                     <div class="setting-description" data-localize="remindersDesc">Receive Islamic reminders and wisdom notifications</div>
                     <div class="setting-control">
-                        <input type="checkbox" id="enableReminders" checked onchange="updateEnableRemindersSetting(this.checked)">
+                        <input type="checkbox" id="enableReminders" checked onchange="window.quranActivityBar.settingsComponent.updateEnableRemindersSetting(this.checked)">
                         <label for="enableReminders">Enable Islamic reminders</label>
                     </div>
                 </div>
@@ -429,11 +468,11 @@
                     <div class="setting-description" data-localize="reminderTypesDesc">Choose which types of Islamic content to receive</div>
                     <div class="setting-control">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label><input type="checkbox" id="showAdia" checked onchange="updateReminderTypeSetting('showAdia', this.checked)"> Adia (Islamic Prayers)</label>
-                            <label><input type="checkbox" id="showAhadis" checked onchange="updateReminderTypeSetting('showAhadis', this.checked)"> Ahadis (Prophet's Sayings)</label>
-                            <label><input type="checkbox" id="showWisdom" checked onchange="updateReminderTypeSetting('showWisdom', this.checked)"> Islamic Wisdom</label>
-                            <label><input type="checkbox" id="showMorningAzkar" checked onchange="updateReminderTypeSetting('showMorningAzkar', this.checked)"> 🌅 Morning Azkar (After Fajr - Sunrise)</label>
-                            <label><input type="checkbox" id="showEveningAzkar" checked onchange="updateReminderTypeSetting('showEveningAzkar', this.checked)"> 🌆 Evening Azkar (After Asr - Maghrib)</label>
+                            <label><input type="checkbox" id="showAdia" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAdia', this.checked)"> Adia (Islamic Prayers)</label>
+                            <label><input type="checkbox" id="showAhadis" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAhadis', this.checked)"> Ahadis (Prophet's Sayings)</label>
+                            <label><input type="checkbox" id="showWisdom" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showWisdom', this.checked)"> Islamic Wisdom</label>
+                            <label><input type="checkbox" id="showMorningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showMorningAzkar', this.checked)"> 🌅 Morning Azkar (After Fajr - Sunrise)</label>
+                            <label><input type="checkbox" id="showEveningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showEveningAzkar', this.checked)"> 🌆 Evening Azkar (After Asr - Maghrib)</label>
                         </div>
                     </div>
                 </div>
@@ -442,7 +481,7 @@
                     <div class="setting-label" data-localize="workingHoursOnly">Working Hours Only</div>
                     <div class="setting-description" data-localize="workingHoursDesc">Only show reminders during typical working hours (9 AM - 6 PM)</div>
                     <div class="setting-control">
-                        <input type="checkbox" id="workingHoursOnly" onchange="updateWorkingHoursSetting(this.checked)">
+                        <input type="checkbox" id="workingHoursOnly" onchange="window.quranActivityBar.settingsComponent.updateWorkingHoursSetting(this.checked)">
                         <label for="workingHoursOnly">Working hours only</label>
                     </div>
                 </div>
@@ -452,12 +491,30 @@
                     <div class="setting-description">Get notified before prayer times</div>
                     <div class="setting-control">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label><input type="checkbox" id="fajrReminder" onchange="updateIslamicReminderSetting('fajrReminder', this.checked)"> Fajr Prayer</label>
-                            <label><input type="checkbox" id="duhrReminder" onchange="updateIslamicReminderSetting('duhrReminder', this.checked)"> Dhuhr Prayer</label>
-                            <label><input type="checkbox" id="asrReminder" onchange="updateIslamicReminderSetting('asrReminder', this.checked)"> Asr Prayer</label>
-                            <label><input type="checkbox" id="maghribReminder" onchange="updateIslamicReminderSetting('maghribReminder', this.checked)"> Maghrib Prayer</label>
-                            <label><input type="checkbox" id="ishaReminder" onchange="updateIslamicReminderSetting('ishaReminder', this.checked)"> Isha Prayer</label>
+                            <label><input type="checkbox" id="fajrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('fajrReminder', this.checked)"> Fajr Prayer</label>
+                            <label><input type="checkbox" id="duhrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('duhrReminder', this.checked)"> Dhuhr Prayer</label>
+                            <label><input type="checkbox" id="asrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('asrReminder', this.checked)"> Asr Prayer</label>
+                            <label><input type="checkbox" id="maghribReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('maghribReminder', this.checked)"> Maghrib Prayer</label>
+                            <label><input type="checkbox" id="ishaReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('ishaReminder', this.checked)"> Isha Prayer</label>
                         </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="reviewNotifications">Review Notifications</div>
+                    <div class="setting-description data-localize="reviewNotificationsDesc">Show occasional notifications asking to leave reviews on VS Code Marketplace</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="enableReviewNotifications" onchange="window.quranActivityBar.settingsComponent.updateReviewNotificationsSetting(this.checked)">
+                        <label for="enableReviewNotifications">Enable review notifications</label>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-label" data-localize="sponsorNotifications">Sponsor Notifications</div>
+                    <div class="setting-description" data-localize="sponsorNotificationsDesc">Show occasional notifications encouraging to support CodeTune development</div>
+                    <div class="setting-control">
+                        <input type="checkbox" id="enableSponsorNotifications" onchange="window.quranActivityBar.settingsComponent.updateSponsorNotificationsSetting(this.checked)">
+                        <label for="enableSponsorNotifications">Enable sponsor notifications</label>
                     </div>
                 </div>
             </div>
@@ -526,7 +583,7 @@
                     <button class="modal-close" id="modalClose">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="surah-list" id="surahList">
+                    <div class="surah-list" id="surahModalContent">
                         <!-- Surahs will be populated by JavaScript -->
                     </div>
                 </div>
@@ -642,19 +699,19 @@
 
                     <!-- Auto Reading Controls -->
                     <div class="auto-reading-controls">
-                        <button class="btn-icon auto-read-toggle" id="autoReadToggle" title="Toggle Auto Reading" disabled>
+                        <button class="btn-icon auto-read-toggle" id="autoReadToggle" title="Toggle Auto Reading">
                             <span class="icon">🔄</span>
                             <span data-localize="autoReading">Auto Reading</span>
                         </button>
 
                         <div class="speed-controls" id="speedControls" style="display: none;">
-                            <button class="speed-btn" data-speed="0.5" title="Slow">🐢</button>
-                            <button class="speed-btn active" data-speed="1" title="Normal">🚶</button>
-                            <button class="speed-btn" data-speed="1.5" title="Fast">🏃</button>
-                            <button class="speed-btn" data-speed="2" title="Very Fast">🐇</button>
+                            <button class="speed-btn" data-speed="0.25" title="Slow">🐢 8s</button>
+                            <button class="speed-btn active" data-speed="0.5" title="Normal">🚶 4s</button>
+                            <button class="speed-btn" data-speed="1" title="Fast">🏃 2s</button>
+                            <button class="speed-btn" data-speed="2" title="Very Fast">🐇 1s</button>
                         </div>
 
-                        <button class="btn-icon" id="playPauseAutoRead" title="Play/Pause Auto Reading" disabled>
+                        <button class="btn-icon" id="playPauseAutoRead" title="Play/Pause Auto Reading">
                             <span class="icon" id="autoPlayIcon">▶️</span>
                         </button>
                     </div>
@@ -664,6 +721,13 @@
             </div>
         </div>
     </div>
+
+    <!-- Component scripts -->
+    <script nonce="{{nonce}}" src="./components/counter.js"></script>
+    <script nonce="{{nonce}}" src="./components/audioPlayer.js"></script>
+    <script nonce="{{nonce}}" src="./components/prayerTracker.js"></script>
+    <script nonce="{{nonce}}" src="./components/settings.js"></script>
+    <script nonce="{{nonce}}" src="./components/statistics.js"></script>
 
     <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
     <script nonce="{{nonce}}" src="{{jsUri}}"></script>
