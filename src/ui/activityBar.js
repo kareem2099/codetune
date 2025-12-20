@@ -48,14 +48,171 @@ class QuranActivityBar {
         this.startTimers();
         this.showWelcomeMessage();
         this.initializeFridaySurahStatus();
+        this.setupModalEventListeners();
+        this.checkAndShowWhatsNew();
     }
+
+    setupModalEventListeners() {
+        // What's New modal close button
+        const whatsNewClose = document.getElementById('whatsNewClose');
+        if (whatsNewClose) {
+            whatsNewClose.onclick = () => this.closeWhatsNewModal();
+        }
+
+        // What's New got it button
+        const whatsNewGotIt = document.getElementById('whatsNewGotIt');
+        if (whatsNewGotIt) {
+            whatsNewGotIt.onclick = () => this.closeWhatsNewModal();
+        }
+
+        // Close modal when clicking overlay
+        const whatsNewModal = document.getElementById('whatsNewModal');
+        if (whatsNewModal) {
+            whatsNewModal.onclick = (e) => {
+                if (e.target.id === 'whatsNewModal') {
+                    this.closeWhatsNewModal();
+                }
+            };
+        }
+    }
+
+    async checkAndShowWhatsNew() {
+        try {
+            // Check if user has already seen this version
+            const seenVersion = localStorage.getItem('codetune_whatsnew_seen');
+            const currentVersion = '0.0.7';
+
+            if (seenVersion === currentVersion) {
+                console.log('User has already seen v0.0.7 whats new modal');
+                return;
+            }
+
+            // Load content from new_features.txt
+            const response = await fetch('./new_features.txt');
+            if (!response.ok) {
+                console.error('Failed to load whats new content');
+                return;
+            }
+
+            const content = await response.text();
+            this.parseAndShowWhatsNewModal(content);
+
+        } catch (error) {
+            console.error('Error checking whats new:', error);
+        }
+    }
+
+    parseAndShowWhatsNewModal(content) {
+        const lines = content.split('\n');
+        let version = '';
+        let recentUpdates = [];
+        let comingSoon = [];
+        let currentSection = '';
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) {continue;}
+
+            if (trimmed.startsWith('v')) {
+                version = trimmed;
+            } else if (trimmed === 'RECENT_UPDATES') {
+                currentSection = 'recent';
+            } else if (trimmed === 'COMING_SOON') {
+                currentSection = 'coming';
+            } else if (currentSection === 'recent' && trimmed.includes('-')) {
+                recentUpdates.push(trimmed);
+            } else if (currentSection === 'coming' && trimmed.includes('-')) {
+                comingSoon.push(trimmed);
+            }
+        }
+
+        this.showWhatsNewModal(version, recentUpdates, comingSoon);
+    }
+
+    showWhatsNewModal(version, recentUpdates, comingSoon) {
+        // Set title
+        const titleEl = document.getElementById('whatsNewTitle');
+        if (titleEl) {
+            titleEl.textContent = `🎉 What's New in CodeTune ${version}`;
+        }
+
+        // Build content
+        let contentHtml = '';
+
+        if (recentUpdates.length > 0) {
+            contentHtml += '<div class="update-section"><h4>✅ Recent Updates</h4><div class="feature-list">';
+            recentUpdates.forEach(update => {
+                const [icon, title, description] = update.split(' - ');
+                contentHtml += `
+                    <div class="feature-item">
+                        <span class="feature-icon">${icon}</span>
+                        <div class="feature-text">
+                            <strong>${title}</strong>
+                            <p>${description}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            contentHtml += '</div></div>';
+        }
+
+        if (comingSoon.length > 0) {
+            contentHtml += '<div class="update-section"><h4>🚀 Coming Soon</h4><div class="feature-list">';
+            comingSoon.forEach(feature => {
+                const [icon, title, description] = feature.split(' - ');
+                contentHtml += `
+                    <div class="feature-item">
+                        <span class="feature-icon">${icon}</span>
+                        <div class="feature-text">
+                            <strong>${title}</strong>
+                            <p>${description}</p>
+                        </div>
+                    </div>
+                `;
+            });
+            contentHtml += '</div></div>';
+        }
+
+        // Set content
+        const contentEl = document.getElementById('whatsNewContent');
+        if (contentEl) {
+            contentEl.innerHTML = contentHtml + '<div class="modal-actions"><button class="btn-primary" id="whatsNewGotIt">Excited! 🎉</button></div>';
+
+            // Re-attach event listener for the dynamically created button
+            const gotItBtn = document.getElementById('whatsNewGotIt');
+            if (gotItBtn) {
+                gotItBtn.onclick = () => this.closeWhatsNewModal();
+            }
+        }
+
+        // Show modal
+        const modal = document.getElementById('whatsNewModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.animation = 'fadeIn 0.3s ease-out';
+        }
+    }
+
+    closeWhatsNewModal() {
+        const modal = document.getElementById('whatsNewModal');
+        if (modal) {
+            modal.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Mark as seen
+        localStorage.setItem('codetune_whatsnew_seen', '0.0.7');
+    }
+    
 
     initializeComponents() {
         // Initialize components in order with proper dependencies
         try {
             this.counterComponent = new CounterComponent();
             this.audioPlayerComponent = new AudioPlayerComponent();
-            this.prayerTrackerComponent = new PrayerTrackerComponent();
+            this.prayerTrackerComponent = new PrayerTrackerComponent(vscode);
             this.settingsComponent = new SettingsComponent();
             this.statisticsComponent = new StatisticsComponent();
 
@@ -180,6 +337,13 @@ class QuranActivityBar {
                 case 'fridaySurahStatus':
                     console.log('Received Friday Surah status:', message.status);
                     this.updateFridaySurahStatus(message.status, message.message);
+                    break;
+
+                // Prayer tracker messages - handled by PrayerTrackerComponent directly
+                case 'receiveLocation':
+                case 'receivePrayerTimes':
+                case 'locationError':
+                    // Do nothing - these are handled by PrayerTrackerComponent
                     break;
 
                 default:

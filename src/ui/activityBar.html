@@ -18,7 +18,7 @@
                 <div class="brand">
                     <div class="brand-icon">📿</div>
                     <div class="brand-text" data-localize="codeTune">CodeTune</div>
-                    <div class="brand-version">v0.0.4</div>
+                    <div class="brand-version">v0.0.7</div>
                 </div>
                 <div class="header-actions">
                     <select class="lang-select" id="headerLanguageSelect" title="Change Language">
@@ -46,6 +46,10 @@
                 <div class="hijri-date">
                     <div class="date-label" data-localize="hijriDate">Hijri Date</div>
                     <div class="date-value" id="hijriDate">Loading...</div>
+                </div>
+                <div class="location-info">
+                    <div class="location-label" data-localize="location">Location</div>
+                    <div class="location-value" id="userLocation">Detecting...</div>
                 </div>
                 <div class="prayer-timer">
                     <div class="prayer-label" data-localize="nextPrayer">Next Prayer</div>
@@ -519,52 +523,7 @@
                 </div>
             </div>
 
-            <!-- Advanced Settings -->
-            <div class="settings-section">
-                <div class="settings-title">
-                    <span>🔧</span>
-                    <span data-localize="advancedSettings">Advanced Settings</span>
-                </div>
 
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="cacheSize">Cache Size</div>
-                    <div class="setting-description" data-localize="cacheSizeDesc">Maximum cache size for downloaded audio (MB)</div>
-                    <div class="setting-control">
-                        <select class="setting-select" id="cacheSizeSelect">
-                            <option value="50">50 MB</option>
-                            <option value="100" selected>100 MB</option>
-                            <option value="200">200 MB</option>
-                            <option value="500">500 MB</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="downloadTimeout">Download Timeout</div>
-                    <div class="setting-description" data-localize="downloadTimeoutDesc">Timeout for audio downloads (seconds)</div>
-                    <div class="setting-control">
-                        <select class="setting-select" id="downloadTimeoutSelect">
-                            <option value="10">10 seconds</option>
-                            <option value="30" selected>30 seconds</option>
-                            <option value="60">60 seconds</option>
-                            <option value="120">120 seconds</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="retryAttempts">Retry Attempts</div>
-                    <div class="setting-description" data-localize="retryAttemptsDesc">Number of retry attempts for failed downloads</div>
-                    <div class="setting-control">
-                        <select class="setting-select" id="retryAttemptsSelect">
-                            <option value="1">1 attempt</option>
-                            <option value="2">2 attempts</option>
-                            <option value="3" selected>3 attempts</option>
-                            <option value="5">5 attempts</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
             <!-- Status Messages -->
             <div class="status-message" id="statusMessage" data-localize="chooseSurah">
@@ -645,6 +604,25 @@
                     <div class="modal-actions">
                         <button class="btn-secondary" id="cancelPlaybackBtn" data-localize="cancel">Cancel</button>
                         <button class="btn-primary" id="startPlaybackBtn" data-localize="startPlayback">Start Playback</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What's New Modal - Dynamic Content -->
+        <div class="modal" id="whatsNewModal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-content whats-new-modal">
+                <div class="modal-header">
+                    <h3 id="whatsNewTitle">🎉 What's New in CodeTune</h3>
+                    <button class="modal-close" id="whatsNewClose">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="whats-new-content" id="whatsNewContent">
+                        <div class="loading-text">Loading features...</div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-primary" id="whatsNewGotIt">Excited! 🎉</button>
                     </div>
                 </div>
             </div>

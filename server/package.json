@@ -1,15 +1,14 @@
 {
-  "name": "codetune-islamic-apis",
+  "name": "codetune-health-check",
   "version": "1.0.0",
-  "description": "Islamic APIs server for CodeTune VS Code extension (Hijri date & prayer times)",
+  "description": "Health check server for CodeTune VS Code extension (Islamic APIs moved to extension)",
   "scripts": {
-    "start:hijri": "node api/hijri-date.js",
-    "dev:hijri": "node api/hijri-date.js",
-    "start:prayer": "node api/next-prayer.js",
-    "dev:prayer": "node api/next-prayer.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
+    "cors": "^2.8.5",
     "axios": "^1.6.0",
     "serverless-http": "^3.2.0"
   },

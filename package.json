@@ -2,7 +2,7 @@
   "name": "codetune",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "publisher": "FreeRave",
   "repository": {
     "type": "git",
@@ -74,7 +74,14 @@
         "codeTune.language": {
           "type": "string",
           "default": "auto",
-          "enum": ["auto", "en", "ar", "ru", "fr", "es"],
+          "enum": [
+            "auto",
+            "en",
+            "ar",
+            "ru",
+            "fr",
+            "es"
+          ],
           "enumDescriptions": [
             "Auto (Follow VS Code)",
             "English",
@@ -94,11 +101,6 @@
           "type": "boolean",
           "default": true,
           "description": "Show occasional notifications encouraging users to support CodeTune development"
-        },
-        "codeTune.salawatCounter": {
-          "type": "number",
-          "default": 0,
-          "description": "Current count of Salawat (praises to Prophet Muhammad)"
         }
       }
     },
@@ -107,7 +109,7 @@
         {
           "id": "codeTuneMain",
           "name": "%views.codeTuneMain.name%",
-          "icon": "$(music)",
+          "icon": "./src/media/icons/icon.svg",
           "contextualTitle": "%views.codeTuneMain.contextualTitle%",
           "type": "webview"
         }
@@ -118,7 +120,7 @@
         {
           "id": "codeTune",
           "title": "%viewsContainers.codeTune.title%",
-          "icon": "$(music)"
+          "icon": "./src/media/icons/icon.svg"
         }
       ]
     },
@@ -171,6 +173,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "adhan": "^4.4.3",
     "axios": "^1.6.0",
     "dotenv": "^17.2.2",
     "music-metadata": "^11.9.0",

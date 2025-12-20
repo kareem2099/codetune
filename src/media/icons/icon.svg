@@ -1,0 +1,31 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="dotGradient" x1="44" y1="44" x2="84" y2="84" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2196F3" /> <stop offset="100%" stop-color="#00C853" /> </linearGradient>
+        
+        <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <path d="M42 32 L18 64 L42 96" 
+          stroke="#E0E0E0" 
+          stroke-width="10" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+          
+    <path d="M86 32 L110 64 L86 96" 
+          stroke="#E0E0E0" 
+          stroke-width="10" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+
+    <g filter="url(#glowEffect)">
+        <circle cx="64" cy="64" r="22" fill="url(#dotGradient)" />
+        
+        <path d="M72 54 C 68 56 66 60 66 64 C 66 70 70 74 74 74 C 70 78 62 78 58 72 C 54 66 56 56 62 52 C 65 50 69 51 72 54 Z" 
+              fill="#1E1E1E" 
+              fill-opacity="0.2"/> 
+    </g>
+</svg>

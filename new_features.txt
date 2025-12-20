@@ -1,0 +1,13 @@
+v0.0.7
+
+RECENT_UPDATES
+🌍 Automatic Location Detection - IP-based location detection, no manual setup needed!
+🕌 Serverless Prayer Times - All prayer calculations now run locally using Adhan library
+🧹 Clean Console - No more error messages in developer console
+⚡ Offline Operation - Works completely offline for prayer times
+
+COMING_SOON
+🌙 Ramadan Detection & Countdown - Automatic Ramadan detection with special features
+⏰ Suhoor & Iftar Reminders - Special notifications for Ramadan meal times
+🎯 Ramadan Goals & Tracking - Quran reading and prayer tracking for Ramadan
+🎨 Ramadan UI Theme - Special Ramadan-themed interface

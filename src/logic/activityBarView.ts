@@ -2,6 +2,83 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { QuranPlayer } from '../file/quranPlayer';
+import { Coordinates, CalculationMethod, PrayerTimes } from 'adhan';
+
+/**
+ * Get user location using IP geolocation (from extension host to bypass webview restrictions)
+ */
+async function getUserLocation(): Promise<{ lat: number; lon: number; city: string; country: string; timezone: string } | null> {
+    try {
+        console.log('Extension: Fetching user location via IP geolocation...');
+
+        // Use ip-api.com for IP-based geolocation (free, no API key needed)
+        const response = await fetch('http://ip-api.com/json/');
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json() as any;
+
+        if (data.status === 'fail') {
+            console.warn('Extension: IP geolocation failed:', data.message);
+            return null;
+        }
+
+        console.log('Extension: Successfully got location:', {
+            city: data.city,
+            country: data.country,
+            lat: data.lat,
+            lon: data.lon,
+            timezone: data.timezone
+        });
+
+        return {
+            lat: data.lat,
+            lon: data.lon,
+            city: data.city,
+            country: data.country,
+            timezone: data.timezone
+        };
+    } catch (error) {
+        console.error('Extension: Location fetch error:', error);
+        return null; // Return null on any error
+    }
+}
+
+/**
+ * Calculate prayer times using Adhan library
+ */
+function calculatePrayerTimes(lat: number, lon: number): { fajr: string; dhuhr: string; asr: string; maghrib: string; isha: string; next: string } {
+    try {
+        console.log('Extension: Calculating prayer times for coordinates:', lat, lon);
+
+        const coordinates = new Coordinates(lat, lon);
+        const date = new Date();
+        const params = CalculationMethod.Egyptian(); // Using Egyptian method as requested
+
+        const prayerTimes = new PrayerTimes(coordinates, date, params);
+
+        // Get next prayer time (it returns the Date object for the next prayer)
+        const nextPrayerTime = prayerTimes.timeForPrayer(prayerTimes.nextPrayer());
+
+        // Return prayer times as ISO strings for easy transport
+        const result = {
+            fajr: prayerTimes.fajr.toISOString(),
+            dhuhr: prayerTimes.dhuhr.toISOString(),
+            asr: prayerTimes.asr.toISOString(),
+            maghrib: prayerTimes.maghrib.toISOString(),
+            isha: prayerTimes.isha.toISOString(),
+            next: nextPrayerTime ? nextPrayerTime.toISOString() : ''
+        };
+
+        console.log('Extension: Prayer times calculated successfully');
+        return result;
+    } catch (error) {
+        console.error('Extension: Error calculating prayer times:', error);
+        throw error;
+    }
+}
 
 export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'codeTuneMain';
@@ -291,6 +368,40 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                                 type: 'fridaySurahStatus',
                                 status: 'not-started',
                                 message: 'Status unavailable'
+                            });
+                        }
+                        break;
+                    case 'requestLocation':
+                        console.log('Webview requested user location via IP geolocation');
+                        // Get user location using IP geolocation
+                        getUserLocation().then((location) => {
+                            console.log('Sending location data back to webview:', location);
+                            this.sendMessageToWebview({
+                                type: 'receiveLocation',
+                                payload: location
+                            });
+                        }).catch((error) => {
+                            console.error('Failed to get location for webview:', error);
+                            this.sendMessageToWebview({
+                                type: 'receiveLocation',
+                                payload: null
+                            });
+                        });
+                        break;
+                    case 'requestPrayerTimes':
+                        console.log('Webview requested prayer times calculation:', data.lat, data.lon);
+                        try {
+                            const times = calculatePrayerTimes(data.lat, data.lon);
+                            console.log('Sending prayer times back to webview');
+                            this.sendMessageToWebview({
+                                type: 'receivePrayerTimes',
+                                payload: times
+                            });
+                        } catch (error) {
+                            console.error('Failed to calculate prayer times:', error);
+                            this.sendMessageToWebview({
+                                type: 'receivePrayerTimes',
+                                payload: null
                             });
                         }
                         break;
