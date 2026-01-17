@@ -149,7 +149,7 @@
   "tasbihAlhamdulillahTranslation": "الْحَمْدُ لِلَّهِ",
   "tasbihLaIlahaIllaAllahTranslation": "لَا إِلَهَ إِلَّا اللَّهُ",
   "tasbihAllahuAkbarTranslation": "اللَّهُ أَكْبَرُ",
-  "salawatSectionTitle": "صَلَوَات - صلوات",
+  "salawatSectionTitle": "صَلّ عَلَى سَيِّدِنَا مُحَمَّد",
   "salawatBlessings": "الصلاة على النبي",
   "salawatCountDisplay": "{count} / {target} الصلوات اليومية",
   "salawatCompleted": "اكتمل الهدف اليومي! 🏆",
@@ -169,5 +169,7 @@
   "today": "اليوم",
   "thisWeek": "هذا الأسبوع",
   "thisMonth": "هذا الشهر",
-  "resetStatsConfirm": "هل أنت متأكد من إعادة تعيين جميع إحصائيات الاستماع {mode}؟ لا يمكن التراجع عن هذا الإجراء."
+  "resetStatsConfirm": "هل أنت متأكد من إعادة تعيين جميع إحصائيات الاستماع {mode}؟ لا يمكن التراجع عن هذا الإجراء.",
+  "prayerCompletedQuestion": "هل أكملت صلاة {prayerName}؟",
+  "prayerTimeNotification": "وقت صلاة {prayerName}"
 }

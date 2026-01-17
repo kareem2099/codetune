@@ -1,6 +1,7 @@
 /**
  * Dhikr Counter Component - Manages all tasbih, istighfar, and adhkar counters
  */
+import { logger } from '../utils/Logger.js';
 class CounterComponent {
     constructor() {
         // Salawat Counter properties
@@ -107,7 +108,7 @@ class CounterComponent {
             }
             this.updateSalawatCounterUI();
         } catch (error) {
-            console.warn('Failed to load salawat counter:', error);
+            logger.warn('Failed to load salawat counter:', error);
         }
     }
 
@@ -115,7 +116,7 @@ class CounterComponent {
         try {
             localStorage.setItem('salawatCounter', JSON.stringify(this.salawatCounter));
         } catch (error) {
-            console.warn('Failed to save salawat counter:', error);
+            logger.warn('Failed to save salawat counter:', error);
         }
     }
 
@@ -153,7 +154,7 @@ class CounterComponent {
         this.saveSalawatCounter();
         this.updateSalawatCounterUI();
 
-        console.log(`Salawat counter incremented: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
+        logger.debug(`Salawat counter incremented: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
     }
 
     checkSalawatCounterReset() {
@@ -206,7 +207,7 @@ class CounterComponent {
             }
             this.updateTasbihCountersUI();
         } catch (error) {
-            console.warn('Failed to load tasbih counters:', error);
+            logger.warn('Failed to load tasbih counters:', error);
         }
     }
 
@@ -214,7 +215,7 @@ class CounterComponent {
         try {
             localStorage.setItem('tasbihCounters', JSON.stringify(this.tasbihCounters));
         } catch (error) {
-            console.warn('Failed to save tasbih counters:', error);
+            logger.warn('Failed to save tasbih counters:', error);
         }
     }
 
@@ -227,7 +228,7 @@ class CounterComponent {
         this.saveTasbihCounters();
         this.updateTasbihCountersUI();
 
-        console.log(`${dhikrType} counter incremented to: ${this.tasbihCounters[dhikrType]}`);
+        logger.debug(`${dhikrType} counter incremented to: ${this.tasbihCounters[dhikrType]}`);
     }
 
     updateTasbihCountersUI() {
@@ -282,7 +283,7 @@ class CounterComponent {
             }
             this.updateIstighfarCountersUI();
         } catch (error) {
-            console.warn('Failed to load istighfar counters:', error);
+            logger.warn('Failed to load istighfar counters:', error);
         }
     }
 
@@ -290,7 +291,7 @@ class CounterComponent {
         try {
             localStorage.setItem('istighfarCounters', JSON.stringify(this.istighfarCounters));
         } catch (error) {
-            console.warn('Failed to save istighfar counters:', error);
+            logger.warn('Failed to save istighfar counters:', error);
         }
     }
 
@@ -303,7 +304,7 @@ class CounterComponent {
         this.saveIstighfarCounters();
         this.updateIstighfarCountersUI();
 
-        console.log(`${dhikrType} istighfar counter incremented to: ${this.istighfarCounters[dhikrType]}`);
+        logger.debug(`${dhikrType} istighfar counter incremented to: ${this.istighfarCounters[dhikrType]}`);
     }
 
     updateIstighfarCountersUI() {
@@ -335,7 +336,7 @@ class CounterComponent {
             }
             this.updateAdhkarCountersUI();
         } catch (error) {
-            console.warn('Failed to load adhkar counters:', error);
+            logger.warn('Failed to load adhkar counters:', error);
         }
     }
 
@@ -343,7 +344,7 @@ class CounterComponent {
         try {
             localStorage.setItem('adhkarCounters', JSON.stringify(this.adhkarCounters));
         } catch (error) {
-            console.warn('Failed to save adhkar counters:', error);
+            logger.warn('Failed to save adhkar counters:', error);
         }
     }
 
@@ -356,7 +357,7 @@ class CounterComponent {
         this.saveAdhkarCounters();
         this.updateAdhkarCountersUI();
 
-        console.log(`${dhikrType} adhkar counter incremented to: ${this.adhkarCounters[dhikrType]}`);
+        logger.debug(`${dhikrType} adhkar counter incremented to: ${this.adhkarCounters[dhikrType]}`);
     }
 
     updateAdhkarCountersUI() {
@@ -381,25 +382,55 @@ class CounterComponent {
         return mapping[dhikrType];
     }
 
-    // Prayer Goals Methods
+    // Prayer Goals Methods - Enhanced with Daily Reset Logic
     loadPrayerGoals() {
         try {
-            const saved = localStorage.getItem('prayerGoals');
-            if (saved) {
-                this.prayerGoals = { ...this.prayerGoals, ...JSON.parse(saved) };
+            // Use new key to ensure clean migration for existing users
+            const savedData = JSON.parse(localStorage.getItem('prayerGoals_v2') || 'null');
+            const today = new Date().toDateString(); // "Sat Jan 17 2026"
+
+            // Smart logic: if data exists and matches today's date, load it
+            if (savedData && savedData.date === today) {
+                this.prayerGoals = savedData.goals;
+                logger.debug("Loaded today's prayer goals ✅");
+            } else {
+                // If old date or no data, reset for new day
+                logger.debug("New day detected! Resetting prayer goals 🔄");
+                this.resetPrayerGoals();
             }
+
             this.updatePrayerGoalsUI();
         } catch (error) {
-            console.warn('Failed to load prayer goals:', error);
+            logger.warn('Failed to load prayer goals:', error);
+            this.resetPrayerGoals(); // Reset on error as fallback
         }
     }
 
     savePrayerGoals() {
         try {
-            localStorage.setItem('prayerGoals', JSON.stringify(this.prayerGoals));
+            // Always save date with goals for daily reset logic
+            const data = {
+                date: new Date().toDateString(), // Current day's fingerprint
+                goals: this.prayerGoals
+            };
+            localStorage.setItem('prayerGoals_v2', JSON.stringify(data));
+            logger.debug('Prayer goals saved with date:', data.date);
         } catch (error) {
-            console.warn('Failed to save prayer goals:', error);
+            logger.warn('Failed to save prayer goals:', error);
         }
+    }
+
+    resetPrayerGoals() {
+        // Reset all goals to false for daily fresh start
+        this.prayerGoals = {
+            fajr: false,
+            dhuhr: false,
+            asr: false,
+            maghrib: false,
+            isha: false
+        };
+        this.savePrayerGoals(); // Save empty state immediately
+        logger.debug('Prayer goals reset for new day');
     }
 
     updatePrayerGoal(prayer, completed) {
@@ -407,7 +438,7 @@ class CounterComponent {
         this.savePrayerGoals();
         this.updatePrayerGoalsUI();
 
-        console.log(`${prayer} goal updated to: ${completed}`);
+        logger.debug(`${prayer} goal updated to: ${completed}`);
     }
 
     updatePrayerGoalsUI() {

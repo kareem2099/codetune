@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
+import { Logger } from '../utils/Logger';
 
 // DOM types for webview audio
 declare const HTMLAudioElement: any;
@@ -73,11 +74,11 @@ export class QuranPlayer {
      * Send a message to the webview
      */
     private sendToWebview(message: any): void {
-        console.log('QuranPlayer: Sending message to webview:', message);
+        Logger.instance.info('QuranPlayer: Sending message to webview:', message);
         if (this.messageSender) {
             this.messageSender(message);
         } else {
-            console.warn('No message sender available for webview communication');
+            Logger.instance.warn('No message sender available for webview communication');
         }
     }
 
@@ -97,7 +98,7 @@ export class QuranPlayer {
                 }));
             }
         } catch (error) {
-            console.error('Error loading audio editions:', error);
+            Logger.instance.error('Error loading audio editions:', error);
             // Keep default editions if API fails
         }
     }
@@ -470,7 +471,7 @@ export class QuranPlayer {
                 return response.data.data.text;
             }
         } catch (error) {
-            console.error('Error fetching ayah text:', error);
+            Logger.instance.error('Error fetching ayah text:', error);
         }
 
         return '';
@@ -485,7 +486,7 @@ export class QuranPlayer {
     }
 
     setEdition(edition: string): void {
-        console.log('QuranPlayer: Setting edition to:', edition);
+        Logger.instance.info('QuranPlayer: Setting edition to:', edition);
         this.currentEdition = edition;
     }
 
@@ -832,7 +833,7 @@ export class QuranPlayer {
                 return response.data.data;
             }
         } catch (error) {
-            console.error('Error fetching ayah info:', error);
+            Logger.instance.error('Error fetching ayah info:', error);
         }
         return null;
     }
@@ -848,7 +849,7 @@ export class QuranPlayer {
                 return response.data.data.ayahs;
             }
         } catch (error) {
-            console.error('Error fetching surah ayahs:', error);
+            Logger.instance.error('Error fetching surah ayahs:', error);
         }
         return [];
     }
@@ -879,7 +880,7 @@ export class QuranPlayer {
                 }
             }
         } catch (error) {
-            console.error('Error searching ayahs:', error);
+            Logger.instance.error('Error searching ayahs:', error);
         }
 
         return results;
@@ -903,7 +904,7 @@ export class QuranPlayer {
                 return response.data.data.ayahs;
             }
         } catch (error) {
-            console.error('Error fetching juz ayahs:', error);
+            Logger.instance.error('Error fetching juz ayahs:', error);
         }
         return [];
     }
@@ -919,7 +920,7 @@ export class QuranPlayer {
                 return response.data.data.ayahs;
             }
         } catch (error) {
-            console.error('Error fetching page ayahs:', error);
+            Logger.instance.error('Error fetching page ayahs:', error);
         }
         return [];
     }

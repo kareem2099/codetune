@@ -4,10 +4,9 @@
 
 <img src="images/icon.png" alt="CodeTune Logo" width="128" />
 
-[![Version](https://img.shields.io/badge/Version-0.0.6-blue.svg)](https://github.com/kareem2099/codetune/releases)
-[![VS Code](https://img.shields.io/badge/VS%20Code-1.74+-blue.svg)](https://code.visualstudio.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Downloads](https://vsmarketplacebadge.apphb.com/installs/kareem2099.codetune.svg)](https://marketplace.visualstudio.com/items?itemName=kareem2099.codetune)
+[![Version](https://img.shields.io/badge/Version-1.0.0-blue)](https://github.com/kareem2099/codetune/releases)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.74+-blue)](https://code.visualstudio.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 
 **Transform your VS Code into a spiritual environment.**
 Authentic Islamic reminders, Quran recitation, prayer times, and spiritual focus tools.
@@ -22,6 +21,34 @@ Authentic Islamic reminders, Quran recitation, prayer times, and spiritual focus
 **CodeTune** integrates spirituality seamlessly into your development workflow. It helps you maintain faith and focus by providing context-aware Islamic content, prayer times based on your location, and a high-quality Quran player, all without leaving your editor.
 
 > *"Indeed, in the remembrance of Allah do hearts find rest."* (Surah Ar-Ra'd, 13:28)
+
+---
+
+## 🏆 What's New in v1.0.0
+
+**CodeTune is now stable and production-ready!** This major release includes:
+
+### 🌍 **Complete Internationalization**
+- **5 Languages Supported:** Arabic (العربية), English, Russian (Русский), French (Français), Spanish (Español)
+- **Automatic Language Detection** based on VS Code locale
+- **RTL Support** for Arabic with proper text direction
+
+### 🎯 **Accurate Islamic Calendar**
+- **Umm al-Qura Calendar:** Official Saudi Islamic calendar implementation
+- **Fixed Hijri Date Issues:** Corrected 2-day offset (now shows accurate dates)
+- **Precise Prayer Times:** Enhanced Adhan library with Egyptian calculation method
+
+### 🔧 **Professional Features**
+- **Smart Statistics Toggle:** Click icon to switch between session counts and listening time
+- **Context-Aware Notifications:** Intelligent prayer time reminders
+- **Friday Surah Intelligence:** Auto-show Friday Surah section only when relevant
+- **Daily Prayer Goals Reset:** Automatic daily reset for spiritual tracking
+
+### 🛡️ **Production Quality**
+- **Zero Console Spam:** Clean logging with optional debug mode
+- **Webview Sandboxing:** Proper VS Code dialog integration
+- **Error Resilience:** Comprehensive error handling throughout
+- **Cross-Platform:** Tested on Windows, macOS, and Linux
 
 ---
 

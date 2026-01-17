@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Logger } from '../utils/Logger';
 
 export class WelcomeMessageManager {
     private static readonly WELCOME_MESSAGE_KEY = 'codeTune.welcomeMessageShown';
@@ -37,7 +38,7 @@ export class WelcomeMessageManager {
             // Show the welcome panel
             await this.showWelcomePanel(context, welcomeData);
         } catch (error) {
-            console.warn('Failed to show welcome message:', error);
+            Logger.instance.warn('Failed to show welcome message:', error);
         }
     }
 

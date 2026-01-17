@@ -1,6 +1,8 @@
 /**
  * Audio Player Component - Manages Quran player controls and audio functionality
  */
+import { logger } from '../utils/Logger.js';
+
 class AudioPlayerComponent {
     constructor() {
         // Audio player state
@@ -173,12 +175,12 @@ class AudioPlayerComponent {
     }
 
     postMessage(type, data = {}) {
-        vscode.postMessage({ type, ...data });
+        window.vscode.postMessage({ type, ...data });
     }
 
     // Direct playback method - starts immediately with default settings
     playSurahDirectly(surahNumber) {
-        console.log('playSurahDirectly called for surah:', surahNumber);
+        logger.info('playSurahDirectly called for surah:', surahNumber);
 
         // Start playback directly with default settings (full-surah mode, current reciter)
         this.postMessage('playQuran', {
@@ -298,7 +300,7 @@ class AudioPlayerComponent {
     initializeAudio() {
         this.audioElement = document.getElementById('quranAudio');
         if (!this.audioElement) {
-            console.error('Audio element not found');
+            logger.error('Audio element not found');
             return;
         }
 
@@ -307,11 +309,11 @@ class AudioPlayerComponent {
 
         // Audio event listeners
         this.audioElement.addEventListener('loadstart', () => {
-            console.log('Audio loading started');
+            logger.info('Audio loading started');
         });
 
         this.audioElement.addEventListener('canplay', () => {
-            console.log('Audio can play');
+            logger.info('Audio can play');
             this.duration = this.audioElement.duration;
             this.updateTimeDisplay();
             // Ensure volume is applied to new audio
@@ -321,7 +323,7 @@ class AudioPlayerComponent {
         });
 
         this.audioElement.addEventListener('play', () => {
-            console.log('Audio started playing');
+            logger.info('Audio started playing');
             this.isPlaying = true;
             this.updatePlaybackControls();
 
@@ -335,7 +337,7 @@ class AudioPlayerComponent {
         });
 
         this.audioElement.addEventListener('pause', () => {
-            console.log('Audio paused');
+            logger.info('Audio paused');
             this.isPlaying = false;
             this.updatePlaybackControls();
 
@@ -344,7 +346,7 @@ class AudioPlayerComponent {
         });
 
         this.audioElement.addEventListener('ended', () => {
-            console.log('Audio ended');
+            logger.info('Audio ended');
             this.isPlaying = false;
             this.updatePlaybackControls();
 
@@ -353,13 +355,13 @@ class AudioPlayerComponent {
 
             // Check if we need to advance to next ayah in ayah-by-ayah mode
             if (this.currentPlaybackMode === 'ayah-by-ayah') {
-                console.log('Ayah ended, requesting next ayah');
+                logger.info('Ayah ended, requesting next ayah');
                 this.postMessage('ayahEnded', {
                     currentSurah: this.currentSurah,
                     currentAyah: this.currentAyah
                 });
             } else {
-                console.log('Full surah or single ayah playback completed');
+                logger.info('Full surah or single ayah playback completed');
                 // Handle end of surah - could auto-advance to next surah here
             }
         });
@@ -373,17 +375,17 @@ class AudioPlayerComponent {
         });
 
         this.audioElement.addEventListener('error', (e) => {
-            console.error('Audio error:', e);
+            logger.error('Audio error:', e);
             // Try fallback: switch to default reciter and retry with new URL
             if (this.reciter !== 'ar.alafasy') {
-                console.log('Trying fallback to default reciter ar.alafasy');
+                logger.info('Trying fallback to default reciter ar.alafasy');
 
                 // Calculate global ayah number from current surah and ayah
                 const globalAyah = this.calculateGlobalAyahNumber(this.currentSurah.number, this.currentAyah);
 
                 // Construct new URL with fallback reciter
                 const fallbackUrl = `https://cdn.islamic.network/quran/audio/${this.audioQuality}/ar.alafasy/${globalAyah}.mp3`;
-                console.log('Fallback URL:', fallbackUrl);
+                logger.info('Fallback URL:', fallbackUrl);
 
                 // Update reciter setting
                 this.reciter = 'ar.alafasy';
@@ -396,9 +398,9 @@ class AudioPlayerComponent {
                 const playPromise = this.audioElement.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
-                        console.log('Fallback audio started successfully');
+                        logger.info('Fallback audio started successfully');
                     }).catch(fallbackError => {
-                        console.error('Fallback audio play failed:', fallbackError);
+                        logger.error('Fallback audio play failed:', fallbackError);
                         this.showNotification('Audio playback failed even with fallback reciter.', 'error');
                     });
                 }
@@ -412,9 +414,9 @@ class AudioPlayerComponent {
     }
 
     playAudio(url, surah, mode = 'full-surah', message = null) {
-        console.log('AudioPlayer: playAudio called with URL:', url, 'surah:', surah, 'mode:', mode);
+        logger.info('AudioPlayer: playAudio called with URL:', url, 'surah:', surah, 'mode:', mode);
         if (!this.audioElement) {
-            console.error('Audio element not initialized');
+            logger.error('Audio element not initialized');
             return;
         }
 
@@ -428,10 +430,10 @@ class AudioPlayerComponent {
         this.currentPlaybackMode = mode;
 
         // Extract ayah number if present in message
-        console.log('playAudio: Extracting ayah from message - surah:', surah, 'mode:', mode, 'ayah:', message.ayah);
+        logger.info('playAudio: Extracting ayah from message - surah:', surah, 'mode:', mode, 'ayah:', message.ayah);
         if (message.ayah) {
             this.currentAyah = message.ayah;
-            console.log('Setting currentAyah from message.ayah:', this.currentAyah);
+            logger.info('Setting currentAyah from message.ayah:', this.currentAyah);
         } else if (mode === 'ayah-by-ayah') {
             // For ayah-by-ayah mode, calculate from globalAyah
             if (typeof surah === 'object' && surah.globalAyah) {
@@ -443,7 +445,7 @@ class AudioPlayerComponent {
                         if (prevSurah) {cumulativeVerses += prevSurah.verses;}
                     }
                     this.currentAyah = surah.globalAyah - cumulativeVerses;
-                    console.log('Calculated currentAyah for ayah-by-ayah:', this.currentAyah, 'from globalAyah:', surah.globalAyah, 'surah:', surah.number);
+                    logger.info('Calculated currentAyah for ayah-by-ayah:', this.currentAyah, 'from globalAyah:', surah.globalAyah, 'surah:', surah.number);
                 }
             }
         } else if (mode === 'single-ayah' && surah && typeof surah === 'object' && surah.number) {
@@ -458,7 +460,7 @@ class AudioPlayerComponent {
                         if (prevSurah) {cumulativeVerses += prevSurah.verses;}
                     }
                     this.currentAyah = surah.globalAyah - cumulativeVerses;
-                    console.log('Calculated currentAyah for single-ayah:', this.currentAyah);
+                    logger.info('Calculated currentAyah for single-ayah:', this.currentAyah);
                 }
             }
         } else {
@@ -472,9 +474,9 @@ class AudioPlayerComponent {
         const playPromise = this.audioElement.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                console.log('Audio started successfully');
+                logger.info('Audio started successfully');
             }).catch(error => {
-                console.error('Audio play failed:', error);
+                logger.error('Audio play failed:', error);
                 this.showNotification('Failed to start audio playback', 'error');
             });
         }
@@ -489,7 +491,7 @@ class AudioPlayerComponent {
     resumeAudio() {
         if (this.audioElement && this.currentAudioUrl) {
             this.audioElement.play().catch(error => {
-                console.error('Resume audio failed:', error);
+                logger.error('Resume audio failed:', error);
             });
         }
     }
@@ -566,15 +568,15 @@ class AudioPlayerComponent {
     }
 
     startSelectedPlayback() {
-        console.log('startSelectedPlayback called');
-        console.log('Current surah:', this.currentSurah);
+        logger.info('startSelectedPlayback called');
+        logger.info('Current surah:', this.currentSurah);
 
         const playbackModeElement = document.querySelector('input[name="playbackMode"]:checked');
         const playbackMode = playbackModeElement ? playbackModeElement.value : 'full-surah';
         const reciterElement = document.getElementById('playbackReciterSelect');
         const reciter = reciterElement ? reciterElement.value : this.reciter;
 
-        console.log('Playback mode:', playbackMode, 'Reciter:', reciter);
+        logger.info('Playback mode:', playbackMode, 'Reciter:', reciter);
 
         // Close modal and start playback
         this.closePlaybackOptionsModal();
@@ -586,10 +588,10 @@ class AudioPlayerComponent {
         }
 
         const surahToPlay = this.currentSurah ? this.currentSurah.number : 1;
-        console.log('Surah to play:', surahToPlay);
+        logger.info('Surah to play:', surahToPlay);
 
         if (!surahToPlay || surahToPlay === 1) {
-            console.error('No valid surah selected for playback!');
+            logger.error('No valid surah selected for playback!');
             this.showNotification('Please select a surah first', 'error');
             return;
         }
@@ -613,11 +615,11 @@ class AudioPlayerComponent {
 
     // Open Quran Reader modal for reading text
     openQuranReader(surahNumber) {
-        console.log('openQuranReader called for surah:', surahNumber);
+        logger.info('openQuranReader called for surah:', surahNumber);
 
         const surah = this.surahData.find(s => s.number === parseInt(surahNumber));
         if (!surah) {
-            console.error('Surah not found:', surahNumber);
+            logger.error('Surah not found:', surahNumber);
             return;
         }
 
@@ -672,7 +674,7 @@ class AudioPlayerComponent {
                 throw new Error('Invalid API response');
             }
         } catch (error) {
-            console.error('Error loading Quran text:', error);
+            logger.error('Error loading Quran text:', error);
             displayEl.innerHTML = '<div class="error-text">Failed to load Quran text. Please try again.</div>';
         }
     }
@@ -791,7 +793,7 @@ class AudioPlayerComponent {
         // Save to localStorage
         this.saveListeningStats();
 
-        console.log('Listening counter incremented:', this.listeningStats);
+        logger.info('Listening counter incremented:', this.listeningStats);
     }
 
     loadListeningStats() {
@@ -808,9 +810,9 @@ class AudioPlayerComponent {
                     statsMode: parsed.statsMode || 'sessions'
                 };
             }
-            console.log('Loaded listening stats:', this.listeningStats);
+            logger.info('Loaded listening stats:', this.listeningStats);
         } catch (error) {
-            console.warn('Failed to load listening stats:', error);
+            logger.warn('Failed to load listening stats:', error);
         }
     }
 
@@ -818,14 +820,14 @@ class AudioPlayerComponent {
         try {
             localStorage.setItem('quranListeningStats', JSON.stringify(this.listeningStats));
         } catch (error) {
-            console.warn('Failed to save listening stats:', error);
+            logger.warn('Failed to save listening stats:', error);
         }
     }
 
     // Time tracking methods
     startTimeTracking() {
         this.playStartTime = Date.now();
-        console.log('Started time tracking at:', this.playStartTime);
+        logger.info('Started time tracking at:', this.playStartTime);
     }
 
     stopTimeTracking() {
@@ -837,7 +839,7 @@ class AudioPlayerComponent {
         const elapsedTime = now - this.playStartTime;
         this.currentSessionTime += elapsedTime;
 
-        console.log('Stopped time tracking. Elapsed time:', elapsedTime, 'ms');
+        logger.info('Stopped time tracking. Elapsed time:', elapsedTime, 'ms');
 
         // Accumulate to total and daily time
         const today = new Date().toISOString().split('T')[0];
@@ -887,9 +889,9 @@ class AudioPlayerComponent {
 
         try {
             localStorage.setItem('quranLastPlayback', JSON.stringify(playbackState));
-            console.log('Saved playback position:', playbackState);
+            logger.info('Saved playback position:', playbackState);
         } catch (error) {
-            console.warn('Failed to save playback position:', error);
+            logger.warn('Failed to save playback position:', error);
         }
     }
 
@@ -898,7 +900,7 @@ class AudioPlayerComponent {
             const saved = localStorage.getItem('quranLastPlayback');
             return saved ? JSON.parse(saved) : null;
         } catch (error) {
-            console.warn('Failed to load playback position:', error);
+            logger.warn('Failed to load playback position:', error);
             return null;
         }
     }
@@ -941,11 +943,11 @@ class AudioPlayerComponent {
 
     // Handle messages from the extension
     handleMessage(message) {
-        console.log('AudioPlayer: Received message from extension:', message);
+        logger.info('AudioPlayer: Received message from extension:', message);
 
         switch (message.type) {
             case 'playAudio':
-                console.log('AudioPlayer: Handling playAudio message');
+                logger.info('AudioPlayer: Handling playAudio message');
                 this.playAudio(message.url, message.surah, message.mode, message);
                 break;
             case 'pauseAudio':
@@ -968,7 +970,7 @@ class AudioPlayerComponent {
                 }
                 break;
             default:
-                console.log('AudioPlayer: Unknown message type:', message.type);
+                logger.info('AudioPlayer: Unknown message type:', message.type);
         }
     }
 

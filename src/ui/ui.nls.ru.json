@@ -169,5 +169,7 @@
   "today": "Сегодня",
   "thisWeek": "На этой неделе",
   "thisMonth": "В этом месяце",
-  "resetStatsConfirm": "Вы уверены, что хотите сбросить всю статистику прослушивания {mode}? Это нельзя отменить."
+  "resetStatsConfirm": "Вы уверены, что хотите сбросить всю статистику прослушивания {mode}? Это нельзя отменить.",
+  "prayerCompletedQuestion": "Завершили ли вы молитву {prayerName}?",
+  "prayerTimeNotification": "Время молитвы {prayerName}"
 }

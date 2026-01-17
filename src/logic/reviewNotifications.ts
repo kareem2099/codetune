@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { Logger } from '../utils/Logger';
 
 interface NotificationSettings {
     enableReviewNotifications: boolean;
@@ -47,9 +48,9 @@ export class ReviewNotificationManager {
                 enableReviewNotifications: config.get('enableReviewNotifications', true),
                 enableSponsorNotifications: config.get('enableSponsorNotifications', true)
             };
-            console.log('Review notification settings loaded:', this.settings);
+            Logger.instance.info('Review notification settings loaded:', this.settings);
         } catch (error) {
-            console.warn('Failed to load notification settings:', error);
+            Logger.instance.warn('Failed to load notification settings:', error);
             this.settings = {
                 enableReviewNotifications: true,
                 enableSponsorNotifications: true
@@ -84,7 +85,7 @@ export class ReviewNotificationManager {
 
             this.saveMilestones();
         } catch (error) {
-            console.warn('Failed to load usage milestones:', error);
+            Logger.instance.warn('Failed to load usage milestones:', error);
             this.milestones = {
                 daysUsed: 1,
                 totalSurahsPlayed: 0,
@@ -102,7 +103,7 @@ export class ReviewNotificationManager {
         try {
             this.context.globalState.update('codeTune.usageMilestones', this.milestones);
         } catch (error) {
-            console.warn('Failed to save usage milestones:', error);
+            Logger.instance.warn('Failed to save usage milestones:', error);
         }
     }
 

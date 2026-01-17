@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { IslamicCalendar } from './islamicCalendar';
+import { Logger } from '../utils/Logger';
 
 export interface IslamicContent {
     type: 'adia' | 'hadis' | 'wisdom' | 'morningAzkar' | 'eveningAzkar';
@@ -248,7 +249,7 @@ export class FridayReminders {
                 this.salawatCounter = { ...this.salawatCounter, ...saved };
             }
         } catch (error) {
-            console.warn('Failed to load salawat counter:', error);
+            Logger.instance.warn('Failed to load salawat counter:', error);
         }
     }
 
@@ -256,7 +257,7 @@ export class FridayReminders {
         try {
             vscode.workspace.getConfiguration('codeTune').update('salawatCounter', this.salawatCounter, true);
         } catch (error) {
-            console.warn('Failed to save salawat counter:', error);
+            Logger.instance.warn('Failed to save salawat counter:', error);
         }
     }
 
@@ -296,7 +297,7 @@ export class FridayReminders {
         this.checkDailyReset(); // Ensure we're working with current day
         this.salawatCounter.currentCount++;
         this.saveSalawatCounter();
-        console.log(`Salawat counter incremented to: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
+        Logger.instance.info(`Salawat counter incremented to: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
     }
 
     public setCustomTarget(target: number, type?: 'regular' | 'friday' | 'ramadan'): void {
@@ -369,12 +370,12 @@ export class FridayReminders {
      */
     public async enforceFridaySurahReading(): Promise<void> {
         if (!this.isFriday()) {
-            console.log('Not Friday - skipping Surah Al-Kahf enforcement');
+            Logger.instance.info('Not Friday - skipping Surah Al-Kahf enforcement');
             return;
         }
 
         if (this.isFridaySurahCompleted()) {
-            console.log('Friday Surah Al-Kahf already completed today');
+            Logger.instance.info('Friday Surah Al-Kahf already completed today');
             return;
         }
 
@@ -391,9 +392,9 @@ export class FridayReminders {
                     message: '🕌 Friday Surah Al-Kahf Reading Time!\n\nIt is Sunnah to read Surah Al-Kahf every Friday for protection from trials and Dajjal.'
                 });
 
-                console.log('Enforced Friday Surah Al-Kahf reading session');
+                Logger.instance.info('Enforced Friday Surah Al-Kahf reading session');
             } else {
-                console.warn('Activity bar provider not available for Friday Surah enforcement');
+                Logger.instance.warn('Activity bar provider not available for Friday Surah enforcement');
                 // Fallback to showing notification
                 vscode.window.showInformationMessage(
                     '🕌 Friday Reminder: Please read Surah Al-Kahf today for protection from trials and Dajjal',
@@ -407,7 +408,7 @@ export class FridayReminders {
             }
 
         } catch (error) {
-            console.error('Error enforcing Friday Surah Al-Kahf reading:', error);
+            Logger.instance.error('Error enforcing Friday Surah Al-Kahf reading:', error);
             vscode.window.showErrorMessage('Failed to start Friday Surah Al-Kahf reading session');
         }
     }
@@ -430,10 +431,10 @@ export class FridayReminders {
 
                 // Save the reset
                 vscode.workspace.getConfiguration('codeTune').update(lastResetKey, today, true);
-                console.log('Reset Friday Surah Al-Kahf state for new day');
+                Logger.instance.info('Reset Friday Surah Al-Kahf state for new day');
             }
         } catch (error) {
-            console.warn('Error checking Friday Surah reset:', error);
+            Logger.instance.warn('Error checking Friday Surah reset:', error);
         }
     }
 
@@ -449,7 +450,7 @@ export class FridayReminders {
             };
             vscode.workspace.getConfiguration('codeTune').update('fridaySurahState', state, true);
         } catch (error) {
-            console.warn('Error saving Friday Surah state:', error);
+            Logger.instance.warn('Error saving Friday Surah state:', error);
         }
     }
 
@@ -464,7 +465,7 @@ export class FridayReminders {
                 this.fridaySurahReadingStarted = saved.started || false;
             }
         } catch (error) {
-            console.warn('Error loading Friday Surah state:', error);
+            Logger.instance.warn('Error loading Friday Surah state:', error);
         }
     }
 

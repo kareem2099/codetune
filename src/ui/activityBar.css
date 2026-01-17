@@ -874,6 +874,41 @@ body::before {
     border-color: rgba(102, 126, 234, 0.5);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
+.lang-select {
+    background-color: var(--vscode-dropdown-background) !important;
+    color: var(--vscode-dropdown-foreground) !important;
+    border: 1px solid var(--vscode-dropdown-border) !important;
+    padding: 2px 4px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit; 
+}
+
+.lang-select option {
+    background-color: var(--vscode-dropdown-background) !important;
+    color: var(--vscode-dropdown-foreground) !important;
+}
+
+.lang-select:hover {
+    border-color: var(--vscode-focusBorder) !important;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background-color: var(--vscode-toolbar-hoverBackground);
+}
 
 /* Main Player Card */
 .player-card {
@@ -2868,4 +2903,9 @@ input[type="checkbox"] {
     .stat-value {
         font-size: var(--font-size-lg);
     }
+}
+
+/* Hidden section for smart visibility */
+.hidden-section {
+    display: none !important;
 }

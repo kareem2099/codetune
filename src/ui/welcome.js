@@ -1,4 +1,5 @@
 // Welcome Message JavaScript
+import { logger } from './utils/Logger.js';
 const vscode = acquireVsCodeApi();
 
 class WelcomeManager {
@@ -67,6 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('message', event => {
     if (window.welcomeManager && event.data) {
         // Handle any messages from extension if needed
-        console.log('Welcome message received:', event.data);
+        logger.info('Welcome message received:', event.data);
     }
 });

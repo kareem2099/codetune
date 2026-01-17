@@ -2,7 +2,8 @@
  * Modern Quran Player - Clean Activity Bar Main Coordinator
  * Uses modular components for better maintainability
  */
-const vscode = acquireVsCodeApi();
+import { logger } from './utils/Logger.js';
+window.vscode = acquireVsCodeApi();
 
 class QuranActivityBar {
     constructor() {
@@ -50,6 +51,14 @@ class QuranActivityBar {
         this.initializeFridaySurahStatus();
         this.setupModalEventListeners();
         this.checkAndShowWhatsNew();
+
+        // Set up periodic visibility updates for Friday Surah section
+        setInterval(() => {
+            this.updateFridaySurahVisibility();
+        }, 60000); // Check every minute
+
+        // Initial visibility check
+        this.updateFridaySurahVisibility();
     }
 
     setupModalEventListeners() {
@@ -80,17 +89,17 @@ class QuranActivityBar {
         try {
             // Check if user has already seen this version
             const seenVersion = localStorage.getItem('codetune_whatsnew_seen');
-            const currentVersion = '0.0.7';
+            const currentVersion = '1.0.0';
 
             if (seenVersion === currentVersion) {
-                console.log('User has already seen v0.0.7 whats new modal');
+                logger.info('User has already seen v1.0.0 whats new modal');
                 return;
             }
 
             // Load content from new_features.txt
             const response = await fetch('./new_features.txt');
             if (!response.ok) {
-                console.error('Failed to load whats new content');
+                logger.error('Failed to load whats new content');
                 return;
             }
 
@@ -98,7 +107,7 @@ class QuranActivityBar {
             this.parseAndShowWhatsNewModal(content);
 
         } catch (error) {
-            console.error('Error checking whats new:', error);
+            logger.error('Error checking whats new:', error);
         }
     }
 
@@ -203,7 +212,7 @@ class QuranActivityBar {
         }
 
         // Mark as seen
-        localStorage.setItem('codetune_whatsnew_seen', '0.0.7');
+        localStorage.setItem('codetune_whatsnew_seen', '1.0.0');
     }
     
 
@@ -212,7 +221,7 @@ class QuranActivityBar {
         try {
             this.counterComponent = new CounterComponent();
             this.audioPlayerComponent = new AudioPlayerComponent();
-            this.prayerTrackerComponent = new PrayerTrackerComponent(vscode);
+            this.prayerTrackerComponent = new PrayerTrackerComponent(window.vscode);
             this.settingsComponent = new SettingsComponent();
             this.statisticsComponent = new StatisticsComponent();
 
@@ -222,9 +231,9 @@ class QuranActivityBar {
                 // (This happens automatically via the event handlers in each component)
             }
 
-            console.log('✅ All components initialized successfully');
+            logger.info('✅ All components initialized successfully');
         } catch (error) {
-            console.error('❌ Failed to initialize components:', error);
+            logger.error('❌ Failed to initialize components:', error);
             this.showNotification('Failed to initialize some components', 'error');
         }
     }
@@ -284,6 +293,8 @@ class QuranActivityBar {
     // Message handling - route to appropriate components
     handleMessage(message) {
         try {
+            logger.info('ActivityBar: Received message:', message.type);
+
             switch (message.type) {
                 // Audio-related messages -> audioPlayerComponent
                 case 'playAudio':
@@ -306,6 +317,7 @@ class QuranActivityBar {
 
                 // Activity bar view messages -> handle here or route to components
                 case 'languageChanged':
+                    logger.info('ActivityBar: Handling languageChanged message');
                     // Handle language changes across components
                     this.handleLanguageChange(message.language, message.localizationData);
                     break;
@@ -320,22 +332,22 @@ class QuranActivityBar {
                     break;
 
                 case 'openNextSurah':
-                    console.log('Opening next surah:', message.surahNumber, 'action:', message.action);
+                    logger.info('Opening next surah:', message.surahNumber, 'action:', message.action);
                     this.handleOpenNextSurah(message.surahNumber, message.action);
                     break;
 
                 case 'autoPlayStartup':
-                    console.log('Auto-play startup triggered:', message);
+                    logger.info('Auto-play startup triggered:', message);
                     this.handleAutoPlayStartup(message.lastPlayback, message.volume);
                     break;
 
                 case 'enforceFridaySurahKahf':
-                    console.log('Enforcing Friday Surah Al-Kahf reading:', message);
+                    logger.info('Enforcing Friday Surah Al-Kahf reading:', message);
                     this.handleEnforceFridaySurahKahf(message.surahNumber, message.message);
                     break;
 
                 case 'fridaySurahStatus':
-                    console.log('Received Friday Surah status:', message.status);
+                    logger.info('Received Friday Surah status:', message.status);
                     this.updateFridaySurahStatus(message.status, message.message);
                     break;
 
@@ -346,17 +358,25 @@ class QuranActivityBar {
                     // Do nothing - these are handled by PrayerTrackerComponent
                     break;
 
+                case 'confirmResult':
+                    logger.info('Confirm result received:', message.confirmed, 'for action:', message.action);
+                    // Handle confirmation results
+                    if (message.confirmed && message.action === 'resetStats' && this.statisticsComponent && this.statisticsComponent.confirmResetStats) {
+                        this.statisticsComponent.confirmResetStats();
+                    }
+                    break;
+
                 default:
-                    console.log('Unknown message type:', message.type);
+                    logger.info('Unknown message type:', message.type);
             }
         } catch (error) {
-            console.error('Error handling message:', message, error);
+            logger.error('Error handling message:', message, error);
         }
     }
 
     // Handle opening next surah from extension (after countdown)
     handleOpenNextSurah(surahNumber, action) {
-        console.log('Handling open next surah:', surahNumber, 'action:', action);
+        logger.info('Handling open next surah:', surahNumber, 'action:', action);
 
         // Open the Quran reader for the next surah
         this.openQuranReader(surahNumber);
@@ -381,23 +401,28 @@ class QuranActivityBar {
             if (this.prayerTrackerComponent) {
                 // Prayer's component handles its own language updates
             }
+
+            // Refresh statistics component localization
+            if (this.statisticsComponent && this.statisticsComponent.refreshLocalization) {
+                this.statisticsComponent.refreshLocalization();
+            }
         }
     }
 
     // Handle auto-play startup - resume from last playback position
     handleAutoPlayStartup(lastPlayback, volume) {
-        console.log('Handling auto-play startup:', lastPlayback, 'volume:', volume);
+        logger.info('Handling auto-play startup:', lastPlayback, 'volume:', volume);
 
         try {
             // Get last playback position from localStorage
             const lastPlaybackData = JSON.parse(localStorage.getItem('lastPlaybackPosition') || 'null');
 
             if (!lastPlaybackData) {
-                console.log('No last playback position found in localStorage');
+                logger.info('No last playback position found in localStorage');
                 return;
             }
 
-            console.log('Found last playback position:', lastPlaybackData);
+            logger.info('Found last playback position:', lastPlaybackData);
 
             // Set volume if provided
             if (volume && this.audioPlayerComponent && this.audioPlayerComponent.setVolume) {
@@ -413,18 +438,18 @@ class QuranActivityBar {
                 setTimeout(() => {
                     if (this.audioPlayerComponent && this.audioPlayerComponent.seekTo) {
                         this.audioPlayerComponent.seekTo(lastPlaybackData.currentTime);
-                        console.log('Auto-play: Seeked to position:', lastPlaybackData.currentTime);
+                        logger.info('Auto-play: Seeked to position:', lastPlaybackData.currentTime);
                     }
                 }, 1000); // 1 second delay
 
                 this.showNotification(`🎵 Auto-playing ${lastPlaybackData.surahName} from ${this.formatTime(lastPlaybackData.currentTime)}`, 'success');
             } else {
-                console.warn('Audio player component not available for auto-play');
+                logger.warn('Audio player component not available for auto-play');
                 this.showNotification('Audio player not ready for auto-play', 'error');
             }
 
         } catch (error) {
-            console.error('Error handling auto-play startup:', error);
+            logger.error('Error handling auto-play startup:', error);
             this.showNotification('Failed to start auto-play', 'error');
         }
     }
@@ -438,7 +463,7 @@ class QuranActivityBar {
 
     // Handle Friday Surah Al-Kahf enforcement
     handleEnforceFridaySurahKahf(surahNumber, message) {
-        console.log('Handling Friday Surah Al-Kahf enforcement:', surahNumber, message);
+        logger.info('Handling Friday Surah Al-Kahf enforcement:', surahNumber, message);
 
         try {
             // Show special Friday notification
@@ -450,21 +475,21 @@ class QuranActivityBar {
             // Start audio playback after a short delay to let the reader load
             setTimeout(() => {
                 if (this.audioPlayerComponent && this.audioPlayerComponent.playSurah) {
-                    console.log('Starting Surah Al-Kahf audio playback for Friday enforcement');
+                    logger.info('Starting Surah Al-Kahf audio playback for Friday enforcement');
                     this.audioPlayerComponent.playSurah(surahNumber);
 
-                    // Mark as started in the extension
-                    vscode.postMessage({
-                        type: 'fridaySurahStarted',
-                        surahNumber: surahNumber
-                    });
+            // Mark as started in the extension
+            window.vscode.postMessage({
+                type: 'fridaySurahStarted',
+                surahNumber: surahNumber
+            });
                 } else {
-                    console.warn('Audio player component not available for Friday Surah enforcement');
+                    logger.warn('Audio player component not available for Friday Surah enforcement');
                 }
             }, 2000); // 2 second delay to let reader load
 
         } catch (error) {
-            console.error('Error handling Friday Surah Al-Kahf enforcement:', error);
+            logger.error('Error handling Friday Surah Al-Kahf enforcement:', error);
             this.showNotification('Failed to start Friday Surah Al-Kahf reading session', 'error');
         }
     }
@@ -517,11 +542,11 @@ class QuranActivityBar {
     }
 
     populateSurahModal() {
-        console.log('Populating surah modal with surahs');
+        logger.info('Populating surah modal with surahs');
 
         const surahModalContent = document.getElementById('surahModalContent');
         if (!surahModalContent) {
-            console.error('Surah modal content element not found');
+            logger.error('Surah modal content element not found');
             return;
         }
 
@@ -572,7 +597,7 @@ class QuranActivityBar {
     }
 
     selectSurah(surahNumber) {
-        console.log('Selected surah:', surahNumber, 'reading mode:', this.currentReadingMode);
+        logger.info('Selected surah:', surahNumber, 'reading mode:', this.currentReadingMode);
 
         // Close the surah browser modal
         const modal = document.getElementById('surahModal');
@@ -589,14 +614,14 @@ class QuranActivityBar {
             if (this.audioPlayerComponent && this.audioPlayerComponent.playSurah) {
                 this.audioPlayerComponent.playSurah(surahNumber);
             } else {
-                console.warn('Audio player component not available');
+                logger.warn('Audio player component not available');
                 this.showNotification('Audio player not ready', 'error');
             }
         }
     }
 
     openSurahBrowser(readingMode = false) {
-        console.log('Opening surah browser, reading mode:', readingMode);
+        logger.info('Opening surah browser, reading mode:', readingMode);
 
         // Populate the modal with surahs
         this.populateSurahModal();
@@ -614,14 +639,14 @@ class QuranActivityBar {
 
     // Quran Reader methods (keeping here as shared)
     openQuranReader(surahNumber) {
-        console.log('Opening Quran reader for surah:', surahNumber);
+        logger.info('Opening Quran reader for surah:', surahNumber);
 
         // Check if any other modals are open and close them
         const modals = ['surahModal', 'playbackOptionsModal', 'prayerConfirmModal'];
         modals.forEach(modalId => {
             const modal = document.getElementById(modalId);
             if (modal && modal.style.display === 'flex') {
-                console.log('Closing conflicting modal:', modalId);
+                logger.info('Closing conflicting modal:', modalId);
                 modal.style.display = 'none';
             }
         });
@@ -630,12 +655,12 @@ class QuranActivityBar {
         const surah = this.surahData.find(s => s.number === this.currentReadingSurah);
 
         if (!surah) {
-            console.error('Surah not found:', surahNumber);
+            logger.error('Surah not found:', surahNumber);
             this.showNotification('Surah not found', 'error');
             return;
         }
 
-        console.log('Found surah:', surah);
+        logger.info('Found surah:', surah);
 
         // Load reading position from localStorage
         try {
@@ -652,15 +677,15 @@ class QuranActivityBar {
         // Calculate total pages for this surah
         this.totalReadingPages = Math.ceil(surah.verses / this.versesPerPage);
 
-        console.log('Calculated total pages:', this.totalReadingPages);
+        logger.info('Calculated total pages:', this.totalReadingPages);
 
         // Update modal title
         const titleElement = document.getElementById('readerSurahTitle');
         if (titleElement) {
             titleElement.textContent = `${surah.arabicName} (${surah.name})`;
-            console.log('Updated modal title to:', titleElement.textContent);
+            logger.info('Updated modal title to:', titleElement.textContent);
         } else {
-            console.error('readerSurahTitle element not found');
+            logger.error('readerSurahTitle element not found');
         }
 
         // Show modal
@@ -668,10 +693,10 @@ class QuranActivityBar {
         if (modal) {
             modal.style.display = 'flex';
             modal.style.zIndex = '10000'; // Ensure it's on top
-            console.log('Modal display set to flex, z-index set to 10000');
+            logger.info('Modal display set to flex, z-index set to 10000');
             this.isReaderModalOpen = true; // Track modal state
         } else {
-            console.error('quranReaderModal element not found');
+            logger.error('quranReaderModal element not found');
             return;
         }
 
@@ -729,7 +754,7 @@ class QuranActivityBar {
             };
             localStorage.setItem('quranReadingProgress', JSON.stringify(readingProgress));
         } catch (error) {
-            console.warn('Failed to save reading progress:', error);
+            logger.warn('Failed to save reading progress:', error);
         }
     }
 
@@ -739,9 +764,9 @@ class QuranActivityBar {
 
         // Check if this was a Friday Surah Al-Kahf reading session
         if (this.currentReadingSurah === 18) {
-            console.log('Friday Surah Al-Kahf reading session completed');
+            logger.info('Friday Surah Al-Kahf reading session completed');
             // Mark as completed in the extension
-            vscode.postMessage({
+            window.vscode.postMessage({
                 type: 'fridaySurahCompleted',
                 surahNumber: 18
             });
@@ -766,7 +791,7 @@ class QuranActivityBar {
 
     // Set up event listeners for reader modal controls
     setupReaderModalControls() {
-        console.log('Setting up reader modal controls');
+        logger.info('Setting up reader modal controls');
 
         // Close buttons
         const readerCloseBtn = document.getElementById('readerClose');
@@ -830,17 +855,17 @@ class QuranActivityBar {
 
     // Auto Reading methods (keeping here as shared)
     toggleAutoReading() {
-        console.log('Toggle auto reading called, current state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled);
+        logger.info('Toggle auto reading called, current state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled);
 
         // State machine: prevent operations during transitions
         if (this.autoReadingState === 'starting' || this.autoReadingState === 'stopping') {
-            console.log('🔍 DEBUG: Operation in progress, ignoring toggle');
+            logger.info('🔍 DEBUG: Operation in progress, ignoring toggle');
             return;
         }
 
         // Don't allow toggling if modal is not open - show warning
         if (!this.isReaderModalOpen) {
-            console.log('🔍 DEBUG: Modal not visible for auto-reading toggle');
+            logger.info('🔍 DEBUG: Modal not visible for auto-reading toggle');
             this.showNotification('Please open Quran Reader first to enable auto-reading', 'error');
             return;
         }
@@ -851,14 +876,14 @@ class QuranActivityBar {
         const speedControls = document.getElementById('speedControls');
         const playBtn = document.getElementById('playPauseAutoRead');
 
-        console.log('Button found:', !!toggleBtn);
-        console.log('Speed controls found:', !!speedControls);
-        console.log('Play button found:', !!playBtn);
+        logger.info('Button found:', !!toggleBtn);
+        logger.info('Speed controls found:', !!speedControls);
+        logger.info('Play button found:', !!playBtn);
 
         if (this.autoReadingEnabled) {
             toggleBtn?.classList.add('active');
             const textSpan = toggleBtn?.querySelector('[data-localize="autoReading"]') || toggleBtn?.querySelectorAll('span')[1];
-            console.log('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
+            logger.info('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
             if (textSpan) {textSpan.innerText = 'Auto Reading: ON';}
             if (speedControls) {speedControls.style.display = 'flex';}
             if (playBtn) {
@@ -867,7 +892,7 @@ class QuranActivityBar {
                 const icon = playBtn.querySelector('.icon');
                 if (icon) {icon.textContent = '⏸️';} // Already playing
             }
-            console.log('Auto reading mode enabled');
+            logger.info('Auto reading mode enabled');
 
             // Show the speed indicator in main activity bar
             this.showAutoReadingIndicator();
@@ -880,7 +905,7 @@ class QuranActivityBar {
 
             toggleBtn?.classList.remove('active');
             const textSpan = toggleBtn?.querySelector('[data-localize="autoReading"]') || toggleBtn?.querySelectorAll('span')[1];
-            console.log('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
+            logger.info('Text span found:', !!textSpan, 'current text:', textSpan?.innerText);
             if (textSpan) {textSpan.innerText = 'Auto Reading';}
             if (speedControls) {speedControls.style.display = 'none';}
             if (playBtn) {
@@ -889,7 +914,7 @@ class QuranActivityBar {
                 const icon = playBtn.querySelector('.icon');
                 if (icon) {icon.textContent = '▶️';}
             }
-            console.log('Auto reading mode disabled');
+            logger.info('Auto reading mode disabled');
 
             // Hide the speed indicator in main activity bar
             this.hideAutoReadingIndicator();
@@ -914,24 +939,24 @@ class QuranActivityBar {
     }
 
     toggleAutoReadingPlayback() {
-        console.log('toggleAutoReadingPlayback called - state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled, 'active:', this.autoReadingActive);
+        logger.info('toggleAutoReadingPlayback called - state:', this.autoReadingState, 'enabled:', this.autoReadingEnabled, 'active:', this.autoReadingActive);
 
         // State machine: prevent operations during transitions
         if (this.autoReadingState === 'starting' || this.autoReadingState === 'stopping') {
-            console.log('🔍 DEBUG: Operation in progress, ignoring playback toggle');
+            logger.info('🔍 DEBUG: Operation in progress, ignoring playback toggle');
             return;
         }
 
         if (!this.autoReadingEnabled) {
-            console.log('Auto reading not enabled - cannot start');
+            logger.info('Auto reading not enabled - cannot start');
             return;
         }
 
         if (this.autoReadingActive) {
-            console.log('Stopping auto reading');
+            logger.info('Stopping auto reading');
             this.stopAutoReading();
         } else {
-            console.log('Starting auto reading');
+            logger.info('Starting auto reading');
             this.startAutoReading();
         }
     }
@@ -941,7 +966,7 @@ class QuranActivityBar {
     stopAutoReading() {
         if (!this.autoReadingActive) {return;}
 
-        console.log('Stopping auto reading');
+        logger.info('Stopping auto reading');
 
         // Set state to stopping
         this.autoReadingState = 'stopping';
@@ -977,33 +1002,33 @@ class QuranActivityBar {
 
     performAutoScroll() {
         // Comprehensive safety checks with debug logging
-        console.log('🔍 DEBUG: performAutoScroll called', {
+        logger.info('🔍 DEBUG: performAutoScroll called', {
             autoReadingActive: this.autoReadingActive,
             autoReadingEnabled: this.autoReadingEnabled,
             speed: this.autoReadingSpeed
         });
 
         if (!this.autoReadingActive) {
-            console.log('performAutoScroll: Auto reading not active, exiting');
+            logger.info('performAutoScroll: Auto reading not active, exiting');
             return;
         }
 
         if (!this.autoReadingEnabled) {
-            console.log('performAutoScroll: Auto reading not enabled, stopping');
+            logger.info('performAutoScroll: Auto reading not enabled, stopping');
             this.stopAutoReading();
             return;
         }
 
         // Simple modal state check using our state flag
         if (!this.isReaderModalOpen) {
-            console.log('performAutoScroll: Quran reader modal not visible, stopping auto-reading');
+            logger.info('performAutoScroll: Quran reader modal not visible, stopping auto-reading');
             this.stopAutoReading();
             return;
         }
 
         try {
             const displayEl = document.getElementById('quranTextDisplay');
-            console.log('🔍 DEBUG: Display element check', {
+            logger.info('🔍 DEBUG: Display element check', {
                 elementExists: !!displayEl,
                 scrollHeight: displayEl?.scrollHeight,
                 clientHeight: displayEl?.clientHeight,
@@ -1012,14 +1037,14 @@ class QuranActivityBar {
             });
 
             if (!displayEl) {
-                console.error('performAutoScroll: quranTextDisplay element not found');
+                logger.error('performAutoScroll: quranTextDisplay element not found');
                 this.stopAutoReading(); // Stop if element doesn't exist
                 return;
             }
 
             // Enhanced scrollability validation
             const canScroll = displayEl.scrollHeight > displayEl.clientHeight + 10; // 10px buffer
-            console.log('🔍 DEBUG: Scrollability check', {
+            logger.info('🔍 DEBUG: Scrollability check', {
                 scrollHeight: displayEl.scrollHeight,
                 clientHeight: displayEl.clientHeight,
                 canScroll: canScroll,
@@ -1027,7 +1052,7 @@ class QuranActivityBar {
             });
 
             if (!canScroll) {
-                console.log('Auto-scroll: Content not scrollable, advancing to next page');
+                logger.info('Auto-scroll: Content not scrollable, advancing to next page');
                 this.advanceToNextReaderPage();
                 return;
             }
@@ -1035,21 +1060,21 @@ class QuranActivityBar {
             // Check if content is still loading or failed to load
             if (displayEl.innerHTML.includes('Loading Quran text...') ||
                 displayEl.innerHTML.includes('Failed to load Quran text')) {
-                console.log('Content still loading or failed to load, skipping auto-scroll');
+                logger.info('Content still loading or failed to load, skipping auto-scroll');
                 return;
             }
 
             // Check if there are verses to scroll through
             const verses = displayEl.querySelectorAll('.arabic-verse');
             if (verses.length === 0) {
-                console.log('No verses found, cannot auto-scroll');
+                logger.info('No verses found, cannot auto-scroll');
                 this.stopAutoReading();
                 return;
             }
 
             // Ensure element has valid dimensions
             if (displayEl.clientHeight === 0 || displayEl.scrollHeight === 0) {
-                console.log('Element has invalid dimensions, skipping scroll');
+                logger.info('Element has invalid dimensions, skipping scroll');
                 return;
             }
 
@@ -1060,7 +1085,7 @@ class QuranActivityBar {
             const maxScroll = Math.max(0, displayEl.scrollHeight - displayEl.clientHeight);
             const hasScrollableContent = maxScroll > 5; // Must have at least 5px to scroll
 
-            console.log('AutoScroll Debug:', {
+            logger.info('AutoScroll Debug:', {
                 currentScroll,
                 maxScroll,
                 hasScrollableContent,
@@ -1072,14 +1097,14 @@ class QuranActivityBar {
 
             // If no scrollable content exists, try to scroll anyway for a short time
             if (!hasScrollableContent || maxScroll <= 0) {
-                console.log('Minimal scrollable content, attempting slow scroll anyway');
+                logger.info('Minimal scrollable content, attempting slow scroll anyway');
                 // Force a small scroll increment even with minimal content
                 const forcedScrollIncrement = Math.max(1, Math.floor(displayEl.clientHeight * 0.05)); // 5% of container height
                 const newScrollTop = Math.min(currentScroll + forcedScrollIncrement, maxScroll);
 
                 if (newScrollTop > currentScroll) {
                     displayEl.scrollTop = newScrollTop;
-                    console.log('Forced scroll performed:', {
+                    logger.info('Forced scroll performed:', {
                         increment: forcedScrollIncrement,
                         oldScroll: currentScroll,
                         newScroll: newScrollTop
@@ -1087,7 +1112,7 @@ class QuranActivityBar {
                     return; // Continue scrolling on next interval
                 } else {
                     // If we still can't scroll, advance to next page
-                    console.log('Cannot force scroll, advancing to next page');
+                    logger.info('Cannot force scroll, advancing to next page');
                     this.advanceToNextReaderPage();
                     return;
                 }
@@ -1102,7 +1127,7 @@ class QuranActivityBar {
             const isVeryNearBottom = currentScroll >= Math.max(0, maxScroll - Math.max(20, containerHeight * 0.1));
 
             if (isNearBottom || isVeryNearBottom) {
-                console.log('Reached bottom threshold, advancing to next page');
+                logger.info('Reached bottom threshold, advancing to next page');
                 this.advanceToNextReaderPage();
                 return;
             }
@@ -1143,7 +1168,7 @@ class QuranActivityBar {
             // Final bounds checking - ensure reasonable scroll amounts
             scrollIncrement = Math.max(1, Math.min(scrollIncrement, 8)); // Max 8px per step for smoothness
 
-            console.log('🔍 DEBUG: Scroll increment calculation', {
+            logger.info('🔍 DEBUG: Scroll increment calculation', {
                 safeSpeed: safeSpeed,
                 baseIncrement: baseIncrement,
                 contentDensity: verses.length > 0 ? displayEl.scrollHeight / verses.length : 'N/A',
@@ -1158,7 +1183,7 @@ class QuranActivityBar {
             if (newScrollTop > currentScroll) {
                 displayEl.scrollTop = newScrollTop;
 
-                console.log('Performed auto-scroll:', {
+                logger.info('Performed auto-scroll:', {
                     increment: scrollIncrement,
                     oldScroll: currentScroll,
                     newScroll: newScrollTop,
@@ -1167,12 +1192,12 @@ class QuranActivityBar {
                 });
             } else {
                 // If we can't scroll further, advance to next page
-                console.log('Cannot scroll further, advancing to next page');
+                logger.info('Cannot scroll further, advancing to next page');
                 this.advanceToNextReaderPage();
             }
 
         } catch (error) {
-            console.error('Error during auto-scroll:', error);
+            logger.error('Error during auto-scroll:', error);
             // On any error, safely stop auto-reading to prevent infinite loops
             this.stopAutoReading();
             this.showNotification('Auto-reading stopped due to an error', 'error');
@@ -1206,7 +1231,7 @@ class QuranActivityBar {
             const currentSurah = this.surahData.find(s => s.number === this.currentReadingSurah);
 
             // Send message to extension to show VS Code notification (non-blocking)
-            vscode.postMessage({
+            window.vscode.postMessage({
                 type: 'surahFinished',
                 currentSurah: currentSurah,
                 nextSurah: nextSurah,
@@ -1343,7 +1368,7 @@ class QuranActivityBar {
         // Clamp speed between 0.3 and 2.5
         this.detectedReadingSpeed = Math.max(0.3, Math.min(2.5, targetSpeed));
 
-        console.log(`Adaptive speed: ${this.detectedReadingSpeed.toFixed(2)} (avg page time: ${avgTime}ms)`);
+        logger.info(`Adaptive speed: ${this.detectedReadingSpeed.toFixed(2)} (avg page time: ${avgTime}ms)`);
 
         // Update UI indicator if we have one
         this.updateAdaptiveSpeedIndicator();
@@ -1391,14 +1416,14 @@ class QuranActivityBar {
     }
 
     async loadReaderPage(pageNumber) {
-        console.log('Loading reader page:', pageNumber, 'for surah:', this.currentReadingSurah);
+        logger.info('Loading reader page:', pageNumber, 'for surah:', this.currentReadingSurah);
 
         // Record time for previous page
         this.recordPageReadingTime();
 
         const displayEl = document.getElementById('quranTextDisplay');
         if (!displayEl) {
-            console.error('Reader text display element not found');
+            logger.error('Reader text display element not found');
             return;
         }
 
@@ -1428,7 +1453,7 @@ class QuranActivityBar {
 
                 // Cache the verses
                 this.cachedVerses[this.currentReadingSurah] = verses;
-                console.log('Cached verses for surah:', this.currentReadingSurah);
+                logger.info('Cached verses for surah:', this.currentReadingSurah);
             }
 
             // Calculate verses for current page
@@ -1457,7 +1482,7 @@ class QuranActivityBar {
             this.lastPageLoadTime = Date.now();
 
         } catch (error) {
-            console.error('Failed to load Quran text:', error);
+            logger.error('Failed to load Quran text:', error);
             displayEl.innerHTML = '<div class="error-text">Failed to load Quran text. Please check your internet connection and try again.</div>';
         }
     }
@@ -1491,7 +1516,7 @@ class QuranActivityBar {
     startAutoReading() {
         if (!this.autoReadingEnabled || this.autoReadingActive || this.autoReadingState !== 'idle') {return;}
 
-        console.log('Starting auto reading at speed:', this.autoReadingSpeed, '(adaptive:', this.detectedReadingSpeed, ')');
+        logger.info('Starting auto reading at speed:', this.autoReadingSpeed, '(adaptive:', this.detectedReadingSpeed, ')');
 
         // Set state to starting
         this.autoReadingState = 'starting';
@@ -1520,12 +1545,12 @@ class QuranActivityBar {
             if (!this.autoReadingActive || this.autoReadingState !== 'starting') {return;} // Check if still active after delay
 
             const intervalMs = Math.max(100, (2 / this.autoReadingSpeed) * 1000);
-            console.log('🔍 DEBUG: Setting up auto-scroll interval with', intervalMs, 'ms delay');
+            logger.info('🔍 DEBUG: Setting up auto-scroll interval with', intervalMs, 'ms delay');
 
             this.autoReadingInterval = setInterval(() => {
                 // Double-check modal state before each scroll attempt
                 if (!this.isReaderModalOpen) {
-                    console.log('🔍 DEBUG: Modal not visible during interval, stopping auto-reading');
+                    logger.info('🔍 DEBUG: Modal not visible during interval, stopping auto-reading');
                     this.stopAutoReading();
                     return;
                 }
@@ -1535,7 +1560,7 @@ class QuranActivityBar {
 
             // Transition to active state
             this.autoReadingState = 'active';
-            console.log('🔍 DEBUG: Auto-scroll interval started, state now active');
+            logger.info('🔍 DEBUG: Auto-scroll interval started, state now active');
         }, 200); // 200ms delay to let modal settle
 
         // Start adaptive speed adjustment (ensure only one)
@@ -1547,7 +1572,7 @@ class QuranActivityBar {
     stopAutoReading() {
         if (!this.autoReadingActive) {return;}
 
-        console.log('Stopping auto reading');
+        logger.info('Stopping auto reading');
 
         // Set state to stopping
         this.autoReadingState = 'stopping';
@@ -1587,7 +1612,7 @@ class QuranActivityBar {
 
         // Only start adaptive adjustment if we have enough data (at least 2 page readings)
         if (this.pageReadDurations.length < 2) {
-            console.log('Not enough data for adaptive speed adjustment yet');
+            logger.info('Not enough data for adaptive speed adjustment yet');
             return;
         }
 
@@ -1688,7 +1713,7 @@ class QuranActivityBar {
             }
 
         } catch (error) {
-            console.error('Error updating auto-reading UI:', error);
+            logger.error('Error updating auto-reading UI:', error);
         }
     }
 
@@ -1705,29 +1730,29 @@ class QuranActivityBar {
 
     // Show auto reading indicator in main activity bar
     showAutoReadingIndicator() {
-        console.log('showAutoReadingIndicator called');
+        logger.info('showAutoReadingIndicator called');
         const indicator = document.getElementById('autoReadingIndicator');
-        console.log('Indicator element found:', !!indicator);
+        logger.info('Indicator element found:', !!indicator);
         if (indicator) {
             indicator.style.display = 'block';
             this.updateSpeedIndicatorDisplay();
             this.bindSpeedButtonEvents();
-            console.log('Auto reading indicator shown');
+            logger.info('Auto reading indicator shown');
         } else {
-            console.error('Auto reading indicator element not found');
+            logger.error('Auto reading indicator element not found');
         }
     }
 
     // Hide auto reading indicator in main activity bar
     hideAutoReadingIndicator() {
-        console.log('hideAutoReadingIndicator called');
+        logger.info('hideAutoReadingIndicator called');
         const indicator = document.getElementById('autoReadingIndicator');
-        console.log('Indicator element found:', !!indicator);
+        logger.info('Indicator element found:', !!indicator);
         if (indicator) {
             indicator.style.display = 'none';
-            console.log('Auto reading indicator hidden');
+            logger.info('Auto reading indicator hidden');
         } else {
-            console.error('Auto reading indicator element not found');
+            logger.error('Auto reading indicator element not found');
         }
     }
 
@@ -1766,7 +1791,7 @@ class QuranActivityBar {
 
     // Utility methods
     postMessage(type, data = {}) {
-        vscode.postMessage({ type, ...data });
+        window.vscode.postMessage({ type, ...data });
     }
 
     showNotification(message, type = 'info') {
@@ -1811,10 +1836,10 @@ class QuranActivityBar {
 
     // Friday Surah Al-Kahf reading method
     startFridaySurahReading() {
-        console.log('Starting Friday Surah Al-Kahf reading session');
+        logger.info('Starting Friday Surah Al-Kahf reading session');
 
         // Send message to extension to trigger the Friday Surah enforcement
-        vscode.postMessage({
+        window.vscode.postMessage({
             type: 'enforceFridaySurahKahf',
             surahNumber: 18,
             message: '🕌 Starting Friday Surah Al-Kahf Reading Session'
@@ -1826,12 +1851,57 @@ class QuranActivityBar {
 
     // Initialize Friday Surah status on load
     initializeFridaySurahStatus() {
-        console.log('Initializing Friday Surah status');
+        logger.info('Initializing Friday Surah status');
 
         // Request current Friday Surah status from extension
-        vscode.postMessage({
+        window.vscode.postMessage({
             type: 'getFridaySurahStatus'
         });
+    }
+
+   // Check if Friday Surah section should be visible (Thursday sunset to Friday end)
+    shouldShowFridaySurah() {
+        const now = new Date();
+        const day = now.getDay(); // 0 = Sunday, 4 = Thursday, 5 = Friday
+        const hour = now.getHours();
+        const minute = now.getMinutes();
+
+        // Case 1: Friday (show all day)
+        if (day === 5) {
+            return true;
+        }
+
+        // Case 2: Thursday (after Maghrib)
+        if (day === 4) {
+            // Correct logic: if hour > 17 (18, 19, etc.) or if hour = 17 and minute >= 45
+            // Thursday sunset approx 5:45 PM
+            if (hour > 17 || (hour === 17 && minute >= 45)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Update Friday Surah section visibility and status
+    updateFridaySurahVisibility() {
+        // Make sure you added ID to this section in HTML file
+        // <div class="dhikr-section" id="fridaySurahSection"> ... </div>
+        const fridaySection = document.getElementById('fridaySurahSection');
+
+        if (!fridaySection) {return;}
+
+        const shouldShow = this.shouldShowFridaySurah();
+
+        // Show or hide the section completely
+        if (shouldShow) {
+            fridaySection.classList.remove('hidden-section'); // or fridaySection.style.display = 'block';
+
+            // Update status only if section is visible
+            this.updateFridaySurahStatus(); // Make sure this function exists or use requestFridaySurahStatus
+        } else {
+            fridaySection.classList.add('hidden-section'); // or fridaySection.style.display = 'none';
+        }
     }
 
     // Update Friday Surah status display
@@ -1881,6 +1951,13 @@ class QuranActivityBar {
         }
     }
 
+    // Request Friday Surah status from extension
+    requestFridaySurahStatus() {
+        window.vscode.postMessage({
+            type: 'getFridaySurahStatus'
+        });
+    }
+
     // Prayer goal update method (called from HTML)
     updatePrayerGoal(prayer, completed) {
         if (this.counterComponent && this.counterComponent.updatePrayerGoal) {
@@ -1890,7 +1967,7 @@ class QuranActivityBar {
 
     // Dispose method for proper cleanup
     dispose() {
-        console.log('Disposing QuranActivityBar...');
+        logger.info('Disposing QuranActivityBar...');
 
         // Stop all auto-reading functionality
         this.stopAutoReading();
@@ -1930,7 +2007,7 @@ class QuranActivityBar {
         this.settingsComponent = null;
         this.statisticsComponent = null;
 
-        console.log('QuranActivityBar disposed successfully');
+        logger.info('QuranActivityBar disposed successfully');
     }
 
     // Surah data for components

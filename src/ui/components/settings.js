@@ -1,6 +1,7 @@
 /**
  * Settings Component - Manages application settings and preferences
  */
+import { logger } from '../utils/Logger.js';
 class SettingsComponent {
     constructor() {
         // Settings state
@@ -264,7 +265,7 @@ class SettingsComponent {
     }
 
     postMessage(type, data = {}) {
-        vscode.postMessage({ type, ...data });
+        window.vscode.postMessage({ type, ...data });
     }
 
     // Settings update methods
@@ -277,7 +278,7 @@ class SettingsComponent {
             settings.language = language;
             localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
         } catch (error) {
-            console.warn('Failed to update language in localStorage:', error);
+            logger.warn('Failed to update language in localStorage:', error);
         }
 
         // Tell extension to update the global configuration and notify webview
@@ -532,7 +533,7 @@ class SettingsComponent {
 
             this.updateSettingsUI();
         } catch (error) {
-            console.warn('Failed to load settings:', error);
+            logger.warn('Failed to load settings:', error);
         }
     }
 

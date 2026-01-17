@@ -1,6 +1,7 @@
 /**
  * Statistics Component - Manages listening statistics and display
  */
+import { logger } from '../utils/Logger.js';
 class StatisticsComponent {
     constructor() {
         // Statistics state
@@ -23,21 +24,30 @@ class StatisticsComponent {
     }
 
     setupEventListeners() {
-        // Statistics mode toggle
-        const statsIcon = document.querySelector('.stats-icon');
-        if (statsIcon) {
-            statsIcon.style.cursor = 'pointer';
-            statsIcon.addEventListener('click', () => {
-                this.toggleStatisticsMode();
-            });
-        }
-
-        // Reset statistics button
+        // Reset statistics button (use event delegation)
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('stats-reset')) {
                 this.resetStats();
             }
         });
+    }
+
+    // Attach event listeners for dynamically created elements
+    attachEventListeners() {
+        // Statistics mode toggle
+        const statsIcon = document.querySelector('.stats-icon');
+        if (statsIcon) {
+            statsIcon.style.cursor = 'pointer';
+            // Remove existing listeners to avoid duplicates
+            statsIcon.removeEventListener('click', this.handleIconClick);
+            // Add new listener
+            statsIcon.addEventListener('click', this.handleIconClick.bind(this));
+        }
+    }
+
+    // Handle icon click (bound to component instance)
+    handleIconClick() {
+        this.toggleStatisticsMode();
     }
 
     // Statistics methods
@@ -59,7 +69,7 @@ class StatisticsComponent {
         this.saveListeningStats();
         this.updateListeningStatsDisplay();
 
-        console.log('Listening counter incremented:', this.listeningStats);
+        logger.info('Listening counter incremented:', this.listeningStats);
     }
 
     loadListeningStats() {
@@ -76,9 +86,9 @@ class StatisticsComponent {
                     statsMode: parsed.statsMode || 'sessions'
                 };
             }
-            console.log('Loaded listening stats:', this.listeningStats);
+            logger.info('Loaded listening stats:', this.listeningStats);
         } catch (error) {
-            console.warn('Failed to load listening stats:', error);
+            logger.warn('Failed to load listening stats:', error);
         }
     }
 
@@ -86,14 +96,14 @@ class StatisticsComponent {
         try {
             localStorage.setItem('quranListeningStats', JSON.stringify(this.listeningStats));
         } catch (error) {
-            console.warn('Failed to save listening stats:', error);
+            logger.warn('Failed to save listening stats:', error);
         }
     }
 
     // Time tracking methods
     startTimeTracking() {
         this.playStartTime = Date.now();
-        console.log('Started time tracking at:', this.playStartTime);
+        logger.info('Started time tracking at:', this.playStartTime);
     }
 
     stopTimeTracking() {
@@ -105,7 +115,7 @@ class StatisticsComponent {
         const elapsedTime = now - this.playStartTime;
         this.currentSessionTime += elapsedTime;
 
-        console.log('Stopped time tracking. Elapsed time:', elapsedTime, 'ms');
+        logger.info('Stopped time tracking. Elapsed time:', elapsedTime, 'ms');
 
         // Accumulate to total and daily time
         const today = new Date().toISOString().split('T')[0];
@@ -207,13 +217,13 @@ class StatisticsComponent {
         this.listeningStats.statsMode = this.listeningStats.statsMode === 'sessions' ? 'time' : 'sessions';
         this.saveListeningStats();
         this.updateListeningStatsDisplay();
-        console.log('Toggled stats mode to:', this.listeningStats.statsMode);
+        logger.info('Toggled stats mode to:', this.listeningStats.statsMode);
     }
 
     updateListeningStatsDisplay() {
         const statsContainer = document.getElementById('listeningStats');
         if (!statsContainer) {
-            console.log('Listening stats container not found');
+            logger.info('Listening stats container not found');
             return;
         }
 
@@ -227,6 +237,15 @@ class StatisticsComponent {
             icon = '📊';
             title = window.localization ? window.localization.getString('quranListeningTitle') : 'Quran Listening';
         }
+
+        // DEBUG: Log localization status
+        logger.info('Statistics: Localization check:', {
+            hasLocalization: !!window.localization,
+            hasGetString: !!(window.localization && window.localization.getString),
+            stringsCount: window.localization ? Object.keys(window.localization.strings || {}).length : 0,
+            titleResult: title,
+            rawTitle: window.localization ? window.localization.getString('quranListeningTitle') : 'NO_LOCALIZATION'
+        });
 
         let totalValue, todayValue, weekValue, monthValue;
 
@@ -283,6 +302,9 @@ class StatisticsComponent {
 
         statsContainer.innerHTML = html;
         statsContainer.style.display = 'block';
+
+        // Re-attach event listeners after HTML update
+        this.attachEventListeners();
     }
 
     resetStats() {
@@ -291,19 +313,31 @@ class StatisticsComponent {
             window.localization.getString('resetStatsConfirm', { mode: modeText }) :
             `Are you sure you want to reset all listening ${modeText} statistics? This cannot be undone.`;
 
-        if (confirm(confirmMessage)) {
-            this.listeningStats = {
-                totalSessions: 0,
-                totalTimePlayed: 0,
-                dailyStats: {},
-                dailyTimeStats: {},
-                lastUpdated: null,
-                statsMode: this.listeningStats.statsMode || 'sessions'
-            };
-            this.saveListeningStats();
-            this.updateListeningStatsDisplay();
-            this.showNotification('Statistics reset successfully', 'success');
+        // Use VS Code dialog instead of browser confirm (webview is sandboxed)
+        if (window.vscode) {
+            window.vscode.postMessage({
+                type: 'showConfirmDialog',
+                message: confirmMessage,
+                action: 'resetStats'
+            });
+        } else {
+            logger.warn('VS Code API not available for confirmation dialog');
         }
+    }
+
+    // Method called from activityBar.js when user confirms reset
+    confirmResetStats() {
+        this.listeningStats = {
+            totalSessions: 0,
+            totalTimePlayed: 0,
+            dailyStats: {},
+            dailyTimeStats: {},
+            lastUpdated: null,
+            statsMode: this.listeningStats.statsMode || 'sessions'
+        };
+        this.saveListeningStats();
+        this.updateListeningStatsDisplay();
+        this.showNotification('Statistics reset successfully', 'success');
     }
 
     // Public interface for other components
@@ -320,6 +354,12 @@ class StatisticsComponent {
 
     onAudioEnd() {
         this.stopTimeTracking();
+    }
+
+    // Public method to refresh localization after language change
+    refreshLocalization() {
+        logger.info('StatisticsComponent: Refreshing localization');
+        this.updateListeningStatsDisplay();
     }
 
     // Utility methods

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
+import { Logger } from './utils/Logger';
 import { QuranPlayer } from './file/quranPlayer';
 import { ActivityBarViewProvider } from './logic/activityBarView';
 import { IslamicRemindersManager } from './logic/islamicReminders';
@@ -28,11 +29,11 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext) {
         const autoPlayEnabled = config.get('autoPlayStartup', false);
 
         if (!autoPlayEnabled) {
-            console.log('Auto-play on startup is disabled');
+            Logger.instance.info('Auto-play on startup is disabled');
             return;
         }
 
-        console.log('Auto-play on startup is enabled, checking for last playback position...');
+        Logger.instance.info('Auto-play on startup is enabled, checking for last playback position...');
 
         // Get last playback position from global state (will be set by webview)
         // For now, we'll wait a bit for the webview to load and then check
@@ -41,11 +42,11 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext) {
                 // Check if we have a last playback position stored
                 const lastPlayback = getLastPlaybackPosition();
                 if (!lastPlayback) {
-                    console.log('No last playback position found');
+                    Logger.instance.info('No last playback position found');
                     return;
                 }
 
-                console.log('Found last playback position:', lastPlayback);
+                Logger.instance.info('Found last playback position:', lastPlayback);
 
                 // Check volume setting - warn if it's 100%
                 const volume = getCurrentVolume();
@@ -77,17 +78,17 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext) {
                             );
                         }
                     } catch (error) {
-                        console.error('Error triggering auto-play:', error);
+                        Logger.instance.error('Error triggering auto-play:', error);
                     }
                 }, 2000); // Wait 2 seconds for webview to be fully ready
 
             } catch (error) {
-                console.error('Error in auto-play startup check:', error);
+                Logger.instance.error('Error in auto-play startup check:', error);
             }
         }, 1000); // Initial delay to let extension finish loading
 
     } catch (error) {
-        console.error('Error checking auto-play on startup:', error);
+        Logger.instance.error('Error checking auto-play on startup:', error);
     }
 }
 
@@ -100,7 +101,7 @@ function getLastPlaybackPosition(): { surahNumber: number; surahName: string; cu
         // For now, return null - the webview will handle this
         return null;
     } catch (error) {
-        console.error('Error getting last playback position:', error);
+        Logger.instance.error('Error getting last playback position:', error);
         return null;
     }
 }
@@ -114,7 +115,7 @@ function getCurrentVolume(): number {
         const config = vscode.workspace.getConfiguration('codeTune');
         return config.get('volume', 70);
     } catch (error) {
-        console.warn('Error getting volume setting:', error);
+        Logger.instance.warn('Error getting volume setting:', error);
         return 70; // Default
     }
 }
@@ -129,7 +130,7 @@ function formatTime(seconds: number): string {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('CodeTune extension is now active!');
+    Logger.instance.info('CodeTune extension is now active!');
 
     // Initialize players and services
     quranPlayer = new QuranPlayer(context);
@@ -151,7 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
     checkAutoPlayOnStartup(context);
 
     // Initialize Activity Bar webview
-    console.log('Extension: Creating Activity Bar provider...');
+    Logger.instance.info('Extension: Creating Activity Bar provider...');
     const activityBarProvider = new ActivityBarViewProvider(
         context.extensionUri,
         quranPlayer,
@@ -161,11 +162,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Make Activity Bar provider globally accessible for settings webview
     (global as any).activityBarProvider = activityBarProvider;
 
-    console.log('Extension: Registering Activity Bar provider...');
+    Logger.instance.info('Extension: Registering Activity Bar provider...');
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(ActivityBarViewProvider.viewType, activityBarProvider)
     );
-    console.log('Extension: Activity Bar provider registered successfully');
+    Logger.instance.info('Extension: Activity Bar provider registered successfully');
 
     // Register commands
     const playQuranCommand = vscode.commands.registerCommand(
@@ -234,7 +235,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('CodeTune extension is deactivating...');
+    Logger.instance.info('CodeTune extension is deactivating...');
 
     if (quranPlayer) {
         quranPlayer.dispose();
@@ -254,5 +255,5 @@ export function deactivate() {
         }
     }
 
-    console.log('CodeTune extension deactivated successfully');
+    Logger.instance.info('CodeTune extension deactivated successfully');
 }

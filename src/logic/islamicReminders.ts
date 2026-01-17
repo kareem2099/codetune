@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { IslamicCalendar } from './islamicCalendar';
 import { FridayReminders, IslamicContent } from './fridayReminders';
+import { Logger } from '../utils/Logger';
 
 interface ReminderSettings {
     enableReminders: boolean;
@@ -241,9 +242,9 @@ export class IslamicRemindersManager {
                 showEveningAzkar: config.get('showEveningAzkar', true),
                 workingHoursOnly: config.get('workingHoursOnly', false)
             };
-            console.log('Islamic reminders loaded from VSCode config:', this.settings);
+            Logger.instance.info('Islamic reminders loaded from VSCode config:', this.settings);
         } catch (error) {
-            console.warn('Failed to load Islamic reminder settings:', error);
+            Logger.instance.warn('Failed to load Islamic reminder settings:', error);
             // Keep default settings
         }
     }
@@ -318,7 +319,7 @@ export class IslamicRemindersManager {
 
         // If this is the Friday Surah Al-Kahf reminder, enforce reading instead of just showing notification
         if (isFridaySurah && !this.fridayReminders.isFridaySurahCompleted()) {
-            console.log('Friday Surah Al-Kahf reminder triggered - enforcing reading');
+            Logger.instance.info('Friday Surah Al-Kahf reminder triggered - enforcing reading');
             await this.fridayReminders.enforceFridaySurahReading();
             return; // Don't show the regular notification
         }

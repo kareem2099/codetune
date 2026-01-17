@@ -169,5 +169,7 @@
   "today": "Aujourd'hui",
   "thisWeek": "Cette semaine",
   "thisMonth": "Ce mois",
-  "resetStatsConfirm": "Êtes-vous sûr de vouloir réinitialiser toutes les statistiques d'écoute {mode}? Ceci ne peut pas être annulé."
+  "resetStatsConfirm": "Êtes-vous sûr de vouloir réinitialiser toutes les statistiques d'écoute {mode}? Ceci ne peut pas être annulé.",
+  "prayerCompletedQuestion": "Avez-vous terminé la prière {prayerName} ?",
+  "prayerTimeNotification": "Heure de la prière {prayerName}"
 }

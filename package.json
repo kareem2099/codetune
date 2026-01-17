@@ -2,14 +2,19 @@
   "name": "codetune",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "publisher": "FreeRave",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/kareem2099/codetune.git"
   },
   "engines": {
-    "vscode": "^1.104.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Other"
@@ -21,7 +26,11 @@
     "focus",
     "quran",
     "tune",
-    "islamic"
+    "islamic",
+    "prayer times",
+    "adhan",
+    "hijri",
+    "azkar"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
@@ -101,6 +110,12 @@
           "type": "boolean",
           "default": true,
           "description": "Show occasional notifications encouraging users to support CodeTune development"
+        },
+        "codeTune.salawatCounter": {
+          "type": "number",
+          "default": 0,
+          "description": "Total count of Salawat stored locally",
+          "scope": "application"
         }
       }
     },
@@ -162,7 +177,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.104.0",
+    "@types/vscode": "^1.74.0",
     "@typescript-eslint/eslint-plugin": "^8.42.0",
     "@typescript-eslint/parser": "^8.42.0",
     "@vscode/test-cli": "^0.0.11",

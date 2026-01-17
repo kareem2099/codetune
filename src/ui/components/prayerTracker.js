@@ -1,6 +1,8 @@
 /**
  * Prayer Tracker Component - Manages Islamic prayer times, goals, and notifications
  */
+import { logger } from '../utils/Logger.js';
+
 class PrayerTrackerComponent {
     constructor(vscodeInstance = null) {
         // Use provided vscode instance or try to acquire it (for backward compatibility)
@@ -27,6 +29,7 @@ class PrayerTrackerComponent {
         this.startPrayerTicker();
         this.detectUserLocation(); // Detect location first
         this.fetchPrayerTimes(); // Fetch real prayer times on initialization
+        this.requestHijriDate(); // Fetch Hijri date on initialization
 
         // Make component globally accessible for modal callbacks
         window.prayerTrackerComponent = this;
@@ -70,7 +73,7 @@ class PrayerTrackerComponent {
                 case 'receiveLocation':
                     const location = message.payload;
                     if (location) {
-                        console.log('PrayerTracker: Received location from extension host:', location);
+                        logger.info('Received location from extension host:', location);
 
                         // Update location properties
                         this.userLocation = {
@@ -89,7 +92,7 @@ class PrayerTrackerComponent {
 
                         this.showNotification(`Location detected: ${location.city}, ${location.country}`, 'success');
                     } else {
-                        console.warn('PrayerTracker: Location detection failed, using fallback');
+                        logger.warn('Location detection failed, using fallback');
                         this.showNotification('Could not detect location automatically. Using Cairo as default.', 'warning');
                         this.useFallbackLocation();
                     }
@@ -97,7 +100,7 @@ class PrayerTrackerComponent {
                 case 'receivePrayerTimes':
                     const times = message.payload;
                     if (times) {
-                        console.log('PrayerTracker: Received prayer times from extension host:', times);
+                        logger.info('Received prayer times from extension host:', times);
 
                         // Store the calculated prayer times
                         this.apiPrayerTimes = {
@@ -108,15 +111,37 @@ class PrayerTrackerComponent {
                             isha: new Date(times.isha)
                         };
 
-                        console.log('Successfully updated prayer times from extension calculation');
+                        logger.info('Successfully updated prayer times from extension calculation');
                         // Update the display immediately
                         this.updateNextPrayer();
                         this.showNotification('Prayer times updated', 'success');
                     } else {
-                        console.warn('PrayerTracker: Prayer times calculation failed');
+                        logger.warn('Prayer times calculation failed');
                         this.showNotification('Failed to calculate prayer times', 'error');
                         // Keep using hardcoded times as fallback
                         this.apiPrayerTimes = null;
+                    }
+                    break;
+                case 'receiveHijriDate':
+                    const hijriDate = message.payload;
+                    if (hijriDate) {
+                        logger.info('Received Hijri date from extension host:', hijriDate);
+                        this.hijriDate = hijriDate;
+
+                        // Update the display
+                        const hijriElement = document.getElementById('hijriDate');
+                        if (hijriElement) {
+                            hijriElement.textContent = this.hijriDate;
+                            logger.info('Updated Hijri date display:', this.hijriDate);
+                        } else {
+                            logger.warn('Hijri date element not found');
+                        }
+                    } else {
+                        logger.warn('Hijri date calculation failed');
+                        const hijriElement = document.getElementById('hijriDate');
+                        if (hijriElement) {
+                            hijriElement.textContent = 'Error loading date';
+                        }
                     }
                     break;
             }
@@ -166,13 +191,13 @@ class PrayerTrackerComponent {
             const savedLocation = this.getSavedLocation();
             if (savedLocation) {
                 this.userLocation = savedLocation;
-                console.log('Using saved location:', this.userLocation);
+                logger.info('Using saved location:', this.userLocation);
                 this.updateLocationDisplay();
                 return;
             }
 
             // If no saved location, request location from extension host via IP geolocation
-            console.log('Requesting location from extension host via IP geolocation...');
+            logger.info('Requesting location from extension host via IP geolocation...');
 
             // Send message to extension host to get location
             if (this.vscode) {
@@ -184,7 +209,7 @@ class PrayerTrackerComponent {
             }
 
         } catch (error) {
-            console.warn('❌ Location detection failed:', error);
+            logger.warn('❌ Location detection failed:', error);
             this.showNotification('Location detection failed. Using Cairo as default. You can manually set your location.', 'info');
 
             // Fall back to Cairo as default
@@ -207,7 +232,7 @@ class PrayerTrackerComponent {
             const saved = localStorage.getItem('prayerLocation');
             return saved ? JSON.parse(saved) : null;
         } catch (error) {
-            console.warn('Failed to load saved location:', error);
+            logger.warn('Failed to load saved location:', error);
             return null;
         }
     }
@@ -216,14 +241,14 @@ class PrayerTrackerComponent {
         try {
             localStorage.setItem('prayerLocation', JSON.stringify(location));
         } catch (error) {
-            console.warn('Failed to save location:', error);
+            logger.warn('Failed to save location:', error);
         }
     }
 
     setUserLocation(lat, lon, timezone, cityName = null) {
         this.userLocation = { lat, lon, timezone, cityName };
         this.saveLocation(this.userLocation);
-        console.log('Location updated:', this.userLocation);
+        logger.info('Location updated:', this.userLocation);
         // Refetch prayer times with new location
         this.fetchPrayerTimes();
     }
@@ -235,7 +260,7 @@ class PrayerTrackerComponent {
             lon: 31.2357
         };
 
-        console.log('Requesting prayer times calculation from extension host for location:', location);
+        logger.info('Requesting prayer times calculation from extension host for location:', location);
 
         // Send message to extension host to calculate prayer times
         if (this.vscode) {
@@ -245,26 +270,32 @@ class PrayerTrackerComponent {
                 lon: location.lon
             });
         } else {
-            console.error('VS Code API not available for prayer times request');
+            logger.error('VS Code API not available for prayer times request');
+        }
+    }
+
+    requestHijriDate() {
+        logger.info('Requesting Hijri date calculation from extension host');
+
+        // Send message to extension host to calculate Hijri date
+        if (this.vscode) {
+            this.vscode.postMessage({
+                type: 'requestHijriDate'
+            });
+        } else {
+            logger.error('VS Code API not available for Hijri date request');
         }
     }
 
     updateIslamicInfo() {
         try {
-            // Update Hijri date
-            this.hijriDate = this.getHijriDate();
-            const hijriElement = document.getElementById('hijriDate');
-            if (hijriElement) {
-                hijriElement.textContent = this.hijriDate;
-                console.log('Updated Hijri date:', this.hijriDate);
-            } else {
-                console.warn('Hijri date element not found');
-            }
+            // Request fresh Hijri date from extension host
+            this.requestHijriDate();
 
             // Update next prayer info
             this.updateNextPrayer();
         } catch (error) {
-            console.warn('Failed to update Islamic information:', error);
+            logger.warn('Failed to update Islamic information:', error);
             this.setErrorState();
         }
     }
@@ -445,7 +476,7 @@ class PrayerTrackerComponent {
 
     confirmPrayerCompleted() {
         if (!this.pendingPrayerConfirmation) {
-            console.warn('No pending prayer confirmation');
+            logger.warn('No pending prayer confirmation');
             return;
         }
 
@@ -501,14 +532,14 @@ class PrayerTrackerComponent {
         if (window.counterComponent && window.counterComponent.updatePrayerGoal) {
             window.counterComponent.updatePrayerGoal(prayer, completed);
         } else {
-            console.warn('Counter component not available for prayer goal update');
+            logger.warn('Counter component not available for prayer goal update');
         }
     }
 
     updateLocationDisplay() {
         const locationElement = document.getElementById('userLocation');
         if (!locationElement) {
-            console.warn('Location element not found');
+            logger.warn('Location element not found');
             return;
         }
 
@@ -552,7 +583,7 @@ class PrayerTrackerComponent {
         // Make location clickable to manually set
         locationElement.onclick = () => this.showLocationSelector();
 
-        console.log('Updated location display:', locationText);
+        logger.info('Updated location display:', locationText);
     }
 
     showLocationSelector() {
@@ -674,7 +705,7 @@ class PrayerTrackerComponent {
 
             } catch (error) {
                 searchResults.innerHTML = '<div style="color: #dc3545; padding: 10px;">Search failed. Please try again.</div>';
-                console.error('Geocoding error:', error);
+                logger.error('Geocoding error:', error);
             }
         };
 
@@ -762,7 +793,7 @@ class PrayerTrackerComponent {
                 this.showNotification(`Could not find ${city}, ${country}. Please try searching manually.`, 'warning');
             }
         } catch (error) {
-            console.error('City search error:', error);
+            logger.error('City search error:', error);
             this.showNotification('Search failed. Please try again.', 'error');
         }
     }

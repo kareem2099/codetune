@@ -18,7 +18,7 @@
                 <div class="brand">
                     <div class="brand-icon">📿</div>
                     <div class="brand-text" data-localize="codeTune">CodeTune</div>
-                    <div class="brand-version">v0.0.7</div>
+                    <div class="brand-version">v1.0.0</div>
                 </div>
                 <div class="header-actions">
                     <select class="lang-select" id="headerLanguageSelect" title="Change Language">
@@ -176,7 +176,7 @@
                 </div>
 
                 <!-- Friday Surah Al-Kahf Reading -->
-                <div class="dhikr-section">
+                <div class="dhikr-section" id="fridaySurahSection">
                     <div class="dhikr-section-title" data-localize="fridaySurahTitle">🕌 Friday Surah Al-Kahf</div>
                     <div class="friday-surah-status" id="fridaySurahStatus">
                         <div class="friday-surah-info">
@@ -506,7 +506,7 @@
 
                 <div class="setting-item">
                     <div class="setting-label" data-localize="reviewNotifications">Review Notifications</div>
-                    <div class="setting-description data-localize="reviewNotificationsDesc">Show occasional notifications asking to leave reviews on VS Code Marketplace</div>
+                    <div class="setting-description" data-localize="reviewNotificationsDesc">Show occasional notifications asking to leave reviews on VS Code Marketplace</div>
                     <div class="setting-control">
                         <input type="checkbox" id="enableReviewNotifications" onchange="window.quranActivityBar.settingsComponent.updateReviewNotificationsSetting(this.checked)">
                         <label for="enableReviewNotifications">Enable review notifications</label>
@@ -701,14 +701,15 @@
     </div>
 
     <!-- Component scripts -->
-    <script nonce="{{nonce}}" src="./components/counter.js"></script>
-    <script nonce="{{nonce}}" src="./components/audioPlayer.js"></script>
-    <script nonce="{{nonce}}" src="./components/prayerTracker.js"></script>
-    <script nonce="{{nonce}}" src="./components/settings.js"></script>
-    <script nonce="{{nonce}}" src="./components/statistics.js"></script>
+    <script type="module" nonce="{{nonce}}" src="{{jsUri}}"></script>
 
-    <script nonce="{{nonce}}" src="{{localizationUri}}"></script>
-    <script nonce="{{nonce}}" src="{{jsUri}}"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/counter.js"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/audioPlayer.js"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/prayerTracker.js"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/settings.js"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/statistics.js"></script>
+
+    <script type="module" nonce="{{nonce}}" src="{{localizationUri}}"></script>
 
     <!-- Settings files - loaded when needed -->
     <link rel="stylesheet" href="{{settingsCssUri}}" id="settingsStylesheet" disabled>

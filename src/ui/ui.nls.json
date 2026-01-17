@@ -169,5 +169,7 @@
   "today": "Today",
   "thisWeek": "This Week",
   "thisMonth": "This Month",
-  "resetStatsConfirm": "Are you sure you want to reset all listening {mode} statistics? This cannot be undone."
+  "resetStatsConfirm": "Are you sure you want to reset all listening {mode} statistics? This cannot be undone.",
+  "prayerCompletedQuestion": "Did you complete the {prayerName} prayer?",
+  "prayerTimeNotification": "Time for {prayerName} prayer"
 }

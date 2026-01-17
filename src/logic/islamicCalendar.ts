@@ -1,3 +1,5 @@
+import { Logger } from "../utils/Logger";
+
 export class IslamicCalendar {
     private static readonly HIJRI_MONTHS = [
         'Muharram', 'Safar', 'Rabi\' al-awwal', 'Rabi\' al-thani',
@@ -10,49 +12,54 @@ export class IslamicCalendar {
     ];
 
     /**
-     * Convert Gregorian date to Hijri date
-     * Using a simplified calculation (not astronomically precise)
+     * Convert Gregorian date to Hijri date using Intl API (Umm al-Qura)
+     * This fixes the 2-day offset issue by using the standard algorithmic calendar.
      */
-    static gregorianToHijri(gregorianDate: Date): { day: number; month: number; year: number; monthName: string } {
-        // This is a simplified calculation. For production use, consider a more accurate astronomical calculation
-        const gregorianYear = gregorianDate.getFullYear();
-        const gregorianMonth = gregorianDate.getMonth() + 1;
-        const gregorianDay = gregorianDate.getDate();
+    static gregorianToHijri(gregorianDate: Date, adjustment: number = 0): { day: number; month: number; year: number; monthName: string } {
+        // Create a copy of the date for manual adjustment if needed
+        const date = new Date(gregorianDate);
+        date.setDate(date.getDate() + adjustment);
 
-        // Approximate conversion (Hijri calendar is lunar, Gregorian is solar)
-        // This is a rough approximation - real Hijri calculation requires astronomical data
-        const hijriEpoch = 1948440; // Approximate Julian day for 1 Muharram 1 AH
-        const gregorianEpoch = new Date(622, 6, 16); // Approximate start of Hijri calendar
+        // Use the built-in International API with Umm al-Qura calendar
+        // 'en-US-u-ca-islamic-umalqura' forces the Umm al-Qura calendar
+        const formatter = new Intl.DateTimeFormat('en-US-u-ca-islamic-umalqura', {
+            day: 'numeric',
+            month: 'numeric',
+            year: 'numeric'
+        });
 
-        const daysSinceEpoch = Math.floor((gregorianDate.getTime() - gregorianEpoch.getTime()) / (1000 * 60 * 60 * 24));
+        const parts = formatter.formatToParts(date);
 
-        // Hijri year calculation (354.367 days per year)
-        const hijriYear = Math.floor(daysSinceEpoch / 354.367) + 1;
+        let day = 0;
+        let month = 0;
+        let year = 0;
 
-        // Calculate remaining days in the year
-        const yearStart = Math.floor((hijriYear - 1) * 354.367);
-        const daysInYear = daysSinceEpoch - yearStart;
+        // Extract date parts from the formatted result
+        parts.forEach(part => {
+            if (part.type === 'day') {day = parseInt(part.value, 10);}
+            if (part.type === 'month') {month = parseInt(part.value, 10);}
+            if (part.type === 'year') {year = parseInt(part.value.replace(/\D/g, ''), 10);} // Remove 'AH' if present
+        });
 
-        // Calculate month and day
-        let month = 1;
-        let day = daysInYear + 1;
+        // Debug logging
+        Logger.instance.info('Hijri conversion debug:', {
+            inputDate: gregorianDate.toISOString(),
+            adjustedDate: date.toISOString(),
+            parts: parts,
+            parsed: { day, month, year }
+        });
 
-        // Approximate month lengths (alternating 29/30 days)
-        const monthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+        // Ensure month is within valid bounds for array lookup
+        const monthIndex = Math.max(0, Math.min(month - 1, 11));
+        const monthName = this.HIJRI_MONTHS[monthIndex];
 
-        for (let i = 0; i < monthLengths.length; i++) {
-            if (day <= monthLengths[i]) {
-                month = i + 1;
-                break;
-            }
-            day -= monthLengths[i];
-        }
+        Logger.instance.info('Final result:', { day, month, year, monthName, monthIndex });
 
         return {
-            day: Math.max(1, Math.min(day, 30)),
+            day: day,
             month: month,
-            year: hijriYear,
-            monthName: this.HIJRI_MONTHS[month - 1]
+            year: year,
+            monthName: monthName
         };
     }
 
@@ -70,12 +77,6 @@ export class IslamicCalendar {
      */
     static calculatePrayerTimes(latitude: number = 21.3891, longitude: number = 39.8579, date: Date = new Date()): PrayerTimes {
         // Default to Mecca coordinates if not specified
-        // This is a simplified calculation. Real prayer times require:
-        // 1. Accurate astronomical calculations
-        // 2. Timezone adjustments
-        // 3. Daylight saving time considerations
-        // 4. Asr calculation method (Hanafi/Shafi)
-
         const dayOfYear = this.getDayOfYear(date);
         const declination = this.calculateSolarDeclination(dayOfYear);
 

@@ -169,5 +169,7 @@
   "today": "Hoy",
   "thisWeek": "Esta semana",
   "thisMonth": "Este mes",
-  "resetStatsConfirm": "¿Estás seguro de que quieres restablecer todas las estadísticas de escucha {mode}? Esto no se puede deshacer."
+  "resetStatsConfirm": "¿Estás seguro de que quieres restablecer todas las estadísticas de escucha {mode}? Esto no se puede deshacer.",
+  "prayerCompletedQuestion": "¿Completaste la oración {prayerName}?",
+  "prayerTimeNotification": "Hora de la oración {prayerName}"
 }
