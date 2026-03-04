@@ -1,4 +1,4 @@
-import { Logger } from "../utils/Logger";
+import { logger } from "../utils/Logger";
 
 export class IslamicCalendar {
     private static readonly HIJRI_MONTHS = [
@@ -36,13 +36,13 @@ export class IslamicCalendar {
 
         // Extract date parts from the formatted result
         parts.forEach(part => {
-            if (part.type === 'day') {day = parseInt(part.value, 10);}
-            if (part.type === 'month') {month = parseInt(part.value, 10);}
-            if (part.type === 'year') {year = parseInt(part.value.replace(/\D/g, ''), 10);} // Remove 'AH' if present
+            if (part.type === 'day') { day = parseInt(part.value, 10); }
+            if (part.type === 'month') { month = parseInt(part.value, 10); }
+            if (part.type === 'year') { year = parseInt(part.value.replace(/\D/g, ''), 10); } // Remove 'AH' if present
         });
 
         // Debug logging
-        Logger.instance.info('Hijri conversion debug:', {
+        logger.info('Hijri conversion debug:', {
             inputDate: gregorianDate.toISOString(),
             adjustedDate: date.toISOString(),
             parts: parts,
@@ -53,7 +53,7 @@ export class IslamicCalendar {
         const monthIndex = Math.max(0, Math.min(month - 1, 11));
         const monthName = this.HIJRI_MONTHS[monthIndex];
 
-        Logger.instance.info('Final result:', { day, month, year, monthName, monthIndex });
+        logger.info('Final result:', { day, month, year, monthName, monthIndex });
 
         return {
             day: day,
@@ -261,7 +261,7 @@ export class IslamicCalendar {
         const altRad = this.degreesToRadians(altitude);
 
         const cosHourAngle = (Math.sin(altRad) - Math.sin(latRad) * Math.sin(decRad)) /
-                            (Math.cos(latRad) * Math.cos(decRad));
+            (Math.cos(latRad) * Math.cos(decRad));
 
         return this.radiansToDegrees(Math.acos(Math.max(-1, Math.min(1, cosHourAngle))));
     }

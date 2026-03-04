@@ -1,11 +1,11 @@
-// src/utils/Logger.ts
 import * as vscode from 'vscode';
 
 export enum LogLevel {
     INFO = 'INFO',
     WARN = 'WARN',
     ERROR = 'ERROR',
-    DEBUG = 'DEBUG'
+    DEBUG = 'DEBUG',
+    PERF = 'PERF'
 }
 
 export class Logger {
@@ -67,14 +67,22 @@ export class Logger {
         }
     }
 
+    public perf(label: string, durationMs: number) {
+        const flag = durationMs > 500 ? ' ⚠️ SLOW' : '';
+        this.log(LogLevel.PERF, `${label} took ${durationMs}ms${flag}`);
+    }
+
     private isDebugMode(): boolean {
         // Debug mode disabled for production to prevent log spam
         // Can be enabled by setting DEBUG_MODE=true environment variable
         return process.env.DEBUG_MODE === 'true' ||
-               (global as any).DEBUG_MODE === true;
+            (global as any).DEBUG_MODE === true;
     }
 
     public show() {
         this.outputChannel.show();
     }
 }
+
+// Pre-built singleton instance — import this instead of using Logger.instance
+export const logger = Logger.instance;

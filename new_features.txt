@@ -1,13 +1,11 @@
-v0.0.7
+v1.1.0
 
 RECENT_UPDATES
-🌍 Automatic Location Detection - IP-based location detection, no manual setup needed!
-🕌 Serverless Prayer Times - All prayer calculations now run locally using Adhan library
-🧹 Clean Console - No more error messages in developer console
-⚡ Offline Operation - Works completely offline for prayer times
+🧠 Smart Focus Mode - Pauses notifications automatically while you are actively coding
+📊 Spiritual Tracker - New dashboard to track Quran reading minutes, Dhikr, and daily streaks
+🛡️ Offline Recovery - Added robust offline support, retry mechanisms, and error history
+⚡ Core Stability - Refactored components, secured UI, and fixed bugs
 
 COMING_SOON
-🌙 Ramadan Detection & Countdown - Automatic Ramadan detection with special features
-⏰ Suhoor & Iftar Reminders - Special notifications for Ramadan meal times
-🎯 Ramadan Goals & Tracking - Quran reading and prayer tracking for Ramadan
-🎨 Ramadan UI Theme - Special Ramadan-themed interface
+🌙 Ramadan Ready - Special Ramadan themes, countdowns, and Iftar/Suhoor tracking
+🎨 UI Modularization - Even faster load times and smoother animations

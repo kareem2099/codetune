@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { IslamicCalendar } from './islamicCalendar';
 import { FridayReminders, IslamicContent } from './fridayReminders';
-import { Logger } from '../utils/Logger';
+import { logger } from '../utils/Logger';
 
 interface ReminderSettings {
     enableReminders: boolean;
@@ -123,7 +123,7 @@ export class IslamicRemindersManager {
             type: 'wisdom',
             arabic: 'وَاصْبِرْ فَإِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ',
             english: 'And be patient, for indeed Allah does not allow the reward of those who do good to be lost.',
-                source: 'Surah Hud 11:115'
+            source: 'Surah Hud 11:115'
         },
         {
             type: 'wisdom',
@@ -242,15 +242,15 @@ export class IslamicRemindersManager {
                 showEveningAzkar: config.get('showEveningAzkar', true),
                 workingHoursOnly: config.get('workingHoursOnly', false)
             };
-            Logger.instance.info('Islamic reminders loaded from VSCode config:', this.settings);
+            logger.info('Islamic reminders loaded from VSCode config:', this.settings);
         } catch (error) {
-            Logger.instance.warn('Failed to load Islamic reminder settings:', error);
+            logger.warn('Failed to load Islamic reminder settings:', error);
             // Keep default settings
         }
     }
 
     private isWorkingHours(): boolean {
-        if (!this.settings.workingHoursOnly) {return true;}
+        if (!this.settings.workingHoursOnly) { return true; }
 
         const now = new Date();
         const hour = now.getHours();
@@ -288,12 +288,12 @@ export class IslamicRemindersManager {
         }
 
         // Always available content (not time-based)
-        if (this.settings.showAdia) {availableTypes.push(...this.adia);}
+        if (this.settings.showAdia) { availableTypes.push(...this.adia); }
         // Show the daily hadith for today's weekday
-        if (this.settings.showAhadis) {availableTypes.push(this.dailyHadiths[todayIndex]);}
-        if (this.settings.showWisdom) {availableTypes.push(...this.wisdom);}
+        if (this.settings.showAhadis) { availableTypes.push(this.dailyHadiths[todayIndex]); }
+        if (this.settings.showWisdom) { availableTypes.push(...this.wisdom); }
 
-        if (availableTypes.length === 0) {return null;}
+        if (availableTypes.length === 0) { return null; }
 
         const randomIndex = Math.floor(Math.random() * availableTypes.length);
         return availableTypes[randomIndex];
@@ -309,27 +309,27 @@ export class IslamicRemindersManager {
     }
 
     private async showReminder() {
-        if (!this.settings.enableReminders) {return;}
-        if (!this.isWorkingHours()) {return;}
+        if (!this.settings.enableReminders) { return; }
+        if (!this.isWorkingHours()) { return; }
 
         const content = this.getRandomContent();
-        if (!content) {return;}
+        if (!content) { return; }
 
         const isFridaySurah = content?.source?.includes('Surah Al-Kahf 18:29 (Friday Quranic Reading Rally)');
 
         // If this is the Friday Surah Al-Kahf reminder, enforce reading instead of just showing notification
         if (isFridaySurah && !this.fridayReminders.isFridaySurahCompleted()) {
-            Logger.instance.info('Friday Surah Al-Kahf reminder triggered - enforcing reading');
+            logger.info('Friday Surah Al-Kahf reminder triggered - enforcing reading');
             await this.fridayReminders.enforceFridaySurahReading();
             return; // Don't show the regular notification
         }
 
         const typeLabel = isFridaySurah ? 'Friday Remembrance: Read Surah Al-Kahf' :
-                         content.type === 'adia' ? 'Adia (Prayer)' :
-                         content.type === 'hadis' ? 'Hadis (Prophet\'s Saying)' :
-                         content.type === 'morningAzkar' ? 'Morning Azkar' :
-                         content.type === 'eveningAzkar' ? 'Evening Azkar' :
-                         'Islamic Wisdom';
+            content.type === 'adia' ? 'Adia (Prayer)' :
+                content.type === 'hadis' ? 'Hadis (Prophet\'s Saying)' :
+                    content.type === 'morningAzkar' ? 'Morning Azkar' :
+                        content.type === 'eveningAzkar' ? 'Evening Azkar' :
+                            'Islamic Wisdom';
 
         // Show notification with Islamic content
         vscode.window.showInformationMessage(
@@ -338,9 +338,9 @@ export class IslamicRemindersManager {
         ).then(() => {
             // Check if this was salawat content and increment counter
             const isSalawatContent = content.arabic?.includes('صَلِّ عَلَى') ||
-                                   content.arabic?.includes('صلاة الله عليه وسلم') ||
-                                   content.source?.includes('Friday Evening Salawat') ||
-                                   content.source?.includes('Friday Prayer');
+                content.arabic?.includes('صلاة الله عليه وسلم') ||
+                content.source?.includes('Friday Evening Salawat') ||
+                content.source?.includes('Friday Prayer');
 
             if (isSalawatContent) {
                 this.fridayReminders.incrementSalawatCounter();
@@ -353,7 +353,7 @@ export class IslamicRemindersManager {
     public startReminders() {
         this.stopReminders(); // Clear any existing interval
 
-        if (!this.settings.enableReminders) {return;}
+        if (!this.settings.enableReminders) { return; }
 
         // Convert minutes to milliseconds
         const intervalMs = this.settings.reminderInterval * 60 * 1000;

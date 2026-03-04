@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Logger } from '../utils/Logger';
+import { logger } from '../utils/Logger';
 
 interface NotificationSettings {
     enableReviewNotifications: boolean;
@@ -48,9 +48,9 @@ export class ReviewNotificationManager {
                 enableReviewNotifications: config.get('enableReviewNotifications', true),
                 enableSponsorNotifications: config.get('enableSponsorNotifications', true)
             };
-            Logger.instance.info('Review notification settings loaded:', this.settings);
+            logger.info('Review notification settings loaded:', this.settings);
         } catch (error) {
-            Logger.instance.warn('Failed to load notification settings:', error);
+            logger.warn('Failed to load notification settings:', error);
             this.settings = {
                 enableReviewNotifications: true,
                 enableSponsorNotifications: true
@@ -85,7 +85,7 @@ export class ReviewNotificationManager {
 
             this.saveMilestones();
         } catch (error) {
-            Logger.instance.warn('Failed to load usage milestones:', error);
+            logger.warn('Failed to load usage milestones:', error);
             this.milestones = {
                 daysUsed: 1,
                 totalSurahsPlayed: 0,
@@ -103,7 +103,7 @@ export class ReviewNotificationManager {
         try {
             this.context.globalState.update('codeTune.usageMilestones', this.milestones);
         } catch (error) {
-            Logger.instance.warn('Failed to save usage milestones:', error);
+            logger.warn('Failed to save usage milestones:', error);
         }
     }
 
@@ -148,10 +148,10 @@ export class ReviewNotificationManager {
 
     private shouldShowReviewPrompt(now: number, oneDay: number, sevenDays: number): boolean {
         // Don't show if user has been prompted too many times
-        if (this.milestones.reviewPromptsShown >= 3) {return false;}
+        if (this.milestones.reviewPromptsShown >= 3) { return false; }
 
         // Don't show if prompted in the last day
-        if (now - this.milestones.lastReviewPromptDate < oneDay) {return false;}
+        if (now - this.milestones.lastReviewPromptDate < oneDay) { return false; }
 
         // Show after 7+ days AND (10+ surahs played OR 50+ dhikr counts)
         const daysCondition = this.milestones.daysUsed >= 7;
@@ -162,10 +162,10 @@ export class ReviewNotificationManager {
 
     private shouldShowSponsorPrompt(now: number, fourteenDays: number): boolean {
         // Don't show if user has been prompted too many times
-        if (this.milestones.sponsorPromptsShown >= 2) {return false;}
+        if (this.milestones.sponsorPromptsShown >= 2) { return false; }
 
         // Don't show if prompted in the last day
-        if (now - this.milestones.lastSponsorPromptDate < (24 * 60 * 60 * 1000)) {return false;}
+        if (now - this.milestones.lastSponsorPromptDate < (24 * 60 * 60 * 1000)) { return false; }
 
         // Show after 14+ days AND significant usage
         const daysCondition = this.milestones.daysUsed >= 14;

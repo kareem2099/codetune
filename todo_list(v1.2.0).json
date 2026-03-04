@@ -1,0 +1,129 @@
+{
+  "version": "1.2.0",
+  "title": "CodeTune v1.2.0 - UI Modularization & Monolith Refactoring",
+  "description": "Focused sprint on breaking down the massive activityBar.js (2000+ lines) and activityBar.css (3000+ lines) into smaller, maintainable component modules without breaking VS Code Webview security constraints.",
+  "created_at": "2026-03-04",
+  "planned_completion": "2026-03-11",
+  "status": "planned",
+  "categories": {
+    "css_refactoring": {
+      "title": "CSS Modularization",
+      "description": "Split the monolithic activityBar.css into component-specific stylesheets",
+      "status": "planned",
+      "priority": "high",
+      "tasks": [
+        {
+          "id": "split_gamification_css",
+          "title": "Extract Tracker & Gamification CSS",
+          "description": "Move tracker dashboard styles to a dedicated file",
+          "status": "pending",
+          "files": [
+            "src/ui/activityBar.css",
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Isolate Gamification UI styles",
+            "Register new CSS URI in activityBarView.ts"
+          ]
+        },
+        {
+          "id": "split_core_components_css",
+          "title": "Extract Core Components CSS",
+          "description": "Separate settings, audio player, and modals styles",
+          "status": "pending",
+          "files": [
+            "src/ui/components/audioPlayer.css",
+            "src/ui/components/modals.css"
+          ],
+          "features": [
+            "Decouple audio player styling",
+            "Clean up base activityBar.css to only hold CSS Variables and Grid layout"
+          ]
+        }
+      ]
+    },
+    "js_refactoring": {
+      "title": "JavaScript Modularization",
+      "description": "Split the 2000+ line activityBar.js into focused, manageable classes",
+      "status": "planned",
+      "priority": "high",
+      "tasks": [
+        {
+          "id": "extract_surah_data",
+          "title": "Extract Surah Constants & Data",
+          "description": "Move the massive Surah arrays and static data to a separate file",
+          "status": "pending",
+          "files": [
+            "src/ui/activityBar.js",
+            "src/ui/data/surahData.js"
+          ],
+          "features": [
+            "Create a clean data source file",
+            "Reduce main JS file size significantly"
+          ]
+        },
+        {
+          "id": "extract_quran_reader_component",
+          "title": "Extract Quran Reader & Auto-Scroll",
+          "description": "Move the Quran reading modal, API fetching, and adaptive auto-scrolling logic into a dedicated component",
+          "status": "pending",
+          "files": [
+            "src/ui/activityBar.js",
+            "src/ui/components/quranReader.js"
+          ],
+          "features": [
+            "Isolate loadReaderPage and API fetching",
+            "Extract performAutoScroll and adaptive speed logic",
+            "Clean up activityBar.js constructor and state variables"
+          ]
+        },
+        {
+          "id": "extract_message_handler",
+          "title": "Extract Message Router",
+          "description": "Move the window.addEventListener('message') switch case to a dedicated router",
+          "status": "pending",
+          "files": [
+            "src/ui/activityBar.js",
+            "src/ui/core/messageRouter.js"
+          ],
+          "features": [
+            "Centralize Webview-to-Extension communication",
+            "Delegate specific payloads to their respective components (e.g., Tracker, Player)"
+          ]
+        }
+      ]
+    }
+  },
+  "estimated_effort": {
+    "total_tasks": 5,
+    "high_priority": 5,
+    "medium_priority": 0,
+    "low_priority": 0,
+    "estimated_completion_weeks": 1
+  },
+  "benefits_expected": [
+    "Drastically improves code readability and maintainability",
+    "Eliminates 'Spaghetti Code' and makes bug fixing much faster",
+    "Reduces Git merge conflicts when adding future features"
+  ],
+  "technical_requirements": [
+    "VS Code Webview URI injection for multiple CSS/JS files inside activityBarView.ts",
+    "Proper <script> and <link> tag ordering in activityBar.html",
+    "Ensuring global scope (window.*) is managed correctly across multiple JS files"
+  ],
+  "success_criteria": [
+    "activityBar.css is reduced to under 500 lines (only base variables and layout)",
+    "activityBar.js is reduced to under 400 lines (only bootstrapping logic)",
+    "The extension runs perfectly with NO '404 File Not Found' errors in the Webview Developer Tools"
+  ],
+  "risks_mitigations": [
+    {
+      "risk": "VS Code Webview might block local imports if URIs are not generated and replaced correctly",
+      "mitigation": "Ensure every new component file is passed through webview.asWebviewUri() and injected via .replace() in getHtmlForWebview"
+    },
+    {
+      "risk": "CSS specificity and overriding issues when splitting files",
+      "mitigation": "Maintain the correct <link> tag order in activityBar.html (base.css first, then component specific CSS)"
+    }
+  ]
+}
