@@ -100,7 +100,17 @@ function showInputModal(title, placeholder, defaultValue, onConfirm) {
 function createTrackerDashboardHTML() {
     return `
         <div class="tracker-dashboard" id="tracker-dashboard">
-            <h3>📊 Spiritual Progress Tracker</h3>
+            <h3>
+                📊 Spiritual Progress Tracker
+                <div class="info-tooltip-container">
+                    <span class="info-icon">ℹ️</span>
+                    <div class="info-tooltip-content">
+                        <strong>🕌 Smart Islamic Tracking</strong><br>
+                        Daily goals reset at <b>Fajr</b> (not midnight).<br>
+                        Friday events begin after <b>Maghrib</b> the evening before.
+                    </div>
+                </div>
+            </h3>
 
             <!-- Daily Goals -->
             <div class="dashboard-section">
@@ -226,7 +236,7 @@ class TrackerDashboardComponent {
      * @param {object | null} spiritualTracker
      */
     constructor() {
-        this.refreshInterval = null; // ✅ stored so we can clear it
+        this.refreshInterval = null; // stored so we can clear it
         this.cachedAchievements = [];
         this.cachedSummary = null;
         this.cachedWeekly = null;
@@ -236,17 +246,17 @@ class TrackerDashboardComponent {
     init() {
         this.setupEventListeners();
 
-        // ✅ Request fresh data from the backend on mount
+        // Request fresh data from the backend on mount
         window.vscode?.postMessage({ type: 'requestDashboardData' });
 
-        // ✅ Refresh request every 30 s (backend responds with dashboardData)
+        // Refresh request every 30 s (backend responds with dashboardData)
         this.refreshInterval = setInterval(() => {
             window.vscode?.postMessage({ type: 'requestDashboardData' });
         }, 30000);
     }
 
     setupEventListeners() {
-        // ✅ All listeners use addEventListener — no inline onclick strings
+        // All listeners use addEventListener — no inline onclick strings
         el('log-quran-listening')?.addEventListener('click', () => this.handleLogQuran());
         el('track-dhikr')?.addEventListener('click', () => this.handleTrackDhikr());
         el('refresh-dashboard')?.addEventListener('click', () => this.updateDashboard());
@@ -333,7 +343,7 @@ class TrackerDashboardComponent {
         // Show first 4 as preview
         const preview = this.cachedAchievements.slice(0, 4);
 
-        // ✅ sanitizeText on every dynamic value before innerHTML
+        // sanitizeText on every dynamic value before innerHTML
         list.innerHTML = preview.map(a => `
             <div class="achievement-badge ${a.unlocked ? 'unlocked' : 'locked'}">
                 <div class="achievement-icon">${sanitizeText(a.icon)}</div>
@@ -357,7 +367,7 @@ class TrackerDashboardComponent {
     }
 
     handleLogQuran() {
-        // ✅ postMessage to backend — SpiritualTracker lives in the Extension Host, not the webview
+        // postMessage to backend — SpiritualTracker lives in the Extension Host, not the webview
         showInputModal('Log Quran Time', 'Minutes listened', '15', (minutes) => {
             window.vscode?.postMessage({ type: 'logQuranTime', minutes });
             showToast('Quran time sent! 📖', 'success');
@@ -365,7 +375,7 @@ class TrackerDashboardComponent {
     }
 
     handleTrackDhikr() {
-        // ✅ postMessage to backend — SpiritualTracker lives in the Extension Host, not the webview
+        // postMessage to backend — SpiritualTracker lives in the Extension Host, not the webview
         showInputModal('Track Dhikr', 'Times recited', '100', (count) => {
             window.vscode?.postMessage({ type: 'incrementDhikr', count });
             showToast('Dhikr sent! ✨', 'success');
@@ -378,7 +388,7 @@ class TrackerDashboardComponent {
         const modal = document.createElement('div');
         modal.className = 'achievements-modal';
 
-        // ✅ sanitizeText on all dynamic content
+        // sanitizeText on all dynamic content
         const items = this.cachedAchievements.map(a => `
             <div class="achievement-full ${a.unlocked ? 'unlocked' : 'locked'}">
                 <span class="icon">${sanitizeText(a.icon)}</span>
@@ -400,7 +410,7 @@ class TrackerDashboardComponent {
 
         document.body.appendChild(modal);
 
-        // ✅ addEventListener instead of inline onclick
+        // addEventListener instead of inline onclick
         modal.querySelector('#close-achievements')
             .addEventListener('click', () => modal.remove());
     }
@@ -428,7 +438,7 @@ if (typeof acquireVsCodeApi !== 'undefined' || typeof window !== 'undefined') {
         if (mount) {
             mount.innerHTML = createTrackerDashboardHTML();
         }
-        // ✅ Expose globally so activityBar.js can call updateFromPayload()
+        // Expose globally so activityBar.js can call updateFromPayload()
         window.trackerDashboardComponent = new TrackerDashboardComponent();
     });
 } else if (typeof module !== 'undefined' && module.exports) {

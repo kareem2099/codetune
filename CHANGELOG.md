@@ -4,7 +4,36 @@ All notable changes to the "codetune" extension will be documented in this file.
 
 ---
 
-## [1.1.0] - 2026-03-04
+## [1.2.0 "Fajr"] - 2026-03-27
+
+### Islamic Date Tracking System
+- Fajr-Based Day Tracking: Daily goals now reset at Fajr (dawn) instead of midnight
+- Timezone-Safe Date Arithmetic: Noon-anchored date calculations prevent DST errors
+- Smart Streak Calculation: Streak survives until next Fajr, not midnight
+- Fajr Time Sync: Prayer times flow from API to SpiritualTracker automatically
+
+### Audio → Tracker Sync Fix (Accumulator Pattern)
+- Short listening sessions (45s) no longer lost — milliseconds accumulate until a full minute
+- Webview-to-Extension Bridge: localStorage data now properly crosses to SpiritualTracker
+- Real-Time Dashboard Update: Quran listening minutes show in progress bar immediately
+
+### 14 Bug Fixes
+- Added missing configuration properties (fridaySurahLastReset, fridaySurahState)
+- Fixed new_features.txt loading (403 Forbidden)
+- Added missing message handlers (receiveHijriDate, updateStatus)
+- Removed duplicate button from HTML
+- Fixed adhkar counter increment (rabbi-ghifir → rabbiGhifir, la-hawla → laHawla)
+- Removed duplicate Listening Statistics section
+- Fixed all dhikr counters to update SpiritualTracker
+- Added Card Wrapper CSS for Spiritual Progress Tracker
+- Added Smart Islamic Tracking Tooltip
+- Added CSS for Quick Action Buttons
+- Fixed Modal Transparency and Readability
+- Updated Tooltip text to be dynamic
+
+---
+
+## [1.1.0 "Hikmah"] - 2026-03-04
 
 ### Smart Focus Mode
 - Coding-Aware Notifications: Extension now monitors typing activity and automatically pauses Islamic reminders while you are actively coding — no more mid-keystroke popups
@@ -48,7 +77,7 @@ All notable changes to the "codetune" extension will be documented in this file.
 
 ---
 
-## [1.0.0] - 2026-01-17
+## [1.0.0 "Nur"] - 2026-01-17
 
  MAJOR RELEASE: CodeTune 1.0.0 - Production Ready Islamic Development Environment
 

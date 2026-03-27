@@ -60,7 +60,7 @@ export class AnnouncementEngine {
     public async checkVersionUpdate(): Promise<boolean> {
         if (!this.context) { return false; }
 
-        const currentVersion = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.1.0';
+        const currentVersion = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.2.0';
         const lastVersion = this.context.globalState.get<string | null>(LAST_VERSION_KEY, null);
 
         if (lastVersion === currentVersion) { return false; }
@@ -114,7 +114,7 @@ export class AnnouncementEngine {
      */
     public async showWhatsNew(): Promise<void> {
         if (!this.context) { return; }
-        const version = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.1.0';
+        const version = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.2.0';
         const allFeatures = FeatureDiscovery.instance.getFeaturesForVersion(version);
         const list = allFeatures.map(f => `${f.icon} **${f.name}** — ${f.description}`).join('\n\n');
 
@@ -142,7 +142,7 @@ export class AnnouncementEngine {
     /** Check if the current version is "new" (not yet seen). */
     public isNewVersion(): boolean {
         if (!this.context) { return false; }
-        const current = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.1.0';
+        const current = vscode.extensions.getExtension('FreeRave.codetune')?.packageJSON?.version ?? '1.2.0';
         return this.context.globalState.get<string | null>(LAST_VERSION_KEY, null) !== current;
     }
 }

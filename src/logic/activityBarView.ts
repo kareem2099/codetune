@@ -138,7 +138,10 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
 
         webviewView.webview.options = {
             enableScripts: true,
-            localResourceRoots: [this._extensionUri],
+            localResourceRoots: [
+                this._extensionUri,
+                vscode.Uri.joinPath(this._extensionUri, 'src', 'media')
+            ],
             enableCommandUris: false,
             enableForms: false
         };
@@ -348,6 +351,12 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                         try {
                             const times = calculatePrayerTimes(data.lat, data.lon);
                             this.sendMessageToWebview({ type: 'receivePrayerTimes', payload: times });
+                            
+                            // Update Fajr time in SpiritualTracker for tracking
+                            const tracker = (global as any).spiritualTracker as SpiritualTracker | undefined;
+                            if (tracker && times.fajr) {
+                                tracker.updateFajrTime(new Date(times.fajr));
+                            }
                         } catch {
                             this.sendMessageToWebview({ type: 'receivePrayerTimes', payload: null });
                         }
@@ -513,7 +522,6 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
             .replace('./components/audioPlayer.js', toUri(path.join(componentDir, 'audioPlayer.js')))
             .replace('./components/prayerTracker.js', toUri(path.join(componentDir, 'prayerTracker.js')))
             .replace('./components/settings.js', toUri(path.join(componentDir, 'settings.js')))
-            .replace('./components/statistics.js', toUri(path.join(componentDir, 'statistics.js')))
             .replace('./components/trackerDashboard.js', toUri(trackerDashboardPath))
             .replace('./components/errorRecovery.js', toUri(errorRecoveryPath))
             .replace('{{trackerDashboardCssUri}}', toUri(trackerDashboardCssPath))
@@ -527,8 +535,11 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
             ? (vscode.env.language.startsWith('ar') ? 'ar' : 'en')
             : currentLanguage;
 
+        // Inject new_features.txt URI for webview access
+        const newFeaturesUri = toUri(path.join(this._extensionUri.fsPath, 'new_features.txt'));
+
         return html
             .replace('<html lang="en">', `<html lang="${urlLanguage}">`)
-            .replace(/<head>/, `<head><script>window.vsCodeLanguage = "${urlLanguage}";</script>`);
+            .replace(/<head>/, `<head><script>window.vsCodeLanguage = "${urlLanguage}";window.newFeaturesUri = "${newFeaturesUri}";</script>`);
     }
 }

@@ -51,11 +51,22 @@ const EMPTY_STATS: TrackerStats = {
 
 export class SpiritualTracker {
     private context: vscode.ExtensionContext;
+    private currentFajrTime: Date | null = null; // Store Fajr time
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
         this.initializeTracker();
         logger.info('SpiritualTracker initialized');
+    }
+
+    // ── Public Setters for Prayer Times ───────
+
+    /**
+     * Update Fajr time from IslamicRemindersManager or API
+     */
+    public updateFajrTime(fajrTime: Date): void {
+        this.currentFajrTime = fajrTime;
+        logger.debug(`SpiritualTracker: Fajr time updated to ${fajrTime.toLocaleTimeString()}`);
     }
 
     // ── Private helpers ───────────────────────
@@ -69,6 +80,43 @@ export class SpiritualTracker {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Magic function: Gets the "Islamic worship day" date based on Fajr
+     */
+    private getHabitTrackingDate(date: Date = new Date()): string {
+        const now = new Date(date);
+        
+        // Default: If API hasn't fetched Fajr time yet, assume 4:00 AM
+        let fajrHour = 4;
+        let fajrMinute = 0;
+
+        if (this.currentFajrTime) {
+            fajrHour = this.currentFajrTime.getHours();
+            fajrMinute = this.currentFajrTime.getMinutes();
+        }
+
+        const fajrTimeToday = new Date(now);
+        fajrTimeToday.setHours(fajrHour, fajrMinute, 0, 0);
+
+        // If we're currently before Fajr, then we're religiously part of "yesterday"
+        if (now < fajrTimeToday) {
+            now.setDate(now.getDate() - 1);
+        }
+
+        return this.formatDate(now);
+    }
+
+    /**
+     * Helper function to go back days safely (without timezone issues)
+     */
+    private getPreviousDateString(baseDateStr: string, daysBack: number): string {
+        const [y, m, d] = baseDateStr.split('-').map(Number);
+        // Set time to 12 noon to avoid any issues with daylight saving time
+        const date = new Date(y, m - 1, d, 12, 0, 0); 
+        date.setDate(date.getDate() - daysBack);
+        return this.formatDate(date);
     }
 
     private getTrackerData(): TrackerDataMap {
@@ -97,7 +145,7 @@ export class SpiritualTracker {
      * Initialize globalState keys on first use
      */
     private initializeTracker(): void {
-        const todayStr = this.formatDate(new Date());
+        const todayStr = this.getHabitTrackingDate(); // Use Islamic date
 
         if (!this.context.globalState.get(TRACKER_KEY)) {
             this.context.globalState.update(TRACKER_KEY, {
@@ -116,7 +164,7 @@ export class SpiritualTracker {
      * NOTE: Call saveTrackerData() after mutating the returned object.
      */
     private getTodayEntry(data: TrackerDataMap): DailyTrackerData {
-        const todayStr = this.formatDate(new Date());
+        const todayStr = this.getHabitTrackingDate(); // Use Islamic date
 
         if (!data[todayStr]) {
             data[todayStr] = { date: todayStr, quranListeningMinutes: 0, dhikrCount: 0 };
@@ -151,7 +199,7 @@ export class SpiritualTracker {
             totalDhikrCount,
             currentStreak,
             longestStreak: Math.max(longestStreak, existing.longestStreak),
-            lastActivityDate: this.formatDate(new Date()),
+            lastActivityDate: this.getHabitTrackingDate(), // Update with last activity using Islamic date
             totalActiveDays: activeDates.length
         };
 
@@ -167,26 +215,23 @@ export class SpiritualTracker {
      */
     private calculateCurrentStreak(activeDates: string[]): number {
         if (activeDates.length === 0) { return 0; }
+        const activeSet = new Set(activeDates);
 
-        const activeSet = new Set(activeDates); // O(1) lookups
+        const todayStr = this.getHabitTrackingDate(); // Calculate streak from Islamic day
+        const yesterdayStr = this.getPreviousDateString(todayStr, 1);
 
-        // Allow the streak to start from today OR yesterday
-        const startDate = new Date();
-        if (!activeSet.has(this.formatDate(startDate))) {
-            startDate.setDate(startDate.getDate() - 1); // Try from yesterday
-            if (!activeSet.has(this.formatDate(startDate))) {
-                return 0; // Neither today nor yesterday has activity → streak broken
-            }
+        // Continuation is allowed if there's activity today or yesterday
+        if (!activeSet.has(todayStr) && !activeSet.has(yesterdayStr)) {
+            return 0; 
         }
 
         let streak = 0;
-        const check = new Date(startDate);
+        let currentCheckStr = activeSet.has(todayStr) ? todayStr : yesterdayStr;
 
-        // Walk backwards until a day with no activity is found
         for (let i = 0; i < 365; i++) {
-            if (activeSet.has(this.formatDate(check))) {
+            if (activeSet.has(currentCheckStr)) {
                 streak++;
-                check.setDate(check.getDate() - 1);
+                currentCheckStr = this.getPreviousDateString(currentCheckStr, 1);
             } else {
                 break;
             }
@@ -209,15 +254,15 @@ export class SpiritualTracker {
         let currentStreak = 1;
 
         for (let i = 1; i < sorted.length; i++) {
-            const prev = new Date(sorted[i - 1]);
-            const current = new Date(sorted[i]);
+            const prev = new Date(`${sorted[i - 1]}T12:00:00`);
+            const current = new Date(`${sorted[i]}T12:00:00`);
             const diff = Math.round((current.getTime() - prev.getTime()) / MS_PER_DAY);
 
             if (diff === 1) {
                 currentStreak++;
                 maxStreak = Math.max(maxStreak, currentStreak);
             } else {
-                currentStreak = 1; // Gap found, reset
+                currentStreak = 1;
             }
         }
 
@@ -267,7 +312,7 @@ export class SpiritualTracker {
      */
     public getTodayStats(): { date: string; quranMinutes: number; dhikrCount: number } {
         const data = this.getTrackerData();
-        const today = this.getTodayEntry(data);
+        const today = this.getTodayEntry(data); // Automatically gets Islamic day data
         return {
             date: today.date,
             quranMinutes: today.quranListeningMinutes,
@@ -296,12 +341,10 @@ export class SpiritualTracker {
     public getLastNDays(days: number): DailyTrackerData[] {
         const data = this.getTrackerData();
         const result: DailyTrackerData[] = [];
-        const now = new Date();
+        const todayStr = this.getHabitTrackingDate(); // Display days based on Islamic timing
 
         for (let i = 0; i < days; i++) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            const dateStr = this.formatDate(date);
+            const dateStr = this.getPreviousDateString(todayStr, i);
             result.push(data[dateStr] ?? { date: dateStr, quranListeningMinutes: 0, dhikrCount: 0 });
         }
 

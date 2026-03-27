@@ -88,14 +88,14 @@ git push origin feature/your-feature-name
 
  TypeScript/JavaScript
 ```typescript
-// ✅ Good: Clear Islamic context
+// Good: Clear Islamic context
 interface IslamicReminder {
   content: string;
   source: 'quran' | 'hadis' | 'authenticated';
   timing?: PrayerTime;
 }
 
-// ❌ Avoid: Generic naming
+// Avoid: Generic naming
 interface Reminder {
   text: string;
   type: string;

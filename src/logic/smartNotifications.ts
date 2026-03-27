@@ -239,7 +239,7 @@ export class SmartNotifications {
     } {
         return {
             focusModeActive: this.focusModeActive,
-            isUserActive: this.isUserActiveState,   // ✅ was calling method reference, now uses state directly
+            isUserActive: this.isUserActiveState,   // was calling method reference, now uses state directly
             inQuietHours: this.isInQuietHours(),
             timeSinceLastActivity: this.getTimeSinceLastActivity(),
             pauseDuringCoding: this.pauseDuringCoding,

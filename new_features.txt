@@ -1,11 +1,13 @@
-v1.1.0
+v1.2.0 "Fajr"
 
 RECENT_UPDATES
-🧠 Smart Focus Mode - Pauses notifications automatically while you are actively coding
-📊 Spiritual Tracker - New dashboard to track Quran reading minutes, Dhikr, and daily streaks
-🛡️ Offline Recovery - Added robust offline support, retry mechanisms, and error history
-⚡ Core Stability - Refactored components, secured UI, and fixed bugs
+Islamic Date Tracking - Daily goals reset at Fajr (dawn) instead of midnight
+Audio Sync Fix - Accumulator pattern ensures no listening time is lost
+14 Bug Fixes - Config registration, 403 Forbidden, dhikr counters, modal transparency
+Spiritual Progress Tracker - Card wrapper, info tooltip, quick action buttons
+Modal Readability - Fixed transparent modals, scrollable achievements list
 
-COMING_SOON
-🌙 Ramadan Ready - Special Ramadan themes, countdowns, and Iftar/Suhoor tracking
-🎨 UI Modularization - Even faster load times and smoother animations
+COMING_SOON v1.3.0 "Tawasul"
+Full Localization - Every string in all 5 languages (EN, AR, ES, FR, RU)
+Settings Overhaul - Unified settings UI, persistence fixes, theme engine
+Notification Settings - Prayer reminders, frequency controls, quiet hours

@@ -1,97 +1,307 @@
 {
   "version": "1.2.0",
+  "codename": "Fajr",
   "title": "CodeTune v1.2.0 - UI Modularization & Monolith Refactoring",
   "description": "Focused sprint on breaking down the massive activityBar.js (2000+ lines) and activityBar.css (3000+ lines) into smaller, maintainable component modules without breaking VS Code Webview security constraints.",
   "created_at": "2026-03-04",
   "planned_completion": "2026-03-11",
   "status": "planned",
   "categories": {
-    "css_refactoring": {
-      "title": "CSS Modularization",
-      "description": "Split the monolithic activityBar.css into component-specific stylesheets",
-      "status": "planned",
+    "bug_fixes": {
+      "title": "Bug Fixes",
+      "description": "Fixes for issues discovered during development",
+      "status": "completed",
       "priority": "high",
       "tasks": [
         {
-          "id": "split_gamification_css",
-          "title": "Extract Tracker & Gamification CSS",
-          "description": "Move tracker dashboard styles to a dedicated file",
-          "status": "pending",
+          "id": "fix_missing_config_properties",
+          "title": "Add Missing Configuration Properties",
+          "description": "Add fridaySurahLastReset and fridaySurahState to package.json configuration",
+          "status": "completed",
           "files": [
-            "src/ui/activityBar.css",
-            "src/ui/components/trackerDashboard.css"
+            "package.json"
           ],
           "features": [
-            "Isolate Gamification UI styles",
-            "Register new CSS URI in activityBarView.ts"
+            "Registered codeTune.fridaySurahLastReset configuration",
+            "Registered codeTune.fridaySurahState configuration",
+            "Fixed 'Unable to write to User Settings' errors"
           ]
         },
         {
-          "id": "split_core_components_css",
-          "title": "Extract Core Components CSS",
-          "description": "Separate settings, audio player, and modals styles",
-          "status": "pending",
+          "id": "fix_new_features_loading",
+          "title": "Fix new_features.txt Loading (403 Forbidden)",
+          "description": "Fix webview unable to load new_features.txt due to 403 Forbidden error",
+          "status": "completed",
           "files": [
-            "src/ui/components/audioPlayer.css",
-            "src/ui/components/modals.css"
+            "src/logic/activityBarView.ts",
+            "src/ui/activityBar.js"
           ],
           "features": [
-            "Decouple audio player styling",
-            "Clean up base activityBar.css to only hold CSS Variables and Grid layout"
+            "Added src/media to localResourceRoots in webview options",
+            "Injected newFeaturesUri via window object in HTML",
+            "Updated fetch URL to use injected URI"
+          ]
+        },
+        {
+          "id": "fix_missing_message_handlers",
+          "title": "Add Missing Message Handlers",
+          "description": "Add receiveHijriDate and updateStatus message handlers in activityBar.js",
+          "status": "completed",
+          "files": [
+            "src/ui/activityBar.js"
+          ],
+          "features": [
+            "Added receiveHijriDate handler for Hijri date updates",
+            "Added updateStatus handler for status message updates",
+            "Fixed 'Unknown message type' warnings in console"
+          ]
+        },
+        {
+          "id": "fix_duplicate_button",
+          "title": "Remove Duplicate Button from HTML",
+          "description": "Remove duplicate 'Excited!' button from What's New modal in HTML",
+          "status": "completed",
+          "files": [
+            "src/ui/activityBar.html"
+          ],
+          "features": [
+            "Removed duplicate button from modal-actions div",
+            "Button is now dynamically created by JavaScript only"
+          ]
+        },
+        {
+          "id": "fix_adhkar_counter_increment",
+          "title": "Fix Adhkar Counter Increment",
+          "description": "Fix adhkar counters not incrementing due to property name mismatch",
+          "status": "completed",
+          "files": [
+            "src/ui/components/counter.js"
+          ],
+          "features": [
+            "Added hyphenated to camelCase conversion in incrementAdhkarCounter",
+            "Fixed rabbi-ghifir to rabbiGhifir conversion",
+            "Fixed la-hawla to laHawla conversion"
+          ]
+        },
+        {
+          "id": "remove_duplicate_listening_stats",
+          "title": "Remove Duplicate Listening Statistics Section",
+          "description": "Remove duplicate Quran Listening and Quran Time sections that duplicated Spiritual Progress Tracker Dashboard",
+          "status": "completed",
+          "files": [
+            "src/ui/activityBar.html",
+            "src/ui/activityBar.css",
+            "src/logic/activityBarView.ts"
+          ],
+          "features": [
+            "Removed listening-stats-card div from HTML",
+            "Removed statistics.js script tag from HTML",
+            "Removed all listening-stats CSS styles",
+            "Removed statistics.js reference from activityBarView.ts",
+            "Deleted src/ui/components/statistics.js file"
+          ]
+        },
+        {
+          "id": "fix_dhikr_counter_spiritual_tracker",
+          "title": "Fix Dhikr Counters to Update SpiritualTracker",
+          "description": "Fix all dhikr counters (Salawat, Tasbih, Istighfar, Adhkar) to update the SpiritualTracker dashboard",
+          "status": "completed",
+          "files": [
+            "src/ui/components/counter.js"
+          ],
+          "features": [
+            "Added incrementDhikr message to incrementSalawatCounter()",
+            "Added incrementDhikr message to incrementTasbihCounter()",
+            "Added incrementDhikr message to incrementIstighfarCounter()",
+            "Added incrementDhikr message to incrementAdhkarCounter()",
+            "Dashboard now updates in real-time when any dhikr is incremented"
+          ]
+        },
+        {
+          "id": "fix_adhkar_counter_not_working",
+          "title": "Fix Adhkar Counters Not Incrementing",
+          "description": "Fix rabbi-ghifir and la-hawla adhkar counters not incrementing due to property name mismatch",
+          "status": "completed",
+          "files": [
+            "src/ui/components/counter.js"
+          ],
+          "features": [
+            "Added hyphenated to camelCase conversion in incrementAdhkarCounter()",
+            "Fixed rabbi-ghifir to rabbiGhifir mapping",
+            "Fixed la-hawla to laHawla mapping"
+          ]
+        },
+        {
+          "id": "add_tracker_dashboard_card_wrapper",
+          "title": "Add Card Wrapper CSS for Spiritual Progress Tracker",
+          "description": "Add Glassmorphism card wrapper to Spiritual Progress Tracker to match other cards",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Added .tracker-dashboard-wrapper with glassmorphism effect",
+            "Added gradient top bar (purple-blue-pink)",
+            "Matches style of Islamic Information and Dhikr cards"
+          ]
+        },
+        {
+          "id": "add_smart_islamic_tracking_tooltip",
+          "title": "Add Smart Islamic Tracking Tooltip",
+          "description": "Add informative tooltip explaining Fajr-based day tracking",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.js",
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Added ℹ️ info icon next to dashboard title",
+            "Added Glassmorphism tooltip with Fajr-based day explanation",
+            "Dynamic text: Friday events begin after Maghrib the evening before",
+            "Supports RTL layout for Arabic users"
+          ]
+        },
+        {
+          "id": "add_quick_actions_css",
+          "title": "Add CSS for Quick Action Buttons",
+          "description": "Style Quick Action buttons (Log Quran Time, Track Dhikr, Refresh)",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Added .action-button with glassmorphism style",
+            "Added hover effect with purple accent",
+            "Added active state with lift effect"
+          ]
+        },
+        {
+          "id": "fix_modal_transparency",
+          "title": "Fix Modal Transparency and Readability",
+          "description": "Fix modals being transparent making text unreadable",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Changed modal background to 98% opaque",
+            "Added achievement-full card styles",
+            "Added scrollable achievements list (max-height: 400px)",
+            "Fixed text readability in all modals"
+          ]
+        },
+        {
+          "id": "update_tooltip_text_dynamic",
+          "title": "Update Tooltip Text to be Dynamic",
+          "description": "Change 'Thursday Maghrib' to 'Maghrib the evening before' for clarity",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.js"
+          ],
+          "features": [
+            "Removed hardcoded 'Thursday' reference",
+            "Changed to 'the evening before' for dynamic clarity",
+            "Prevents user confusion on different days"
+          ]
+        }
+      ]
+    },
+    "css_refactoring": {
+      "title": "CSS Modularization",
+      "description": "Moved to v1.4.0 - Split the monolithic activityBar.css into component-specific stylesheets",
+      "status": "moved_to_v1.4.0",
+      "priority": "high",
+      "tasks": []
+    },
+    "islamic_date_tracking": {
+      "title": "Islamic Date Tracking System",
+      "description": "Implement Islamic date tracking that respects Fajr as the day boundary instead of midnight",
+      "status": "completed",
+      "priority": "high",
+      "tasks": [
+        {
+          "id": "update_spiritual_tracker_islamic_dates",
+          "title": "Update SpiritualTracker with Islamic Date Logic",
+          "description": "Add getHabitTrackingDate() method to determine Islamic day based on Fajr time",
+          "status": "completed",
+          "files": [
+            "src/utils/SpiritualTracker.ts"
+          ],
+          "features": [
+            "Added getHabitTrackingDate() - determines Islamic day based on Fajr",
+            "Added updateFajrTime() - stores current Fajr time",
+            "Added getPreviousDateString() - safe date calculation with timezone handling",
+            "Updated all date operations to use Islamic dates",
+            "Default Fajr fallback at 4:00 AM if not calculated yet"
+          ]
+        },
+        {
+          "id": "sync_fajr_from_activity_bar",
+          "title": "Sync Fajr Time from ActivityBarView",
+          "description": "Update activityBarView.ts to send Fajr time to SpiritualTracker when prayer times are calculated",
+          "status": "completed",
+          "files": [
+            "src/logic/activityBarView.ts"
+          ],
+          "features": [
+            "Added tracker.updateFajrTime() call in requestPrayerTimes handler",
+            "Converts ISO string to Date object for tracker"
+          ]
+        },
+        {
+          "id": "sync_fajr_from_islamic_reminders",
+          "title": "Sync Fajr Time from IslamicRemindersManager",
+          "description": "Update IslamicRemindersManager to accept SpiritualTracker and sync Fajr time",
+          "status": "completed",
+          "files": [
+            "src/logic/islamicReminders.ts",
+            "src/extension.ts"
+          ],
+          "features": [
+            "Added SpiritualTracker import",
+            "Added spiritualTracker property",
+            "Modified constructor to accept optional SpiritualTracker",
+            "Added syncFajrTimeWithTracker() method",
+            "Calls sync on startup and when calculating prayer times"
+          ]
+        },
+        {
+          "id": "update_extension_initialization_order",
+          "title": "Update Extension Initialization Order",
+          "description": "Change initialization order in extension.ts so SpiritualTracker is created before IslamicRemindersManager",
+          "status": "completed",
+          "files": [
+            "src/extension.ts"
+          ],
+          "features": [
+            "Moved SpiritualTracker creation before IslamicRemindersManager",
+            "Pass spiritualTracker to IslamicRemindersManager constructor"
+          ]
+        },
+        {
+          "id": "add_islamic_tracking_tooltip",
+          "title": "Add Smart Islamic Tracking Tooltip",
+          "description": "Add informative tooltip to Spiritual Progress Tracker header explaining Fajr-based day tracking",
+          "status": "completed",
+          "files": [
+            "src/ui/components/trackerDashboard.js",
+            "src/ui/components/trackerDashboard.css"
+          ],
+          "features": [
+            "Added ℹ️ info icon next to dashboard title",
+            "Added Glassmorphism tooltip on hover explaining Fajr-based day reset",
+            "Explains Friday events start on Thursday Maghrib",
+            "Supports RTL layout for Arabic users"
           ]
         }
       ]
     },
     "js_refactoring": {
       "title": "JavaScript Modularization",
-      "description": "Split the 2000+ line activityBar.js into focused, manageable classes",
-      "status": "planned",
+      "description": "Moved to v1.4.0 - Split the 2000+ line activityBar.js into focused, manageable classes",
+      "status": "moved_to_v1.4.0",
       "priority": "high",
-      "tasks": [
-        {
-          "id": "extract_surah_data",
-          "title": "Extract Surah Constants & Data",
-          "description": "Move the massive Surah arrays and static data to a separate file",
-          "status": "pending",
-          "files": [
-            "src/ui/activityBar.js",
-            "src/ui/data/surahData.js"
-          ],
-          "features": [
-            "Create a clean data source file",
-            "Reduce main JS file size significantly"
-          ]
-        },
-        {
-          "id": "extract_quran_reader_component",
-          "title": "Extract Quran Reader & Auto-Scroll",
-          "description": "Move the Quran reading modal, API fetching, and adaptive auto-scrolling logic into a dedicated component",
-          "status": "pending",
-          "files": [
-            "src/ui/activityBar.js",
-            "src/ui/components/quranReader.js"
-          ],
-          "features": [
-            "Isolate loadReaderPage and API fetching",
-            "Extract performAutoScroll and adaptive speed logic",
-            "Clean up activityBar.js constructor and state variables"
-          ]
-        },
-        {
-          "id": "extract_message_handler",
-          "title": "Extract Message Router",
-          "description": "Move the window.addEventListener('message') switch case to a dedicated router",
-          "status": "pending",
-          "files": [
-            "src/ui/activityBar.js",
-            "src/ui/core/messageRouter.js"
-          ],
-          "features": [
-            "Centralize Webview-to-Extension communication",
-            "Delegate specific payloads to their respective components (e.g., Tracker, Player)"
-          ]
-        }
-      ]
+      "tasks": []
     }
   },
   "estimated_effort": {

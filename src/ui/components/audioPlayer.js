@@ -40,6 +40,7 @@ class AudioPlayerComponent {
         // Time tracking
         this.playStartTime = null;
         this.currentSessionTime = 0; // time played in current session
+        this.unloggedMs = 0; // accumulator for partial minutes
 
         this.surahData = surahData;
         this.showReadingProgress = false;
@@ -857,6 +858,21 @@ class AudioPlayerComponent {
 
         // Save and reset tracking
         this.saveListeningStats();
+
+        // Accumulator: Add elapsed time to unlogged buffer
+        this.unloggedMs += elapsedTime;
+
+        // Calculate complete minutes accumulated
+        const minutesToLog = Math.floor(this.unloggedMs / 60000);
+
+        // Only send complete minutes to SpiritualTracker
+        if (minutesToLog > 0) {
+            logger.info('Sending Quran listening time to extension:', minutesToLog, 'minutes');
+            this.postMessage('logQuranTime', { minutes: minutesToLog });
+            // Keep remaining seconds for next session
+            this.unloggedMs -= (minutesToLog * 60000);
+        }
+
         this.playStartTime = null;
         this.currentSessionTime = 0;
     }

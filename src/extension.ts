@@ -99,7 +99,7 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext): Promise
                 const volume = getCurrentVolume();
                 if (volume >= 100) {
                     vscode.window.showWarningMessage(
-                        '⚠️ Auto-play enabled but volume is at 100%. Temporarily reducing volume to 70% to avoid startling you.',
+                        'Auto-play enabled but volume is at 100%. Temporarily reducing volume to 70% to avoid startling you.',
                         'OK'
                     );
                 }
@@ -114,7 +114,7 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext): Promise
                                 volume: Math.min(volume, 70)
                             });
                             vscode.window.showInformationMessage(
-                                `🎵 Auto-playing ${lastPlayback.surahName} from ${formatTime(lastPlayback.currentTime)}`
+                                `Auto-playing ${lastPlayback.surahName} from ${formatTime(lastPlayback.currentTime)}`
                             );
                         }
                     } catch (error) {
@@ -141,13 +141,15 @@ export function activate(context: vscode.ExtensionContext): void {
 
     // Initialize core services
     quranPlayer = new QuranPlayer(context);
-    islamicRemindersManager = new IslamicRemindersManager();
-    smartNotifications = new SmartNotifications(islamicRemindersManager);
-    reviewNotificationManager = new ReviewNotificationManager(context);
-
-    // Spiritual Tracker & Insights
+    
+    // Spiritual Tracker & Insights (must be created before IslamicRemindersManager)
     spiritualTracker = new SpiritualTracker(context);
     trackerInsights = new TrackerInsights(spiritualTracker);
+    
+    // Islamic Reminders Manager (needs SpiritualTracker for Islamic date tracking)
+    islamicRemindersManager = new IslamicRemindersManager(spiritualTracker);
+    smartNotifications = new SmartNotifications(islamicRemindersManager);
+    reviewNotificationManager = new ReviewNotificationManager(context);
 
     // Make services globally accessible for Webview message handlers
     (global as any).islamicRemindersManager = islamicRemindersManager;
@@ -225,7 +227,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const testActivityBarCommand = vscode.commands.registerCommand(
         'codeTune.testActivityBar',
         () => {
-            vscode.window.showInformationMessage('Activity Bar is working! ✅');
+            vscode.window.showInformationMessage('Activity Bar is working!');
         }
     );
 

@@ -4,8 +4,9 @@
 
 <img src="images/icon.png" alt="CodeTune Logo" width="128" />
 
-[![Version](https://img.shields.io/badge/Version-1.1.0-green)](https://github.com/kareem2099/codetune/releases)
-[![VS Code](https://img.shields.io/badge/VS%20Code-1.75+-blue)](https://code.visualstudio.com/)
+[![Version](https://img.shields.io/badge/version-1.2.0-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
+[![Codename](https://img.shields.io/badge/codename-Fajr-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.86+-blue)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 
 **Transform your VS Code into a spiritual environment.**  
@@ -22,33 +23,58 @@ Authentic Islamic reminders, Quran recitation, prayer times, and spiritual focus
 
 > *"Indeed, in the remembrance of Allah do hearts find rest."* (Surah Ar-Ra'd, 13:28)
 
+<div align="center">
+  <img src="images/main_screen.gif" alt="CodeTune Dashboard Demo" width="700" style="border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);" />
+</div>
+
 ---
 
-## 🏆 What's New in v1.1.0
+## 🏆 What's New in v1.2.0 "Fajr"
 
-### 🧠 **Smart Focus Mode** *(NEW)*
+### 🕌 **Islamic Date Tracking System** *(NEW)*
+- **Fajr-Based Day Tracking:** Daily goals now reset at Fajr (dawn) instead of midnight
+- **Timezone-Safe Date Arithmetic:** Noon-anchored date calculations prevent DST errors
+- **Smart Streak Calculation:** Streak survives until next Fajr, not midnight
+- **Fajr Time Sync:** Prayer times flow from API to SpiritualTracker automatically
+
+### 🎵 **Audio → Tracker Sync Fix** *(CRITICAL FIX)*
+- **Accumulator Pattern:** Short listening sessions (45s) no longer lost — milliseconds accumulate until a full minute
+- **Webview-to-Extension Bridge:** localStorage data now properly crosses to SpiritualTracker
+- **Real-Time Dashboard Update:** Quran listening minutes show in progress bar immediately
+
+### 🐛 **14 Bug Fixes**
+- Config registration, 403 Forbidden, message handlers, duplicate buttons, dhikr counter sync, modal transparency, and more
+
+### 📊 **Previous: v1.1.0 "Hikmah"**
+
+### 🧠 **Smart Focus Mode**
 - **Coding-Aware Notifications:** Detects when you're actively typing and **pauses** reminders automatically
 - **Auto-Resume:** Notifications resume after you stop coding — never breaking your flow again
 - **Quiet Hours:** Configurable night hours where all notifications are fully silenced
 
-### 📊 **Spiritual Progress Dashboard** *(NEW)*
+### 📊 **Spiritual Progress Dashboard**
 - **Daily Goals Tracker:** Visual progress bars for Quran listening minutes and Dhikr count
 - **Streak System:** Tracks consecutive days of spiritual activity with motivational messages
 - **Achievements:** Unlock badges like "One Week Warrior" (7-day streak) and "Legend" (30-day streak)
 - **Weekly Summary:** Overview of your spiritual activity over the last 7 days
 - **All-Time Stats:** Total Quran minutes, Dhikr count, and personal records
 
-### 🛡️ **Intelligent Error Recovery** *(NEW)*
+### 🛡️ **Intelligent Error Recovery**
 - **"You're Offline" Screen:** Beautiful network status UI with pending retry queue
 - **Auto-Retry:** Automatically re-attempts failed audio streaming when connection returns
 - **User-Friendly Errors:** No scary stack traces — just clear, helpful messages
 - **Exponential Backoff:** Smart retry logic that doesn't hammer the server
 
-### 🔒 **Reliability & Security Improvements** *(NEW)*
+<div align="center">
+  <img src="images/Friday_Surah_Al-Kahf.gif" alt="Friday Surah Al-Kahf Reminder" width="400" style="border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 15px 0;" />
+</div>
+
+### 🔒 **Reliability & Security Improvements**
 - **XSS Protection:** All dynamic content is fully sanitized before rendering
 - **Memory Leak Prevention:** All intervals, timers, and event listeners are properly disposed
 - **Error Black Box:** Background error logging for debugging without UI clutter
 - **Retry Manager:** Robust network request handling with configurable max retries
+
 
 ---
 
@@ -82,12 +108,19 @@ Authentic Islamic reminders, Quran recitation, prayer times, and spiritual focus
 * **Background Play:** Independent volume and seamless CDN streaming
 * **Statistics:** Daily/Weekly/Monthly listening metrics
 
+<div align="center">
+  <img src="images/audio.png" alt="Premium Quran Player Interface" width="400" style="border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 15px 0;" />
+</div>
+
 ### 🧿 Islamic Dhikr Counters
 * Tasbih (سُبْحَانَ اللَّهِ / الْحَمْدُ لِلَّهِ / اللَّهُ أَكْبَرُ)
 * Istighfar, Salawat with Friday-aware daily targets
 * Adhkar collection with one-click increment
 * Persistent cross-session storage
 
+<div align="center">
+  <img src="images/read.png" alt="Built-in Quran Reader with Auto-Scroll" width="400" style="border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 15px 0;" />
+</div>
 ---
 
 ## 🚀 Installation

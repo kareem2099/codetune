@@ -13,7 +13,6 @@ class QuranActivityBar {
         this.audioPlayerComponent = null;
         this.prayerTrackerComponent = null;
         this.settingsComponent = null;
-        this.statisticsComponent = null;
 
         // Quran Reader properties (keeping here as it's shared functionality)
         this.currentReadingSurah = null;
@@ -90,15 +89,16 @@ class QuranActivityBar {
         try {
             // Check if user has already seen this version
             const seenVersion = localStorage.getItem('codetune_whatsnew_seen');
-            const currentVersion = '1.1.0';
+            const currentVersion = '1.2.0';
 
             if (seenVersion === currentVersion) {
                 logger.info('User has already seen v1.0.0 whats new modal');
                 return;
             }
 
-            // Load content from new_features.txt
-            const response = await fetch('./new_features.txt');
+            // Load content from new_features.txt using injected URI
+            const featuresUrl = window.newFeaturesUri || './new_features.txt';
+            const response = await fetch(featuresUrl);
             if (!response.ok) {
                 logger.error('Failed to load whats new content');
                 return;
@@ -213,7 +213,7 @@ class QuranActivityBar {
         }
 
         // Mark as seen
-        localStorage.setItem('codetune_whatsnew_seen', '1.1.0');
+        localStorage.setItem('codetune_whatsnew_seen', '1.2.0');
     }
 
 
@@ -224,14 +224,6 @@ class QuranActivityBar {
             this.audioPlayerComponent = new AudioPlayerComponent();
             this.prayerTrackerComponent = new PrayerTrackerComponent(window.vscode);
             this.settingsComponent = new SettingsComponent();
-            this.statisticsComponent = new StatisticsComponent();
-
-            // Connect components where needed
-            if (this.statisticsComponent && this.audioPlayerComponent) {
-                // Audio player will notify statistics component on play/pause/end
-                // (This happens automatically via the event handlers in each component)
-            }
-
             logger.info('✅ All components initialized successfully');
         } catch (error) {
             logger.error('❌ Failed to initialize components:', error);
@@ -360,7 +352,7 @@ class QuranActivityBar {
                     break;
 
                 case 'dashboardData':
-                    // ✅ Backend sent fresh tracker data — forward to the TrackerDashboard component
+                    // Backend sent fresh tracker data — forward to the TrackerDashboard component
                     if (window.trackerDashboardComponent && window.trackerDashboardComponent.updateFromPayload) {
                         window.trackerDashboardComponent.updateFromPayload(message.payload);
                     }
@@ -369,13 +361,29 @@ class QuranActivityBar {
                 case 'confirmResult':
                     logger.info('Confirm result received:', message.confirmed, 'for action:', message.action);
                     // Handle confirmation results
-                    if (message.confirmed && message.action === 'resetStats' && this.statisticsComponent && this.statisticsComponent.confirmResetStats) {
-                        this.statisticsComponent.confirmResetStats();
-                    }
-                    // ✅ Handle error history clear confirmation from ErrorRecoveryComponent
+                    // Handle error history clear confirmation from ErrorRecoveryComponent
                     if (message.confirmed && message.action === 'clearErrorHistory' && window.errorRecoveryComponent) {
                         window.errorRecoveryComponent.recentErrors = [];
                         window.errorRecoveryComponent.renderRecentErrors();
+                    }
+                    break;
+
+                case 'receiveHijriDate':
+                    // Handle Hijri date updates from extension
+                    logger.info('Received Hijri date from extension host:', message.payload);
+                    if (window.localization && window.localization.updateHijriDate) {
+                        window.localization.updateHijriDate(message.payload);
+                    }
+                    break;
+
+                case 'updateStatus':
+                    // Handle status message updates from extension
+                    logger.info('Received status update:', message.elementId, message.message);
+                    if (message.elementId) {
+                        const statusElement = document.getElementById(message.elementId);
+                        if (statusElement) {
+                            statusElement.textContent = message.message;
+                        }
                     }
                     break;
 
@@ -415,10 +423,6 @@ class QuranActivityBar {
                 // Prayer's component handles its own language updates
             }
 
-            // Refresh statistics component localization
-            if (this.statisticsComponent && this.statisticsComponent.refreshLocalization) {
-                this.statisticsComponent.refreshLocalization();
-            }
         }
     }
 
@@ -2009,17 +2013,12 @@ class QuranActivityBar {
         if (this.settingsComponent && this.settingsComponent.dispose) {
             this.settingsComponent.dispose();
         }
-        if (this.statisticsComponent && this.statisticsComponent.dispose) {
-            this.statisticsComponent.dispose();
-        }
 
         // Clear references
         this.counterComponent = null;
         this.audioPlayerComponent = null;
         this.prayerTrackerComponent = null;
         this.settingsComponent = null;
-        this.statisticsComponent = null;
-
         logger.info('QuranActivityBar disposed successfully');
     }
 }

@@ -154,6 +154,9 @@ class CounterComponent {
         this.saveSalawatCounter();
         this.updateSalawatCounterUI();
 
+        // Update SpiritualTracker with total dhikr count
+        this.postMessage('incrementDhikr', { count: 1 });
+
         logger.debug(`Salawat counter incremented: ${this.salawatCounter.currentCount}/${this.salawatCounter.dailyTarget}`);
     }
 
@@ -227,6 +230,9 @@ class CounterComponent {
         this.tasbihCounters[dhikrType]++;
         this.saveTasbihCounters();
         this.updateTasbihCountersUI();
+
+        // Update SpiritualTracker with total dhikr count
+        this.postMessage('incrementDhikr', { count: 1 });
 
         logger.debug(`${dhikrType} counter incremented to: ${this.tasbihCounters[dhikrType]}`);
     }
@@ -304,6 +310,9 @@ class CounterComponent {
         this.saveIstighfarCounters();
         this.updateIstighfarCountersUI();
 
+        // Update SpiritualTracker with total dhikr count
+        this.postMessage('incrementDhikr', { count: 1 });
+
         logger.debug(`${dhikrType} istighfar counter incremented to: ${this.istighfarCounters[dhikrType]}`);
     }
 
@@ -349,15 +358,21 @@ class CounterComponent {
     }
 
     incrementAdhkarCounter(dhikrType) {
-        if (!this.adhkarCounters[dhikrType]) {
-            this.adhkarCounters[dhikrType] = 0;
+        // Convert hyphenated format (rabbi-ghifir) to camelCase (rabbiGhifir)
+        const camelCaseType = dhikrType.replace(/-([a-z])/g, (match, letter) => letter.toUpperCase());
+        
+        if (!this.adhkarCounters[camelCaseType]) {
+            this.adhkarCounters[camelCaseType] = 0;
         }
 
-        this.adhkarCounters[dhikrType]++;
+        this.adhkarCounters[camelCaseType]++;
         this.saveAdhkarCounters();
         this.updateAdhkarCountersUI();
 
-        logger.debug(`${dhikrType} adhkar counter incremented to: ${this.adhkarCounters[dhikrType]}`);
+        // Update SpiritualTracker with total dhikr count
+        this.postMessage('incrementDhikr', { count: 1 });
+
+        logger.debug(`${camelCaseType} adhkar counter incremented to: ${this.adhkarCounters[camelCaseType]}`);
     }
 
     updateAdhkarCountersUI() {

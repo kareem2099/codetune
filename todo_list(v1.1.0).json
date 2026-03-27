@@ -1,5 +1,6 @@
 {
   "version": "1.1.0",
+  "codename": "Hikmah",
   "title": "CodeTune v1.1.0 - Core Focus & Stability Sprint",
   "description": "Focused sprint on smart context-aware notifications, local spiritual tracking (gamification), and robust error handling.",
   "created_at": "2026-02-28",

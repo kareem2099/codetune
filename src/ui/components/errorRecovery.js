@@ -1,4 +1,4 @@
-// ✅ Use the global window.vscode set by activityBar.js — acquireVsCodeApi() can only
+// Use the global window.vscode set by activityBar.js — acquireVsCodeApi() can only
 //    be called ONCE per webview lifetime. Calling it again from a module throws a runtime error.
 const getVscode = () => window.vscode || null;
 
@@ -294,7 +294,7 @@ if (typeof acquireVsCodeApi !== 'undefined' || typeof window !== 'undefined') {
         if (mount) {
             mount.innerHTML = createErrorRecoveryHTML();
         }
-        // ✅ Expose globally so activityBar.js can call methods on it
+        // Expose globally so activityBar.js can call methods on it
         window.errorRecoveryComponent = new ErrorRecoveryComponent();
     });
 } else if (typeof module !== 'undefined' && module.exports) {

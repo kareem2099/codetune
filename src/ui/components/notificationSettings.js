@@ -65,10 +65,10 @@ class NotificationSettingsComponent {
      * @param {ReturnType<typeof acquireVsCodeApi>} vscodeApi
      */
     constructor(vscodeApi) {
-        // ✅ receives vscodeApi instead of smartNotifications object
+        // receives vscodeApi instead of smartNotifications object
         // smartNotifications lives in the Extension Host, not the Webview
         this.vscode = vscodeApi;
-        this.statusInterval = null; // ✅ stored to avoid memory leak
+        this.statusInterval = null; // stored to avoid memory leak
         this.init();
     }
 
@@ -86,7 +86,7 @@ class NotificationSettingsComponent {
 
         saveButton?.addEventListener('click', () => this.saveSettings());
 
-        // ✅ Store interval reference
+        // Store interval reference
         this.statusInterval = setInterval(() => this.requestStatusUpdate(), 1000);
 
         // Request initial status
@@ -134,7 +134,7 @@ class NotificationSettingsComponent {
             const quietEndValue = document.getElementById('quiet-end-hour')?.value ?? '07:00';
             const durationRaw = parseInt(document.getElementById('focus-mode-duration')?.value ?? '15', 10);
 
-            // ✅ Validate focusModeDuration range
+            // Validate focusModeDuration range
             if (isNaN(durationRaw) || durationRaw < 5 || durationRaw > 300) {
                 this.showMessage('Focus duration must be between 5 and 300 seconds.', 'error');
                 return;
@@ -151,7 +151,7 @@ class NotificationSettingsComponent {
                 focusModeDuration: durationRaw * 1000 // convert to ms
             };
 
-            // ✅ postMessage to Extension Host instead of calling object directly
+            // postMessage to Extension Host instead of calling object directly
             this.vscode?.postMessage({ type: 'updateSmartNotifications', settings });
 
             this.showMessage('Settings saved successfully! ✅', 'success');
@@ -170,7 +170,7 @@ class NotificationSettingsComponent {
         document.querySelector('.settings-message')?.remove();
 
         const msgEl = document.createElement('div');
-        // ✅ Use CSS classes instead of inline style colors
+        // Use CSS classes instead of inline style colors
         msgEl.className = `settings-message message-${type}`;
         msgEl.textContent = message;
 

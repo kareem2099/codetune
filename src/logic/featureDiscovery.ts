@@ -30,6 +30,18 @@ const FEATURE_REGISTRY: FeatureInfo[] = [
     { id: 'theme_engine', name: 'Theme Engine', description: 'Choose from 4 color themes or build a custom one.', version: '1.1.0', icon: '🎨' },
     { id: 'advanced_settings', name: 'Advanced Settings', description: 'Import/export your config and reset to defaults.', version: '1.1.0', icon: '⚙️' },
     { id: 'error_recovery', name: 'Error Recovery', description: 'Automatic retry logic and friendly error messages.', version: '1.1.0', icon: '🛡️' },
+
+    // v1.2.0 "Fajr" features
+    { id: 'islamic_date_tracking', name: 'Islamic Date Tracking', description: 'Daily goals reset at Fajr (dawn) instead of midnight.', version: '1.2.0', icon: '🕌' },
+    { id: 'accumulator_pattern', name: 'Audio Accumulator', description: 'Short listening sessions accumulate properly — no time lost.', version: '1.2.0', icon: '🎵' },
+    { id: 'smart_tracking_tooltip', name: 'Smart Tracking Tooltip', description: 'Info tooltip explains Fajr-based day tracking to users.', version: '1.2.0', icon: 'ℹ️' },
+    { id: 'tracker_card_design', name: 'Tracker Card Design', description: 'Glassmorphism card wrapper with gradient top bar for Spiritual Progress Tracker.', version: '1.2.0', icon: '📊' },
+
+    // v1.3.0 "Tawasul" features
+    { id: 'full_localization', name: 'Full Localization', description: 'Every string localized across 5 languages (EN, AR, ES, FR, RU).', version: '1.3.0', icon: '🌐' },
+    { id: 'settings_overhaul', name: 'Settings Overhaul', description: 'Unified settings UI with glassmorphism design and proper persistence.', version: '1.3.0', icon: '⚙️' },
+    { id: 'notification_settings', name: 'Notification Settings', description: 'Prayer reminder toggles, frequency controls, and quiet hours.', version: '1.3.0', icon: '🔔' },
+    { id: 'theme_engine_fix', name: 'Theme Engine Fix', description: 'Theme persistence and CSS variables for both light and dark themes.', version: '1.3.0', icon: '🎨' },
 ];
 
 export class FeatureDiscovery {

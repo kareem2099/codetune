@@ -39,6 +39,31 @@
     color: var(--td-text);
 }
 
+/* ═══════════════════════════════════════════════
+   TRACKER DASHBOARD CARD WRAPPER
+   ═══════════════════════════════════════════════ */
+
+.tracker-dashboard-wrapper {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: var(--td-radius, 10px);
+    box-shadow: var(--shadow-light, 0 4px 20px rgba(0, 0, 0, 0.1));
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+.tracker-dashboard-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #6c6fee 0%, #89b4fa 50%, #cba6f7 100%);
+}
+
 /* ── Dashboard card sections ── */
 .dashboard-section {
     background: var(--td-surface);
@@ -54,6 +79,72 @@
     text-transform: uppercase;
     letter-spacing: .06em;
     color: var(--td-muted);
+}
+
+/* ═══════════════════════════════════════════════
+   SMART ISLAMIC TRACKING TOOLTIP
+   ═══════════════════════════════════════════════ */
+
+.info-tooltip-container {
+    display: inline-block;
+    position: relative;
+    margin-left: 8px;
+    cursor: help;
+}
+
+.info-icon {
+    font-size: 14px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.info-tooltip-container:hover .info-icon {
+    opacity: 1;
+}
+
+.info-tooltip-content {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    width: 220px;
+    background: var(--glass-bg, rgba(30, 30, 30, 0.95));
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text-primary, #fff);
+    font-size: 12px;
+    font-weight: normal;
+    text-align: left;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    line-height: 1.5;
+}
+
+.info-tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--glass-border, rgba(255, 255, 255, 0.1)) transparent transparent transparent;
+}
+
+.info-tooltip-container:hover .info-tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+html[lang="ar"] .info-tooltip-content {
+    text-align: right;
 }
 
 /* ── Daily goals ── */
@@ -108,6 +199,39 @@
 
 .dhikr-fill {
     background: var(--td-dhikr-grad);
+}
+
+/* ── Quick Actions ── */
+.quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.action-button {
+    flex: 1;
+    min-width: 100px;
+    padding: 8px 12px;
+    border: 1px solid var(--td-border);
+    border-radius: var(--td-radius-sm);
+    background: rgba(255, 255, 255, .04);
+    color: var(--td-text);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--td-transition);
+    text-align: center;
+}
+
+.action-button:hover {
+    background: rgba(108, 111, 238, .15);
+    border-color: var(--td-accent);
+    transform: translateY(-1px);
+}
+
+.action-button:active {
+    transform: translateY(0);
+    background: rgba(108, 111, 238, .2);
 }
 
 /* ── Action buttons row ── */
@@ -379,14 +503,77 @@
 }
 
 .td-modal-content {
-    background: var(--td-surface);
+    background: var(--td-bg, #1e1e2e);
     border: 1px solid var(--td-border);
     border-radius: var(--td-radius);
     padding: 20px;
-    min-width: 240px;
-    max-width: 320px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+    min-width: 280px;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .7);
     animation: td-slide-up 0.2s ease;
+    backdrop-filter: blur(20px);
+}
+
+.input-modal .td-modal-content,
+.achievements-modal .td-modal-content {
+    background: rgba(30, 30, 46, 0.98);
+}
+
+.all-achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+    padding-right: 4px;
+}
+
+.achievement-full {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px;
+    border-radius: var(--td-radius-sm);
+    background: rgba(255, 255, 255, .04);
+    border: 1px solid var(--td-border);
+}
+
+.achievement-full.unlocked {
+    border-color: rgba(166, 227, 161, .3);
+    background: rgba(166, 227, 161, .06);
+}
+
+.achievement-full .icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.achievement-full .details {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievement-full .name {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.achievement-full .description {
+    font-size: 11px;
+    color: var(--td-muted);
+    line-height: 1.4;
+}
+
+.achievement-full .status {
+    font-size: 10px;
+    color: var(--td-accent);
+    margin-top: 4px;
+}
+
+.achievement-full.locked .status {
+    color: var(--td-muted);
 }
 
 .td-modal-content label {

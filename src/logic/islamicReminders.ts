@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { IslamicCalendar } from './islamicCalendar';
 import { FridayReminders, IslamicContent } from './fridayReminders';
 import { logger } from '../utils/Logger';
+import { SpiritualTracker } from '../utils/SpiritualTracker'; // Import tracker
 
 interface ReminderSettings {
     enableReminders: boolean;
@@ -19,6 +20,7 @@ export class IslamicRemindersManager {
     private lastReminderTime: number = 0;
     private settings: ReminderSettings;
     private fridayReminders: FridayReminders;
+    private spiritualTracker?: SpiritualTracker; // Store tracker reference
 
     // Islamic content database
     private adia: IslamicContent[] = [
@@ -211,7 +213,8 @@ export class IslamicRemindersManager {
         }
     ];
 
-    constructor() {
+    constructor(tracker?: SpiritualTracker) {
+        this.spiritualTracker = tracker;
         this.settings = {
             enableReminders: true,
             reminderInterval: 60,
@@ -225,7 +228,26 @@ export class IslamicRemindersManager {
         // Create FridayReminders with initial settings
         this.fridayReminders = new FridayReminders(this.settings);
         this.loadSettings();
+        
+        // Sync Fajr time with tracker on startup
+        this.syncFajrTimeWithTracker();
+        
         this.startReminders();
+    }
+
+    // Send Fajr time to SpiritualTracker for Islamic date tracking
+    private syncFajrTimeWithTracker() {
+        if (!this.spiritualTracker) { return; }
+        
+        try {
+            const prayerTimes = IslamicCalendar.calculatePrayerTimes();
+            if (prayerTimes && prayerTimes.fajr) {
+                this.spiritualTracker.updateFajrTime(prayerTimes.fajr);
+                logger.debug('Synced Fajr time with SpiritualTracker:', prayerTimes.fajr.toLocaleTimeString());
+            }
+        } catch (error) {
+            logger.warn('Could not sync Fajr time with Tracker:', error);
+        }
     }
 
     private loadSettings() {
