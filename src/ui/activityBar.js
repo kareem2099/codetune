@@ -89,7 +89,7 @@ class QuranActivityBar {
         try {
             // Check if user has already seen this version
             const seenVersion = localStorage.getItem('codetune_whatsnew_seen');
-            const currentVersion = '1.2.0';
+            const currentVersion = '1.2.1';
 
             if (seenVersion === currentVersion) {
                 logger.info('User has already seen v1.0.0 whats new modal');
@@ -152,10 +152,11 @@ class QuranActivityBar {
         if (recentUpdates.length > 0) {
             contentHtml += '<div class="update-section"><h4>✅ Recent Updates</h4><div class="feature-list">';
             recentUpdates.forEach(update => {
-                const [icon, title, description] = update.split(' - ');
+                const parts = update.split(' - ');
+                const title = parts[0] || '';
+                const description = parts[1] || '';
                 contentHtml += `
                     <div class="feature-item">
-                        <span class="feature-icon">${icon}</span>
                         <div class="feature-text">
                             <strong>${title}</strong>
                             <p>${description}</p>
@@ -169,10 +170,11 @@ class QuranActivityBar {
         if (comingSoon.length > 0) {
             contentHtml += '<div class="update-section"><h4>🚀 Coming Soon</h4><div class="feature-list">';
             comingSoon.forEach(feature => {
-                const [icon, title, description] = feature.split(' - ');
+                const parts = feature.split(' - ');
+                const title = parts[0] || '';
+                const description = parts[1] || '';
                 contentHtml += `
                     <div class="feature-item">
-                        <span class="feature-icon">${icon}</span>
                         <div class="feature-text">
                             <strong>${title}</strong>
                             <p>${description}</p>
@@ -213,7 +215,7 @@ class QuranActivityBar {
         }
 
         // Mark as seen
-        localStorage.setItem('codetune_whatsnew_seen', '1.2.0');
+        localStorage.setItem('codetune_whatsnew_seen', '1.2.1');
     }
 
 
@@ -243,7 +245,7 @@ class QuranActivityBar {
         // Theme toggle
         const themeToggle = document.getElementById('themeToggle');
         if (themeToggle) {
-            themeToggle.addEventListener('change', () => {
+            themeToggle.addEventListener('click', () => {
                 this.toggleTheme();
             });
         }

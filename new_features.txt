@@ -1,4 +1,4 @@
-v1.2.0 "Fajr"
+v1.2.1 "Fajr"
 
 RECENT_UPDATES
 Islamic Date Tracking - Daily goals reset at Fajr (dawn) instead of midnight

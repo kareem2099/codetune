@@ -4,7 +4,7 @@
 
 <img src="images/icon.png" alt="CodeTune Logo" width="128" />
 
-[![Version](https://img.shields.io/badge/version-1.2.0-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
+[![Version](https://img.shields.io/badge/version-1.2.1-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
 [![Codename](https://img.shields.io/badge/codename-Fajr-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.86+-blue)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
