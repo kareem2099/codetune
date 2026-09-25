@@ -13,6 +13,7 @@ class QuranActivityBar {
         this.audioPlayerComponent = null;
         this.prayerTrackerComponent = null;
         this.settingsComponent = null;
+        this.notificationSettingsComponent = null;
 
         // Quran Reader properties (keeping here as it's shared functionality)
         this.currentReadingSurah = null;
@@ -89,7 +90,7 @@ class QuranActivityBar {
         try {
             // Check if user has already seen this version
             const seenVersion = localStorage.getItem('codetune_whatsnew_seen');
-            const currentVersion = '1.2.1';
+            const currentVersion = '1.3.0';
 
             if (seenVersion === currentVersion) {
                 logger.info('User has already seen v1.0.0 whats new modal');
@@ -215,7 +216,7 @@ class QuranActivityBar {
         }
 
         // Mark as seen
-        localStorage.setItem('codetune_whatsnew_seen', '1.2.1');
+        localStorage.setItem('codetune_whatsnew_seen', '1.3.0');
     }
 
 
@@ -223,9 +224,26 @@ class QuranActivityBar {
         // Initialize components in order with proper dependencies
         try {
             this.counterComponent = new CounterComponent();
+            window.counterComponent = this.counterComponent;
             this.audioPlayerComponent = new AudioPlayerComponent();
+            window.audioPlayerComponent = this.audioPlayerComponent;
             this.prayerTrackerComponent = new PrayerTrackerComponent(window.vscode);
+            window.prayerTrackerComponent = this.prayerTrackerComponent;
             this.settingsComponent = new SettingsComponent();
+            window.settingsComponent = this.settingsComponent;
+
+            const container = document.getElementById('notificationSettingsContainer');
+            if (container && window.createNotificationSettingsHTML) {
+                container.innerHTML = window.createNotificationSettingsHTML();
+                if (window.localization && window.localization.localizeElements) {
+                    window.localization.localizeElements();
+                }
+                if (window.NotificationSettingsComponent) {
+                    this.notificationSettingsComponent = new window.NotificationSettingsComponent(window.vscode);
+                    window.notificationSettingsComponent = this.notificationSettingsComponent;
+                }
+            }
+
             logger.info('✅ All components initialized successfully');
         } catch (error) {
             logger.error('❌ Failed to initialize components:', error);
@@ -304,6 +322,30 @@ class QuranActivityBar {
                     break;
 
                 // Settings-related messages -> settingsComponent
+                case 'initialSettings':
+                    logger.info('ActivityBar: Handling initialSettings message', message.settings);
+                    if (this.settingsComponent && this.settingsComponent.applyLoadedSettings) {
+                        this.settingsComponent.applyLoadedSettings(message.settings);
+                    }
+                    if (this.audioPlayerComponent && message.settings?.reciter) {
+                        this.audioPlayerComponent.reciter = message.settings.reciter;
+                    }
+                    if (message.settings?.theme) {
+                        this.applyTheme(message.settings.theme);
+                    }
+                    break;
+
+                case 'themeChanged':
+                    logger.info('ActivityBar: Handling themeChanged message', message.theme);
+                    this.applyTheme(message.theme, message.vars);
+                    break;
+
+                case 'notificationStatus':
+                    if (window.notificationSettingsComponent && window.notificationSettingsComponent.onStatusReceived) {
+                        window.notificationSettingsComponent.onStatusReceived(message.payload);
+                    }
+                    break;
+
                 case 'updateLanguageSetting':
                     if (this.settingsComponent && this.settingsComponent.updateLanguageSetting) {
                         this.settingsComponent.updateLanguageSetting(message.language);
@@ -1339,31 +1381,50 @@ class QuranActivityBar {
         }
     }
 
-    // Theme toggle
-    toggleTheme() {
+    // Theme management
+    applyTheme(theme, vars) {
         const body = document.body;
-        const isDark = body.classList.contains('dark-theme') || (!body.classList.contains('light-theme'));
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle?.querySelector('.icon');
 
-        if (isDark) {
+        if (theme === 'light') {
             body.classList.remove('dark-theme');
             body.classList.add('light-theme');
-            this.postMessage('showNotification', {
-                message: 'Switched to light theme',
-                type: 'info'
-            });
+            if (icon) { icon.textContent = '☀️'; }
         } else {
             body.classList.remove('light-theme');
             body.classList.add('dark-theme');
-            this.postMessage('showNotification', {
-                message: 'Switched to dark theme',
-                type: 'info'
-            });
+            if (icon) { icon.textContent = '🌙'; }
         }
 
-        // Save theme preference
-        if (this.settingsComponent) {
-            this.settingsComponent.saveSettings();
+        if (vars && typeof vars === 'object') {
+            for (const [key, value] of Object.entries(vars)) {
+                document.documentElement.style.setProperty(key, value);
+            }
         }
+
+        if (this.settingsComponent) {
+            this.settingsComponent.theme = theme;
+            if (typeof this.settingsComponent.saveSettingsLocally === 'function') {
+                this.settingsComponent.saveSettingsLocally();
+            } else if (typeof this.settingsComponent.saveSettings === 'function') {
+                this.settingsComponent.saveSettings();
+            }
+        }
+    }
+
+    toggleTheme() {
+        const body = document.body;
+        const isDark = body.classList.contains('dark-theme') || (!body.classList.contains('light-theme'));
+        const newTheme = isDark ? 'light' : 'dark';
+
+        this.applyTheme(newTheme);
+        this.postMessage('setTheme', { theme: newTheme });
+
+        const msg = newTheme === 'light'
+            ? (window.localization?.getString('switchedToLightTheme') || 'Switched to light theme')
+            : (window.localization?.getString('switchedToDarkTheme') || 'Switched to dark theme');
+        this.showNotification(msg, 'info');
     }
 
     // Adaptive Reading Speed Detection
@@ -1982,6 +2043,12 @@ class QuranActivityBar {
         if (this.counterComponent && this.counterComponent.updatePrayerGoal) {
             this.counterComponent.updatePrayerGoal(prayer, completed);
         }
+        if (completed) {
+            const vscode = this.vscode || window.vscode;
+            if (vscode) {
+                vscode.postMessage({ type: 'prayerCompleted', prayer });
+            }
+        }
     }
 
     // Dispose method for proper cleanup
@@ -2015,12 +2082,17 @@ class QuranActivityBar {
         if (this.settingsComponent && this.settingsComponent.dispose) {
             this.settingsComponent.dispose();
         }
+        if (this.notificationSettingsComponent && this.notificationSettingsComponent.dispose) {
+            this.notificationSettingsComponent.dispose();
+        }
 
         // Clear references
         this.counterComponent = null;
         this.audioPlayerComponent = null;
         this.prayerTrackerComponent = null;
         this.settingsComponent = null;
+        this.notificationSettingsComponent = null;
+        window.notificationSettingsComponent = null;
         logger.info('QuranActivityBar disposed successfully');
     }
 }

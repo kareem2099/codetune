@@ -134,7 +134,7 @@ export class SmartNotifications {
      *   - Cross-midnight range  e.g. 22:00 → 07:00  (start > end)  : active if hour >= 22 OR  hour < 7
      *   - Same-day range        e.g. 12:00 → 14:00  (start < end)  : active if hour >= 12 AND hour < 14
      */
-    private isInQuietHours(): boolean {
+    public isInQuietHours(): boolean {
         if (!this.quietHoursEnabled) {
             return false;
         }
@@ -183,7 +183,28 @@ export class SmartNotifications {
         if (settings.quietHoursEnd !== undefined) { this.quietHoursEnd = settings.quietHoursEnd; }
         if (settings.focusModeDuration !== undefined) { this.focusModeDuration = settings.focusModeDuration; }
 
+        try {
+            const config = vscode.workspace.getConfiguration('codeTune.smartNotifications');
+            if (settings.pauseDuringCoding !== undefined) { config.update('pauseDuringCoding', settings.pauseDuringCoding, true); }
+            if (settings.quietHoursEnabled !== undefined) { config.update('quietHoursEnabled', settings.quietHoursEnabled, true); }
+            if (settings.quietHoursStart !== undefined) { config.update('quietHoursStart', settings.quietHoursStart, true); }
+            if (settings.quietHoursEnd !== undefined) { config.update('quietHoursEnd', settings.quietHoursEnd, true); }
+            if (settings.focusModeDuration !== undefined) { config.update('focusModeDuration', settings.focusModeDuration, true); }
+        } catch (err) {
+            logger.warn('Failed to persist smart notification settings:', err);
+        }
+
         logger.info('SmartNotifications settings updated', settings);
+    }
+
+    public getSettings(): SmartNotificationSettings {
+        return {
+            pauseDuringCoding: this.pauseDuringCoding,
+            quietHoursEnabled: this.quietHoursEnabled,
+            quietHoursStart: this.quietHoursStart,
+            quietHoursEnd: this.quietHoursEnd,
+            focusModeDuration: this.focusModeDuration
+        };
     }
 
     /**

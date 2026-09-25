@@ -17,7 +17,8 @@ class SettingsComponent {
             showAhadis: true,
             showWisdom: true,
             showMorningAzkar: true,
-            showEveningAzkar: true
+            showEveningAzkar: true,
+            enableAyahKursiReminder: true
         };
         this.workingHoursOnly = false;
         this.islamicReminders = {
@@ -31,6 +32,7 @@ class SettingsComponent {
         this.downloadTimeout = 30;
         this.retryAttempts = 3;
         this.reciter = 'ar.abdulbasitmurattal';
+        this.audioQuality = '128';
 
         this.setupEventListeners();
         this.loadSettings();
@@ -45,11 +47,25 @@ class SettingsComponent {
             });
         }
 
-        // Settings controls
+        // Settings controls - reciter
         const reciterSelect = document.getElementById('reciterSelect');
         if (reciterSelect) {
             reciterSelect.addEventListener('change', (e) => {
                 this.updateReciterSetting(e.target.value);
+            });
+        }
+
+        const playbackReciterSelect = document.getElementById('playbackReciterSelect');
+        if (playbackReciterSelect) {
+            playbackReciterSelect.addEventListener('change', (e) => {
+                this.updateReciterSetting(e.target.value);
+            });
+        }
+
+        const audioQualitySelect = document.getElementById('audioQualitySelect');
+        if (audioQualitySelect) {
+            audioQualitySelect.addEventListener('change', (e) => {
+                this.updateAudioQualitySetting(e.target.value);
             });
         }
 
@@ -105,7 +121,7 @@ class SettingsComponent {
         }
 
         // Reminder types
-        ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar'].forEach(id => {
+        ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar', 'enableAyahKursiReminder'].forEach(id => {
             const checkbox = document.getElementById(id);
             if (checkbox) {
                 checkbox.addEventListener('change', (e) => {
@@ -300,8 +316,31 @@ class SettingsComponent {
     updateReciterSetting(reciter) {
         this.reciter = reciter;
         this.postMessage('updateReciter', { reciter: reciter });
-        this.showNotification('Quran reciter updated successfully', 'success');
+        const reciterSelect = document.getElementById('reciterSelect');
+        if (reciterSelect) {
+            reciterSelect.value = reciter;
+        }
+        const playbackReciterSelect = document.getElementById('playbackReciterSelect');
+        if (playbackReciterSelect) {
+            playbackReciterSelect.value = reciter;
+        }
+        if (window.audioPlayerComponent) {
+            window.audioPlayerComponent.reciter = reciter;
+        }
         this.saveSettings();
+        const msg = window.localization?.getString('reciterChanged', { reciter }) || 'Quran reciter updated successfully';
+        this.showNotification(msg, 'success');
+    }
+
+    updateAudioQualitySetting(quality) {
+        this.audioQuality = quality;
+        this.postMessage('updateAudioQuality', { quality: quality });
+        if (window.audioPlayerComponent) {
+            window.audioPlayerComponent.audioQuality = quality;
+        }
+        this.saveSettings();
+        const msg = window.localization?.getString('audioQualitySet', { quality }) || `Audio quality set to ${quality} kbps`;
+        this.showNotification(msg, 'success');
     }
 
     updateAutoPlaySetting(enabled) {
@@ -368,6 +407,7 @@ class SettingsComponent {
                         type === 'showAhadis' ? 'Ahadis' :
                         type === 'showMorningAzkar' ? 'Morning Azkar' :
                         type === 'showEveningAzkar' ? 'Evening Azkar' :
+                        type === 'enableAyahKursiReminder' ? 'Ayah Al-Kursi' :
                         'Islamic Wisdom';
         this.showNotification(`${typeName} ${enabled ? 'enabled' : 'disabled'}`, 'success');
         this.saveSettings();
@@ -457,16 +497,26 @@ class SettingsComponent {
             showWisdom: this.reminderTypes.showWisdom,
             showMorningAzkar: this.reminderTypes.showMorningAzkar,
             showEveningAzkar: this.reminderTypes.showEveningAzkar,
+            enableAyahKursiReminder: this.reminderTypes.enableAyahKursiReminder,
             workingHoursOnly: this.workingHoursOnly
         };
     }
 
     saveSettings() {
+        let existing = {};
+        try {
+            const saved = localStorage.getItem('codeTuneSettings');
+            if (saved) { existing = JSON.parse(saved); }
+        } catch (e) {
+            existing = {};
+        }
+
         const settings = {
-            volume: 70, // Will be updated by audio component
+            ...existing,
+            volume: 70, // Updated by audio component
             playbackMode: 'surah',
             reciter: this.reciter,
-            audioQuality: '128',
+            audioQuality: this.audioQuality,
             autoPlayStartup: this.autoPlayStartup,
             theme: this.theme,
             compactMode: this.compactMode,
@@ -474,6 +524,7 @@ class SettingsComponent {
             language: this.language,
             enableReminders: this.enableReminders,
             reminderInterval: this.reminderInterval,
+            enableAyahKursiReminder: this.reminderTypes.enableAyahKursiReminder,
             reminderTypes: this.reminderTypes,
             workingHoursOnly: this.workingHoursOnly,
             islamicReminders: this.islamicReminders,
@@ -482,15 +533,117 @@ class SettingsComponent {
             retryAttempts: this.retryAttempts
         };
 
-        localStorage.setItem('quranPlayerSettings', JSON.stringify(settings));
+        localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
+        this.postMessage('saveSettings', { settings });
+    }
+
+    saveSettingsLocally() {
+        let existing = {};
+        try {
+            const saved = localStorage.getItem('codeTuneSettings');
+            if (saved) { existing = JSON.parse(saved); }
+        } catch (e) {
+            existing = {};
+        }
+
+        const settings = {
+            ...existing,
+            theme: this.theme,
+            reciter: this.reciter,
+            audioQuality: this.audioQuality,
+            autoPlayStartup: this.autoPlayStartup,
+            compactMode: this.compactMode,
+            showNotifications: this.showNotifications,
+            language: this.language,
+            enableReminders: this.enableReminders,
+            reminderInterval: this.reminderInterval,
+            enableAyahKursiReminder: this.reminderTypes.enableAyahKursiReminder,
+            reminderTypes: this.reminderTypes,
+            workingHoursOnly: this.workingHoursOnly,
+            islamicReminders: this.islamicReminders,
+            cacheSize: this.cacheSize,
+            downloadTimeout: this.downloadTimeout,
+            retryAttempts: this.retryAttempts
+        };
+
+        try {
+            localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
+        } catch (e) {
+            logger.warn('Failed to save settings locally:', e);
+        }
+    }
+
+    applyLoadedSettings(settings) {
+        if (!settings) { return; }
+        if (settings.reciter) { this.reciter = settings.reciter; }
+        if (settings.audioQuality) { this.audioQuality = settings.audioQuality; }
+        if (settings.autoPlayStartup !== undefined) { this.autoPlayStartup = settings.autoPlayStartup; }
+        if (settings.compactMode !== undefined) { this.compactMode = settings.compactMode; }
+        if (settings.showNotifications !== undefined) { this.showNotifications = settings.showNotifications; }
+        if (settings.language) { this.language = settings.language; }
+        if (settings.enableReminders !== undefined) { this.enableReminders = settings.enableReminders; }
+        if (settings.reminderInterval !== undefined) { this.reminderInterval = settings.reminderInterval; }
+        if (settings.theme) { this.theme = settings.theme; }
+        if (settings.workingHoursOnly !== undefined) { this.workingHoursOnly = settings.workingHoursOnly; }
+        if (settings.islamicReminders) {
+            this.islamicReminders = { ...this.islamicReminders, ...settings.islamicReminders };
+        }
+        if (settings.prayerReminders) {
+            this.islamicReminders = { ...this.islamicReminders, ...settings.prayerReminders };
+        }
+        if (settings.showAdia !== undefined) { this.reminderTypes.showAdia = settings.showAdia; }
+        if (settings.showAhadis !== undefined) { this.reminderTypes.showAhadis = settings.showAhadis; }
+        if (settings.showWisdom !== undefined) { this.reminderTypes.showWisdom = settings.showWisdom; }
+        if (settings.showMorningAzkar !== undefined) { this.reminderTypes.showMorningAzkar = settings.showMorningAzkar; }
+        if (settings.showEveningAzkar !== undefined) { this.reminderTypes.showEveningAzkar = settings.showEveningAzkar; }
+        if (settings.enableAyahKursiReminder !== undefined) { this.reminderTypes.enableAyahKursiReminder = settings.enableAyahKursiReminder; }
+        if (settings.reminderTypes && settings.reminderTypes.enableAyahKursiReminder !== undefined) {
+            this.reminderTypes.enableAyahKursiReminder = settings.reminderTypes.enableAyahKursiReminder;
+        }
+
+        try {
+            localStorage.setItem('codeTuneSettings', JSON.stringify({
+                reciter: this.reciter,
+                audioQuality: this.audioQuality,
+                autoPlayStartup: this.autoPlayStartup,
+                theme: this.theme,
+                compactMode: this.compactMode,
+                showNotifications: this.showNotifications,
+                language: this.language,
+                enableReminders: this.enableReminders,
+                reminderInterval: this.reminderInterval,
+                reminderTypes: this.reminderTypes,
+                workingHoursOnly: this.workingHoursOnly,
+                islamicReminders: this.islamicReminders,
+                cacheSize: this.cacheSize,
+                downloadTimeout: this.downloadTimeout,
+                retryAttempts: this.retryAttempts
+            }));
+        } catch (e) {
+            logger.warn('Failed to save to localStorage in applyLoadedSettings:', e);
+        }
+
+        this.updateSettingsUI();
     }
 
     loadSettings() {
         try {
-            const settings = JSON.parse(localStorage.getItem('quranPlayerSettings') || '{}');
+            let settings = {};
+            const savedCodeTune = localStorage.getItem('codeTuneSettings');
+            const savedQuranPlayer = localStorage.getItem('quranPlayerSettings');
+
+            if (savedCodeTune) {
+                settings = JSON.parse(savedCodeTune);
+            } else if (savedQuranPlayer) {
+                // Migrate from legacy quranPlayerSettings
+                settings = JSON.parse(savedQuranPlayer);
+                localStorage.setItem('codeTuneSettings', JSON.stringify(settings));
+                logger.info('Migrated settings from quranPlayerSettings to codeTuneSettings');
+            }
 
             // Load all settings with defaults
             this.reciter = settings.reciter || 'ar.abdulbasitmurattal';
+            this.audioQuality = settings.audioQuality || '128';
             this.autoPlayStartup = settings.autoPlayStartup || false;
             this.theme = settings.theme || 'auto';
             this.compactMode = settings.compactMode || false;
@@ -503,7 +656,8 @@ class SettingsComponent {
                 showAhadis: true,
                 showWisdom: true,
                 showMorningAzkar: true,
-                showEveningAzkar: true
+                showEveningAzkar: true,
+                enableAyahKursiReminder: true
             };
             this.workingHoursOnly = settings.workingHoursOnly || false;
             this.islamicReminders = settings.islamicReminders || {
@@ -532,6 +686,7 @@ class SettingsComponent {
             }
 
             this.updateSettingsUI();
+            this.postMessage('requestInitialSettings');
         } catch (error) {
             logger.warn('Failed to load settings:', error);
         }
@@ -548,6 +703,16 @@ class SettingsComponent {
         const reciterSelect = document.getElementById('reciterSelect');
         if (reciterSelect) {
             reciterSelect.value = this.reciter;
+        }
+
+        const playbackReciterSelect = document.getElementById('playbackReciterSelect');
+        if (playbackReciterSelect) {
+            playbackReciterSelect.value = this.reciter;
+        }
+
+        const audioQualitySelect = document.getElementById('audioQualitySelect');
+        if (audioQualitySelect) {
+            audioQualitySelect.value = this.audioQuality;
         }
 
         // Auto play checkbox
@@ -592,7 +757,7 @@ class SettingsComponent {
         }
 
         // Reminder types checkboxes
-        ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar'].forEach(id => {
+        ['showAdia', 'showAhadis', 'showWisdom', 'showMorningAzkar', 'showEveningAzkar', 'enableAyahKursiReminder'].forEach(id => {
             const checkbox = document.getElementById(id);
             if (checkbox) {
                 checkbox.checked = this.reminderTypes[id] !== false; // Default true

@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { logger } from '../utils/Logger';
 
-export type ThemeName = 'default' | 'green' | 'gold' | 'ocean' | 'custom';
+export type ThemeName = 'default' | 'green' | 'gold' | 'ocean' | 'dark' | 'light' | 'custom';
 
 export interface ThemeVariables {
     '--ct-primary': string;
@@ -18,7 +18,7 @@ export interface ThemeVariables {
 }
 
 const PRESETS: Record<ThemeName, ThemeVariables | null> = {
-    default: null, // null = use VS Code varsactk
+    default: null, // null = use VS Code vars
 
     green: {
         '--ct-primary': '#2d8a55',
@@ -57,6 +57,32 @@ const PRESETS: Record<ThemeName, ThemeVariables | null> = {
         '--ct-text-secondary': '#7db8d4',
         '--ct-border': '#163a52',
         '--ct-shadow': 'rgba(30,126,161,0.25)'
+    },
+
+    dark: {
+        '--ct-primary': '#667eea',
+        '--ct-primary-hover': '#5a67d8',
+        '--ct-accent': '#764ba2',
+        '--ct-bg-primary': '#0f0f23',
+        '--ct-bg-secondary': '#1a1a2e',
+        '--ct-bg-card': '#16213e',
+        '--ct-text-primary': '#e2e8f0',
+        '--ct-text-secondary': '#cbd5e1',
+        '--ct-border': 'rgba(255, 255, 255, 0.1)',
+        '--ct-shadow': 'rgba(0, 0, 0, 0.3)'
+    },
+
+    light: {
+        '--ct-primary': '#4f46e5',
+        '--ct-primary-hover': '#4338ca',
+        '--ct-accent': '#6366f1',
+        '--ct-bg-primary': '#f8fafc',
+        '--ct-bg-secondary': '#f1f5f9',
+        '--ct-bg-card': '#ffffff',
+        '--ct-text-primary': '#0f172a',
+        '--ct-text-secondary': '#334155',
+        '--ct-border': '#e2e8f0',
+        '--ct-shadow': 'rgba(0, 0, 0, 0.08)'
     },
 
     custom: null // populated at runtime
@@ -118,6 +144,11 @@ export class ThemeEngine {
         this.currentTheme = name;
         if (this.context) {
             this.context.globalState.update('codeTune_theme', name);
+        }
+        try {
+            vscode.workspace.getConfiguration('codeTune').update('theme', name, vscode.ConfigurationTarget.Global);
+        } catch {
+            // ignore if not configurable
         }
 
         const vars = this.getVariables();

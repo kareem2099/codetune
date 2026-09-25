@@ -7,51 +7,60 @@
 function createNotificationSettingsHTML() {
     return `
         <div class="settings-section" id="notification-settings">
-            <h3>🔔 Notification Settings</h3>
-
-            <div class="setting-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="pause-during-coding" checked>
-                    Pause reminders during active coding (Focus Mode)
-                </label>
-                <p class="help-text">Automatically pause notifications when you're actively typing or navigating code.</p>
+            <div class="settings-title">
+                <span>🔔</span>
+                <span data-localize="notificationSettings">Notification Settings</span>
             </div>
 
-            <div class="setting-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="quiet-hours-enabled">
-                    Enable Quiet Hours (Do Not Disturb)
-                </label>
-                <p class="help-text">Stop notifications during your preferred quiet period.</p>
+            <div class="setting-item">
+                <div class="setting-control">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="pause-during-coding" checked>
+                        <span data-localize="pauseDuringCoding">Pause reminders during active coding (Focus Mode)</span>
+                    </label>
+                </div>
+                <div class="setting-description" data-localize="pauseDuringCodingDesc">Automatically pause notifications when you're actively typing or navigating code.</div>
+            </div>
 
-                <div id="quiet-hours-config" class="sub-settings" style="display: none;">
-                    <div class="time-input-group">
-                        <label for="quiet-start-hour">Quiet Hours Start:</label>
-                        <input type="time" id="quiet-start-hour" value="22:00">
+            <div class="setting-item">
+                <div class="setting-control">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="quiet-hours-enabled">
+                        <span data-localize="quietHoursEnabled">Enable Quiet Hours (Do Not Disturb)</span>
+                    </label>
+                </div>
+                <div class="setting-description" data-localize="quietHoursEnabledDesc">Stop notifications during your preferred quiet period.</div>
+
+                <div id="quiet-hours-config" class="sub-settings" style="display: none; margin-top: 10px;">
+                    <div class="time-input-group" style="margin-bottom: 8px;">
+                        <label for="quiet-start-hour" data-localize="quietHoursStart">Quiet Hours Start:</label>
+                        <input type="time" id="quiet-start-hour" value="22:00" class="setting-select" style="width: auto;">
                     </div>
                     <div class="time-input-group">
-                        <label for="quiet-end-hour">Quiet Hours End:</label>
-                        <input type="time" id="quiet-end-hour" value="07:00">
+                        <label for="quiet-end-hour" data-localize="quietHoursEnd">Quiet Hours End:</label>
+                        <input type="time" id="quiet-end-hour" value="07:00" class="setting-select" style="width: auto;">
                     </div>
                 </div>
             </div>
 
-            <div class="setting-group">
-                <label for="focus-mode-duration">Focus Mode Inactivity Duration (seconds):</label>
-                <input type="number" id="focus-mode-duration" min="5" max="300" value="15" step="1">
-                <p class="help-text">Exit focus mode after this many seconds of inactivity (5–300 seconds).</p>
-            </div>
-
-            <div class="setting-group">
-                <h4>Current Status</h4>
-                <div id="notification-status" class="status-display">
-                    <p><strong>Focus Mode:</strong> <span id="focus-status">Inactive</span></p>
-                    <p><strong>In Quiet Hours:</strong> <span id="quiet-status">No</span></p>
-                    <p><strong>Time Since Activity:</strong> <span id="activity-time">N/A</span></p>
+            <div class="setting-item">
+                <div class="setting-label" data-localize="focusModeDuration">Focus Mode Inactivity Duration (seconds):</div>
+                <div class="setting-description" data-localize="focusModeDurationDesc">Exit focus mode after this many seconds of inactivity (5–300 seconds).</div>
+                <div class="setting-control">
+                    <input type="number" id="focus-mode-duration" min="5" max="300" value="15" step="1" class="setting-select" style="width: 100px;">
                 </div>
             </div>
 
-            <button id="save-notification-settings" class="primary-button">Save Settings</button>
+            <div class="setting-item">
+                <div class="setting-label" data-localize="currentStatus">Current Status</div>
+                <div id="notification-status" class="status-display" style="padding: 10px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; font-size: 11px;">
+                    <p><strong data-localize="focusMode">Focus Mode:</strong> <span id="focus-status">Inactive</span></p>
+                    <p><strong data-localize="inQuietHours">In Quiet Hours:</strong> <span id="quiet-status">No</span></p>
+                    <p><strong data-localize="timeSinceActivity">Time Since Activity:</strong> <span id="activity-time">N/A</span></p>
+                </div>
+            </div>
+
+            <button id="save-notification-settings" class="primary-button" data-localize="saveSettings" style="margin-top: 10px;">Save Settings</button>
         </div>
     `;
 }
@@ -65,10 +74,11 @@ class NotificationSettingsComponent {
      * @param {ReturnType<typeof acquireVsCodeApi>} vscodeApi
      */
     constructor(vscodeApi) {
-        // receives vscodeApi instead of smartNotifications object
-        // smartNotifications lives in the Extension Host, not the Webview
-        this.vscode = vscodeApi;
-        this.statusInterval = null; // stored to avoid memory leak
+        // receives vscodeApi or falls back to global window.vscode
+        this.vscode = vscodeApi || (typeof window !== 'undefined' ? window.vscode : null);
+        this.statusInterval = null; // periodic IPC refresh
+        this.localTickerInterval = null; // client-side 1s display ticker
+        this.lastActivityTimeMs = null;
         this.init();
     }
 
@@ -86,8 +96,11 @@ class NotificationSettingsComponent {
 
         saveButton?.addEventListener('click', () => this.saveSettings());
 
-        // Store interval reference
-        this.statusInterval = setInterval(() => this.requestStatusUpdate(), 1000);
+        // Poll extension host every 30s instead of spamming every 1s
+        this.statusInterval = setInterval(() => this.requestStatusUpdate(), 30000);
+
+        // Local ticker updates the "Xs ago" counter every second client-side
+        this.localTickerInterval = setInterval(() => this.updateActivityTimeDisplay(), 1000);
 
         // Request initial status
         this.requestStatusUpdate();
@@ -108,7 +121,6 @@ class NotificationSettingsComponent {
     onStatusReceived(status) {
         const focusStatusEl = document.getElementById('focus-status');
         const quietStatusEl = document.getElementById('quiet-status');
-        const activityTimeEl = document.getElementById('activity-time');
 
         if (focusStatusEl) {
             focusStatusEl.textContent = status.focusModeActive ? '🔴 Active' : '🟢 Inactive';
@@ -120,8 +132,16 @@ class NotificationSettingsComponent {
             quietStatusEl.className = status.inQuietHours ? 'status-active' : 'status-inactive';
         }
 
-        if (activityTimeEl && typeof status.timeSinceLastActivity === 'number') {
-            const seconds = Math.floor(status.timeSinceLastActivity / 1000);
+        if (typeof status.timeSinceLastActivity === 'number') {
+            this.lastActivityTimeMs = Date.now() - status.timeSinceLastActivity;
+            this.updateActivityTimeDisplay();
+        }
+    }
+
+    updateActivityTimeDisplay() {
+        const activityTimeEl = document.getElementById('activity-time');
+        if (activityTimeEl && this.lastActivityTimeMs !== null) {
+            const seconds = Math.max(0, Math.floor((Date.now() - this.lastActivityTimeMs) / 1000));
             activityTimeEl.textContent = `${seconds}s ago`;
         }
     }
@@ -189,12 +209,21 @@ class NotificationSettingsComponent {
             clearInterval(this.statusInterval);
             this.statusInterval = null;
         }
+        if (this.localTickerInterval !== null) {
+            clearInterval(this.localTickerInterval);
+            this.localTickerInterval = null;
+        }
     }
 }
 
 // ─────────────────────────────────────────────
 // Export
 // ─────────────────────────────────────────────
+
+if (typeof window !== 'undefined') {
+    window.NotificationSettingsComponent = NotificationSettingsComponent;
+    window.createNotificationSettingsHTML = createNotificationSettingsHTML;
+}
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { NotificationSettingsComponent, createNotificationSettingsHTML };

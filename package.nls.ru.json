@@ -8,6 +8,7 @@
   "config.codeTune.showWisdom": "Показывать исламскую мудрость и стихи в напоминаниях",
   "config.codeTune.showMorningAzkar": "Показывать утренние Азкар в соответствующее время (أذكار الصباح)",
   "config.codeTune.showEveningAzkar": "Показывать вечерние Азкар в соответствующее время (أذكار المساء)",
+  "config.codeTune.enableAyahKursiReminder": "Напоминать о чтении Аята аль-Курси после каждой обязательной молитвы (آية الكرسي دبر كل صلاة)",
   "config.codeTune.workingHoursOnly": "Показывать напоминания только в рабочее время (9 утра - 6 вечера)",
   "config.codeTune.language": "Выберите язык отображения для CodeTune",
   "views.codeTuneMain.name": "CodeTune",
@@ -19,5 +20,8 @@
   "views.islamicDhikrCounters.name": "Исламский Зикр и счетчики",
   "views.islamicDhikrCounters.contextualTitle": "Исламский Зикр и счетчики",
   "views.quranTime.name": "Время Корана",
-  "views.quranTime.contextualTitle": "Время Корана"
+  "views.quranTime.contextualTitle": "Время Корана",
+  "config.codeTune.enableReviewNotifications": "Показывать периодические уведомления с просьбой оценить CodeTune в VS Code Marketplace",
+  "config.codeTune.enableSponsorNotifications": "Показывать периодические уведомления о поддержке разработки CodeTune",
+  "config.codeTune.theme": "Выберите визуальную тему для CodeTune (по умолчанию, зелёный, золотой, океан, тёмная, светлая)"
 }

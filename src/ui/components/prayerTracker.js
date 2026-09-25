@@ -534,6 +534,13 @@ class PrayerTrackerComponent {
         } else {
             logger.warn('Counter component not available for prayer goal update');
         }
+
+        if (completed) {
+            const vscode = this.vscode || window.vscode;
+            if (vscode) {
+                vscode.postMessage({ type: 'prayerCompleted', prayer });
+            }
+        }
     }
 
     updateLocationDisplay() {

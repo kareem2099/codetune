@@ -45,9 +45,25 @@ class AudioPlayerComponent {
         this.surahData = surahData;
         this.showReadingProgress = false;
 
+        this.loadSavedSettings();
         this.loadListeningStats();
         this.initializeAudio();
         this.setupAudioEventListeners();
+    }
+
+    loadSavedSettings() {
+        try {
+            const saved = localStorage.getItem('codeTuneSettings') || localStorage.getItem('quranPlayerSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings.reciter) { this.reciter = settings.reciter; }
+                if (settings.volume !== undefined) { this.volume = settings.volume; }
+                if (settings.audioQuality) { this.audioQuality = settings.audioQuality; }
+                if (settings.playbackMode) { this.playbackMode = settings.playbackMode; }
+            }
+        } catch (error) {
+            logger.warn('Failed to load audio player settings:', error);
+        }
     }
 
     setupAudioEventListeners() {
@@ -589,10 +605,10 @@ class AudioPlayerComponent {
             this.saveSettings();
         }
 
-        const surahToPlay = this.currentSurah ? this.currentSurah.number : 1;
+        const surahToPlay = this.currentSurah ? this.currentSurah.number : null;
         logger.info('Surah to play:', surahToPlay);
 
-        if (!surahToPlay || surahToPlay === 1) {
+        if (!surahToPlay) {
             logger.error('No valid surah selected for playback!');
             this.showNotification('Please select a surah first', 'error');
             return;
@@ -923,39 +939,23 @@ class AudioPlayerComponent {
     }
 
     saveSettings() {
-        const settings = {
-            volume: this.volume,
-            playbackMode: this.playbackMode,
-            reciter: this.reciter,
-            audioQuality: this.audioQuality,
-            autoPlayStartup: false,
-            theme: 'auto',
-            compactMode: false,
-            showNotifications: true,
-            language: 'auto',
-            enableReminders: true,
-            reminderInterval: 30,
-            reminderTypes: {
-                showAdia: true,
-                showAhadis: true,
-                showWisdom: true,
-                showMorningAzkar: true,
-                showEveningAzkar: true
-            },
-            workingHoursOnly: false,
-            islamicReminders: {
-                fajr: false,
-                dhuhr: false,
-                asr: false,
-                maghrib: false,
-                isha: false
-            },
-            cacheSize: 100,
-            downloadTimeout: 30,
-            retryAttempts: 3
-        };
+        try {
+            let existing = {};
+            const saved = localStorage.getItem('codeTuneSettings') || localStorage.getItem('quranPlayerSettings');
+            if (saved) {
+                try { existing = JSON.parse(saved); } catch (e) { existing = {}; }
+            }
+            existing.volume = this.volume;
+            existing.playbackMode = this.playbackMode;
+            existing.reciter = this.reciter;
+            existing.audioQuality = this.audioQuality;
 
-        localStorage.setItem('quranPlayerSettings', JSON.stringify(settings));
+            localStorage.setItem('codeTuneSettings', JSON.stringify(existing));
+            this.postMessage('saveSettings', { settings: existing });
+            this.postMessage('updateReciter', { reciter: this.reciter });
+        } catch (error) {
+            logger.warn('Failed to save audio player settings:', error);
+        }
     }
 
     // Handle messages from the extension

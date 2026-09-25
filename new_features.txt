@@ -1,13 +1,13 @@
-v1.2.1 "Fajr"
+v1.3.0 "Tawasul"
 
 RECENT_UPDATES
-Islamic Date Tracking - Daily goals reset at Fajr (dawn) instead of midnight
-Audio Sync Fix - Accumulator pattern ensures no listening time is lost
-14 Bug Fixes - Config registration, 403 Forbidden, dhikr counters, modal transparency
-Spiritual Progress Tracker - Card wrapper, info tooltip, quick action buttons
-Modal Readability - Fixed transparent modals, scrollable achievements list
+Full Localization - Complete translation coverage across all 5 languages (EN, AR, ES, FR, RU)
+Settings Overhaul - Glassmorphic settings card, persistent preferences, reciter & audio quality
+Theme Engine - Native light & dark contrast themes, real-time reactive CSS variables
+Smart Notifications - Focus mode during active coding, quiet hours (DND), prayer reminders
+Bug Fixes - Fixed settings overwrite bug, eliminated hardcoded strings, robust state persistence
 
-COMING_SOON v1.3.0 "Tawasul"
-Full Localization - Every string in all 5 languages (EN, AR, ES, FR, RU)
-Settings Overhaul - Unified settings UI, persistence fixes, theme engine
-Notification Settings - Prayer reminders, frequency controls, quiet hours
+COMING_SOON v1.4.0
+Advanced Audio Caching - Pre-buffering and offline playback support
+Tajweed Guide - Colored Quranic text with interactive tajweed rules
+Spiritual Milestones - Expanded achievements and community stats

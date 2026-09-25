@@ -12,7 +12,6 @@ eslint.config.mjs
 esbuild.js
 .gitignore
 todo_list*.json
-new_features.txt
 bfg.jar
 vsc-extension-quickstart.md
 ISLAMIC_REMINDERS_FEATURE.md
@@ -41,3 +40,4 @@ src/test/
 !README.md
 !CHANGELOG.md
 !LICENSE
+!new_features.txt

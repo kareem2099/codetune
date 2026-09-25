@@ -2,7 +2,7 @@
   "name": "codetune",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "publisher": "FreeRave",
   "icon": "images/icon.png",
   "galleryBanner": {
@@ -75,6 +75,11 @@
           "default": true,
           "description": "%config.codeTune.showEveningAzkar%"
         },
+        "codeTune.enableAyahKursiReminder": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.codeTune.enableAyahKursiReminder%"
+        },
         "codeTune.workingHoursOnly": {
           "type": "boolean",
           "default": false,
@@ -99,17 +104,30 @@
             "Français (French)",
             "Español (Spanish)"
           ],
-          "description": "Choose the display language for CodeTune"
+          "description": "%config.codeTune.language%"
+        },
+        "codeTune.theme": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "green",
+            "gold",
+            "ocean",
+            "dark",
+            "light"
+          ],
+          "description": "%config.codeTune.theme%"
         },
         "codeTune.enableReviewNotifications": {
           "type": "boolean",
           "default": true,
-          "description": "Show occasional notifications asking users to leave reviews for CodeTune on VS Code Marketplace"
+          "description": "%config.codeTune.enableReviewNotifications%"
         },
         "codeTune.enableSponsorNotifications": {
           "type": "boolean",
           "default": true,
-          "description": "Show occasional notifications encouraging users to support CodeTune development"
+          "description": "%config.codeTune.enableSponsorNotifications%"
         },
         "codeTune.salawatCounter": {
           "type": "number",
@@ -130,6 +148,54 @@
             "lastUpdated": ""
           },
           "description": "Friday Surah Al-Kahf reading state tracking"
+        },
+        "codeTune.autoPlayStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-play Quran recitation on startup"
+        },
+        "codeTune.prayerReminders": {
+          "type": "object",
+          "default": {
+            "fajr": false,
+            "dhuhr": false,
+            "asr": false,
+            "maghrib": false,
+            "isha": false
+          },
+          "description": "Prayer reminders notification settings"
+        },
+        "codeTune.volume": {
+          "type": "number",
+          "default": 70,
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Quran audio player volume"
+        },
+        "codeTune.smartNotifications.pauseDuringCoding": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pause notifications while actively coding"
+        },
+        "codeTune.smartNotifications.quietHoursEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable quiet hours for notifications"
+        },
+        "codeTune.smartNotifications.quietHoursStart": {
+          "type": "number",
+          "default": 22,
+          "description": "Quiet hours start hour (0-23)"
+        },
+        "codeTune.smartNotifications.quietHoursEnd": {
+          "type": "number",
+          "default": 7,
+          "description": "Quiet hours end hour (0-23)"
+        },
+        "codeTune.smartNotifications.focusModeDuration": {
+          "type": "number",
+          "default": 15000,
+          "description": "Focus mode duration in milliseconds"
         }
       }
     },
@@ -164,7 +230,7 @@
       },
       {
         "command": "codeTune.openSettings",
-        "title": "Open CodeTune Settings"
+        "title": "%commands.codeTune.openSettings.title%"
       }
     ],
     "keybindings": [

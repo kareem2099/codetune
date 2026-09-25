@@ -4,8 +4,8 @@
 
 <img src="images/icon.png" alt="CodeTune Logo" width="128" />
 
-[![Version](https://img.shields.io/badge/version-1.2.1-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
-[![Codename](https://img.shields.io/badge/codename-Fajr-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
+[![Codename](https://img.shields.io/badge/codename-Tawasul-ffcc00?style=flat-square&labelColor=0f0f0f)](https://github.com/kareem2099/codetune/releases)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.86+-blue)](https://code.visualstudio.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](https://opensource.org/licenses/MIT)
 
@@ -29,23 +29,50 @@ Authentic Islamic reminders, Quran recitation, prayer times, and spiritual focus
 
 ---
 
-## 🏆 What's New in v1.2.0 "Fajr"
+## 🏆 What's New in v1.3.0 "Tawasul"
 
-### 🕌 **Islamic Date Tracking System** *(NEW)*
+### 🌐 **Full 5-Language Internationalization** *(MAJOR)*
+- **100% Translation Coverage:** Complete localization across English, Arabic (العربية), Spanish (Español), French (Français), and Russian (Русский)
+- **Live Runtime Switching:** Instant UI updates when changing language with zero window reload
+- **Bi-directional Layouts:** Polished RTL (Right-to-Left) for Arabic and LTR for European languages
+- **Zero Hardcoded Strings:** Every button, modal, label, and notification is fully localized
+
+### 🕌 **Ayah Al-Kursi After-Prayer Reminders** *(NEW)*
+- **Post-Prayer Admonition:** Automatic notification 15–40 minutes after each prayer and immediate prompt upon marking prayer completed:
+  > *«Whoever recites Ayah Al-Kursi after each obligatory prayer, nothing prevents him from entering Paradise except death.»*
+- **Modal Recitation View:** Full Arabic text in authentic Uthmani script with Harakat plus full English translation in a dedicated dialog
+- **Extended Daily Azkar:** Added Ayah Al-Kursi and Sayyid Al-Istighfar to Morning & Evening Azkar
+
+### ⚙️ **Glassmorphic Settings & Persistent Preferences**
+- **Modern Settings Card:** Sleek design matching the rest of the spiritual dashboard
+- **Rock-Solid Persistence:** Settings sync seamlessly between VS Code configuration, `globalState`, and `localStorage`
+- **Zero Console Errors:** All configuration keys officially registered in schema
+
+### 🎨 **Contrast Theme Engine**
+- **Light & Dark Themes:** Native contrast modes with real-time reactive CSS variables
+
+### ⚡ **IPC Performance & Bug Fixes**
+- **Heartbeat Optimization:** Eliminated 1-second IPC polling spam; replaced with a 30s heartbeat & client UI ticker
+- **Surah Al-Fatihah Fix:** Corrected selection validation in player that was blocking playback of Surah 1
+- **Component Global Scope:** Reliable event handling and communication across all UI components
+
+---
+
+### 📊 Previous: v1.2.0 "Fajr"
+
+### 🕌 **Islamic Date Tracking System**
 - **Fajr-Based Day Tracking:** Daily goals now reset at Fajr (dawn) instead of midnight
 - **Timezone-Safe Date Arithmetic:** Noon-anchored date calculations prevent DST errors
 - **Smart Streak Calculation:** Streak survives until next Fajr, not midnight
 - **Fajr Time Sync:** Prayer times flow from API to SpiritualTracker automatically
 
-### 🎵 **Audio → Tracker Sync Fix** *(CRITICAL FIX)*
+### 🎵 **Audio → Tracker Sync Fix**
 - **Accumulator Pattern:** Short listening sessions (45s) no longer lost — milliseconds accumulate until a full minute
 - **Webview-to-Extension Bridge:** localStorage data now properly crosses to SpiritualTracker
 - **Real-Time Dashboard Update:** Quran listening minutes show in progress bar immediately
 
 ### 🐛 **14 Bug Fixes**
 - Config registration, 403 Forbidden, message handlers, duplicate buttons, dhikr counter sync, modal transparency, and more
-
-### 📊 **Previous: v1.1.0 "Hikmah"**
 
 ### 🧠 **Smart Focus Mode**
 - **Coding-Aware Notifications:** Detects when you're actively typing and **pauses** reminders automatically

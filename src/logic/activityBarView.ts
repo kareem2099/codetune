@@ -7,6 +7,8 @@ import { logger } from '../utils/Logger';
 import { IslamicCalendar } from './islamicCalendar';
 import { SpiritualTracker } from '../utils/SpiritualTracker';
 import { TrackerInsights } from './trackerInsights';
+import { ThemeEngine } from '../ui/themeEngine';
+import { SmartNotifications } from './smartNotifications';
 
 // ─────────────────────────────────────────────
 // Helpers (module-level)
@@ -115,17 +117,45 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'codeTuneMain';
 
     private _view?: vscode.WebviewView;
+    private readonly _extensionUri: vscode.Uri;
 
     constructor(
-        private readonly _extensionUri: vscode.Uri,
+        private readonly _context: vscode.ExtensionContext,
         private quranPlayer: QuranPlayer,
         private islamicRemindersManager?: any
     ) {
+        this._extensionUri = _context.extensionUri;
         // Set up bidirectional communication with QuranPlayer
         this.quranPlayer.setMessageSender((message: any) => {
             this.sendMessageToWebview(message);
         });
         logger.info('Activity Bar: Provider constructor called');
+    }
+
+    public getFullInitialSettings(): any {
+        const config = vscode.workspace.getConfiguration('codeTune');
+        return {
+            volume: config.get('volume', 70),
+            reciter: this.quranPlayer.getCurrentEdition(),
+            audioQuality: this.quranPlayer.getBitrate().toString(),
+            autoPlayStartup: config.get('autoPlayStartup', false),
+            compactMode: this._context.globalState.get('codeTune_compactMode', false),
+            showNotifications: this._context.globalState.get('codeTune_showNotifications', true),
+            language: config.get('language', 'auto'),
+            enableReminders: config.get('enableReminders', true),
+            reminderInterval: config.get('reminderInterval', 60),
+            showAdia: config.get('showAdia', true),
+            showAhadis: config.get('showAhadis', true),
+            showWisdom: config.get('showWisdom', true),
+            showMorningAzkar: config.get('showMorningAzkar', true),
+            showEveningAzkar: config.get('showEveningAzkar', true),
+            enableAyahKursiReminder: config.get('enableAyahKursiReminder', true),
+            workingHoursOnly: config.get('workingHoursOnly', false),
+            islamicReminders: this.islamicRemindersManager?.getPrayerSettings?.() || {
+                fajr: false, dhuhr: false, asr: false, maghrib: false, isha: false
+            },
+            theme: ThemeEngine.instance.getCurrentTheme()
+        };
     }
 
     public resolveWebviewView(
@@ -149,17 +179,22 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
         logger.info('Activity Bar: Webview HTML set');
 
-        // Send language + localization after webview initializes
+        // Send language + localization and initial settings after webview initializes
         setTimeout(() => {
             const currentLanguage = vscode.workspace.getConfiguration('codeTune').get('language', 'auto');
             const localizationData = this.loadLocalizationData(currentLanguage as string);
             webviewView.webview.postMessage({ type: 'languageChanged', language: currentLanguage, localizationData });
-            logger.info('Activity Bar: Sent language to webview:', currentLanguage);
+            webviewView.webview.postMessage({ type: 'initialSettings', settings: this.getFullInitialSettings() });
+            logger.info('Activity Bar: Sent language and initial settings to webview');
         }, 1000);
 
         // ── Message handler ───────────────────────────────────────────────────
         webviewView.webview.onDidReceiveMessage(async (data) => {
-            logger.info('Activity Bar received message:', data);
+            if (data.type !== 'requestNotificationStatus') {
+                logger.info('Activity Bar received message:', data);
+            } else {
+                logger.debug('Activity Bar received message:', data);
+            }
             try {
                 switch (data.type) {
 
@@ -229,14 +264,44 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                     }
 
                     // ── Settings ──────────────────────────────────────────────
+                    case 'requestInitialSettings':
+                        this.sendMessageToWebview({ type: 'initialSettings', settings: this.getFullInitialSettings() });
+                        break;
+
                     case 'openSettings':
                     case 'goBackToActivityBar':
                         logger.info(`${data.type} received`);
                         break;
 
-                    case 'saveSettings':
+                    case 'saveSettings': {
+                        const s = data.settings;
+                        if (s) {
+                            this._context.globalState.update('codeTune_settings', s);
+                            if (s.compactMode !== undefined) {
+                                this._context.globalState.update('codeTune_compactMode', s.compactMode);
+                            }
+                            if (s.showNotifications !== undefined) {
+                                this._context.globalState.update('codeTune_showNotifications', s.showNotifications);
+                            }
+                            if (s.reciter) {
+                                this.quranPlayer.setEdition(s.reciter);
+                            }
+                            if (s.audioQuality) {
+                                this.quranPlayer.setBitrate(parseInt(s.audioQuality, 10));
+                            }
+                            if (s.theme) {
+                                ThemeEngine.instance.applyTheme(s.theme);
+                            }
+                            if (s.autoPlayStartup !== undefined) {
+                                vscode.workspace.getConfiguration('codeTune').update('autoPlayStartup', s.autoPlayStartup, true);
+                            }
+                            if (this.islamicRemindersManager) {
+                                this.islamicRemindersManager.updateSettings(s);
+                            }
+                        }
                         vscode.window.showInformationMessage('Settings saved successfully!');
                         break;
+                    }
 
                     case 'executeCommand':
                         await vscode.commands.executeCommand(data.command);
@@ -256,6 +321,42 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                             logger.warn('Islamic reminders manager not available');
                         }
                         break;
+
+                    case 'updateReciter':
+                        this.quranPlayer.setEdition(data.reciter);
+                        this._context.globalState.update('codeTune_reciter', data.reciter);
+                        break;
+
+                    case 'updateAudioQuality':
+                        this.quranPlayer.setBitrate(parseInt(data.quality || data.bitrate, 10));
+                        break;
+
+                    case 'setTheme':
+                        ThemeEngine.instance.applyTheme(data.theme);
+                        break;
+
+                    case 'updateSmartNotifications': {
+                        const smart = (global as any).smartNotifications as SmartNotifications | undefined;
+                        if (smart) {
+                            smart.updateSettings(data.settings);
+                        }
+                        break;
+                    }
+
+                    case 'requestNotificationStatus': {
+                        const smart = (global as any).smartNotifications as SmartNotifications | undefined;
+                        if (smart) {
+                            this.sendMessageToWebview({
+                                type: 'notificationStatus',
+                                payload: {
+                                    focusModeActive: smart.isFocusModeActive(),
+                                    inQuietHours: smart.isInQuietHours(),
+                                    timeSinceLastActivity: smart.getTimeSinceLastActivity()
+                                }
+                            });
+                        }
+                        break;
+                    }
 
                     case 'updateReviewNotifications': {
                         const rnm = (global as any).reviewNotificationManager;
@@ -309,6 +410,22 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
                     case 'requestDashboardData': {
                         logger.info('Webview requested dashboard data');
                         this.sendDashboardData();
+                        break;
+                    }
+
+                    case 'prayerCompleted': {
+                        const prayerKey = typeof data.prayer === 'string' ? data.prayer.toLowerCase() : '';
+                        const prayerMap: Record<string, string> = {
+                            fajr: 'صلاة الفجر',
+                            dhuhr: 'صلاة الظهر',
+                            asr: 'صلاة العصر',
+                            maghrib: 'صلاة المغرب',
+                            isha: 'صلاة العشاء'
+                        };
+                        const prayerName = prayerMap[prayerKey] || 'الصلاة';
+                        if (this.islamicRemindersManager?.showAyahKursiReminder) {
+                            this.islamicRemindersManager.showAyahKursiReminder(prayerName, prayerKey);
+                        }
                         break;
                     }
 
@@ -522,6 +639,7 @@ export class ActivityBarViewProvider implements vscode.WebviewViewProvider {
             .replace('./components/audioPlayer.js', toUri(path.join(componentDir, 'audioPlayer.js')))
             .replace('./components/prayerTracker.js', toUri(path.join(componentDir, 'prayerTracker.js')))
             .replace('./components/settings.js', toUri(path.join(componentDir, 'settings.js')))
+            .replace('./components/notificationSettings.js', toUri(path.join(componentDir, 'notificationSettings.js')))
             .replace('./components/trackerDashboard.js', toUri(trackerDashboardPath))
             .replace('./components/errorRecovery.js', toUri(errorRecoveryPath))
             .replace('{{trackerDashboardCssUri}}', toUri(trackerDashboardCssPath))

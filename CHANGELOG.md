@@ -2,6 +2,36 @@
 
 All notable changes to the "codetune" extension will be documented in this file.
 
+## [1.3.0 "Tawasul"] - 2026-09-25
+
+### 🌐 Full 5-Language Internationalization
+- **100% Translation Coverage:** Complete translation across English, Arabic (العربية), Spanish (Español), French (Français), and Russian (Русский).
+- **Runtime Language Switching:** Instant live interface language updates without reloading the window.
+- **Bi-directional Support:** Seamless RTL (Right-to-Left) and LTR layout switching tailored for Arabic and European languages.
+- **Zero Hardcoded Strings:** Audited and localized every single label, button, modal prompt, tooltip, and status notification.
+
+### 🕌 Ayah Al-Kursi & Islamic Reminders
+- **After-Prayer Ayah Al-Kursi Reminders:** Automatic reminder within 15–40 minutes after each prayer time window, and immediate prompt upon marking prayer completed:
+  > «مَنْ قَرَأَ آيَةَ الْكُرْسِيِّ دُبُرَ كُلِّ صَلَاةٍ مَكْتُوبَةٍ لَمْ يَمْنَعْهُ مِنْ دُخُولِ الْجَنَّةِ إِلَّا أَنْ يَمُوتَ»
+- **Full Text Recitation Modal:** Read Ayah Al-Kursi in authentic Arabic script with diacritics (Harakat) along with the complete English translation via a dedicated VS Code modal dialog (`{ modal: true }`).
+- **Extended Morning & Evening Azkar:** Added Ayah Al-Kursi (Al-Baqarah 2:255) and Sayyid Al-Istighfar (سيد الاستغفار) to both morning and evening Azkar collections.
+- **Configurable Toggles:** New `codeTune.enableAyahKursiReminder` setting in Settings UI and VS Code settings schema.
+
+### ⚙️ Settings Overhaul & Persistence
+- **Glassmorphic Settings Card:** Modern, cohesive settings UI consistent with the extension's visual design.
+- **Reliable Configuration Persistence:** Full synchronization between `vscode.workspace.getConfiguration`, `globalState`, and `localStorage` — preferences persist reliably across editor restarts.
+- **Registered Configuration Schema:** Added missing properties (`autoPlayStartup`, `prayerReminders`, `volume`, `smartNotifications.*`) into `package.json`, eliminating settings write errors.
+
+### 🎨 Theme Engine
+- **Reactive Theme System:** Dedicated light and dark contrast themes powered by real-time reactive CSS variables.
+- **Immediate Feedback:** Seamless theme toggling with persistent preferences.
+
+### ⚡ Performance, IPC & Bug Fixes
+- **Eliminated Polling Spam:** Replaced 1-second IPC polling in Notification Settings with an efficient 30s heartbeat coupled with client-side UI ticking.
+- **Global Component Bridge:** Exposed `window.counterComponent`, `window.audioPlayerComponent`, `window.prayerTrackerComponent`, and `window.settingsComponent` to ensure robust inter-component communication.
+- **Surah Al-Fatihah Playback Fix:** Corrected selection validation in `audioPlayer.js` that was erroneously blocking Surah 1.
+- **Resilient Theme Handlers:** Fixed `saveSettingsLocally` exception during theme and initial settings events.
+
 ---
 
 ## [1.2.0 "Fajr"] - 2026-03-27

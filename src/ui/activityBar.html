@@ -397,143 +397,197 @@
                 </div>
             </div>
 
-
-
-            <!-- Playback Settings -->
-            <div class="settings-section">
-                <div class="settings-title">
-                    <span>▶️</span>
-                    <span data-localize="playbackSettings">Playback Settings</span>
-                </div>
-
-                    <div class="setting-item">
-                    <div class="setting-label" data-localize="autoPlayStartup">Auto-play on Startup</div>
-                    <div class="setting-description" data-localize="autoPlayDesc">Automatically start playing when VS Code opens</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="autoPlayStartup" onchange="window.quranActivityBar.settingsComponent.updateAutoPlaySetting(this.checked)">
-                        <label for="autoPlayStartup" data-localize="enableAutoPlay">Enable auto-play</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Appearance Settings -->
-            <div class="settings-section">
-                <div class="settings-title">
-                    <span>🎨</span>
-                    <span data-localize="appearanceSettings">Appearance Settings</span>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="compactMode">Compact Mode</div>
-                    <div class="setting-description" data-localize="compactDesc">Use a more compact layout to save space</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="compactMode" onchange="window.quranActivityBar.settingsComponent.updateCompactModeSetting(this.checked)">
-                        <label for="compactMode">Enable compact mode</label>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="showNotifications">Show Notifications</div>
-                    <div class="setting-description" data-localize="notificationsDesc">Display notifications for playback events</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="showNotifications" checked onchange="window.quranActivityBar.settingsComponent.updateNotificationsSetting(this.checked)">
-                        <label for="showNotifications">Enable notifications</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Islamic Reminders -->
-            <div class="settings-section">
-                <div class="settings-title">
-                    <span>🕌</span>
-                    <span data-localize="islamicRemindersTitle">Islamic Reminders</span>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="enableReminders">Enable Reminders</div>
-                    <div class="setting-description" data-localize="remindersDesc">Receive Islamic reminders and wisdom notifications</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="enableReminders" checked onchange="window.quranActivityBar.settingsComponent.updateEnableRemindersSetting(this.checked)">
-                        <label for="enableReminders">Enable Islamic reminders</label>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="reminderInterval">Reminder Interval</div>
-                    <div class="setting-description" data-localize="reminderIntervalDesc">How often to show Islamic reminders</div>
-                    <div class="setting-control">
-                        <select class="setting-select" id="reminderIntervalSelect">
-                            <option value="5">Every 5 minutes</option>
-                            <option value="15">Every 15 minutes</option>
-                            <option value="30" selected>Every 30 minutes</option>
-                            <option value="60">Every 1 hour</option>
-                            <option value="120">Every 2 hours</option>
-                            <option value="240">Every 4 hours</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="reminderTypes">Reminder Types</div>
-                    <div class="setting-description" data-localize="reminderTypesDesc">Choose which types of Islamic content to receive</div>
-                    <div class="setting-control">
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label><input type="checkbox" id="showAdia" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAdia', this.checked)"> Adia (Islamic Prayers)</label>
-                            <label><input type="checkbox" id="showAhadis" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAhadis', this.checked)"> Ahadis (Prophet's Sayings)</label>
-                            <label><input type="checkbox" id="showWisdom" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showWisdom', this.checked)"> Islamic Wisdom</label>
-                            <label><input type="checkbox" id="showMorningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showMorningAzkar', this.checked)"> 🌅 Morning Azkar (After Fajr - Sunrise)</label>
-                            <label><input type="checkbox" id="showEveningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showEveningAzkar', this.checked)"> 🌆 Evening Azkar (After Asr - Maghrib)</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="workingHoursOnly">Working Hours Only</div>
-                    <div class="setting-description" data-localize="workingHoursDesc">Only show reminders during typical working hours (9 AM - 6 PM)</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="workingHoursOnly" onchange="window.quranActivityBar.settingsComponent.updateWorkingHoursSetting(this.checked)">
-                        <label for="workingHoursOnly">Working hours only</label>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="prayerReminders">Prayer Reminders</div>
-                    <div class="setting-description">Get notified before prayer times</div>
-                    <div class="setting-control">
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label><input type="checkbox" id="fajrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('fajrReminder', this.checked)"> Fajr Prayer</label>
-                            <label><input type="checkbox" id="duhrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('duhrReminder', this.checked)"> Dhuhr Prayer</label>
-                            <label><input type="checkbox" id="asrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('asrReminder', this.checked)"> Asr Prayer</label>
-                            <label><input type="checkbox" id="maghribReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('maghribReminder', this.checked)"> Maghrib Prayer</label>
-                            <label><input type="checkbox" id="ishaReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('ishaReminder', this.checked)"> Isha Prayer</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="reviewNotifications">Review Notifications</div>
-                    <div class="setting-description" data-localize="reviewNotificationsDesc">Show occasional notifications asking to leave reviews on VS Code Marketplace</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="enableReviewNotifications" onchange="window.quranActivityBar.settingsComponent.updateReviewNotificationsSetting(this.checked)">
-                        <label for="enableReviewNotifications">Enable review notifications</label>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-label" data-localize="sponsorNotifications">Sponsor Notifications</div>
-                    <div class="setting-description" data-localize="sponsorNotificationsDesc">Show occasional notifications encouraging to support CodeTune development</div>
-                    <div class="setting-control">
-                        <input type="checkbox" id="enableSponsorNotifications" onchange="window.quranActivityBar.settingsComponent.updateSponsorNotificationsSetting(this.checked)">
-                        <label for="enableSponsorNotifications">Enable sponsor notifications</label>
-                    </div>
-                </div>
-            </div>
-
-
-
             <!-- Status Messages -->
             <div class="status-message" id="statusMessage" data-localize="chooseSurah">
                 Choose a Surah to begin recitation
+            </div>
+        </div>
+
+        <!-- Settings Card -->
+        <div class="settings-card" id="codeTuneSettingsCard">
+            <div class="card-header">
+                <div class="card-icon">⚙️</div>
+                <span data-localize="settingsTitle">CodeTune Settings</span>
+            </div>
+
+            <div class="settings-card-content">
+                <!-- Audio & Playback Settings -->
+                <div class="settings-section">
+                    <div class="settings-title">
+                        <span>▶️</span>
+                        <span data-localize="playbackSettings">Playback Settings</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label" data-localize="defaultReciter">Default Reciter</div>
+                        <div class="setting-description" data-localize="chooseReciter">Choose your preferred Quran reciter</div>
+                        <div class="setting-control">
+                            <select class="setting-select" id="reciterSelect">
+                                <option value="ar.alafasy">مشاري راشد العفاسي - Mishary Rashid Alafasy</option>
+                                <option value="ar.abdurrahmaansudais">عبد الرحمن السديس - Abdurrahman As-Sudais</option>
+                                <option value="ar.abdulbasitmurattal" selected>عبد الباسط عبد الصمد - Abdul Basit Abdul Samad</option>
+                                <option value="ar.husary">محمود خليل الحصري - Mahmoud Khalil Al-Hussary</option>
+                                <option value="ar.husarymujawwad">محمود خليل الحصري (المجود) - Hussary Mujawwad</option>
+                                <option value="ar.minshawi">محمد صديق المنشاوي - Muhammad Siddiq Al-Minshawy</option>
+                                <option value="ar.minshawimujawwad">المنشاوي (المجود) - Minshawy Mujawwad</option>
+                                <option value="ar.mahermuaiqly">ماهر المعيقلي - Maher Al Muaiqly</option>
+                                <option value="ar.hudhaify">علي بن عبدالرحمن الحذيفي - Ali bin Abdulrahman Al-Hudhaify</option>
+                                <option value="ar.saoodshuraym">سعود الشريم - Saood bin Ibraaheem Ash-Shuraym</option>
+                                <option value="ar.ahmedajamy">أحمد علي العجمي - Ahmed Ibn Ali Al-Ajamy</option>
+                                <option value="ar.muhammadayyoub">محمد أيوب - Muhammad Ayyoub</option>
+                                <option value="ar.abdullahbasfar">عبد الله بصفر - Abdullah Basfar</option>
+                                <option value="ar.shaatree">أبو بكر الشاطري - Abu Bakr Ash-Shatri</option>
+                                <option value="ar.hanirifai">هاني الرفاعي - Hani Ar-Rifai</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label" data-localize="audioQuality">Audio Quality</div>
+                        <div class="setting-description" data-localize="selectQuality">Select preferred audio quality for streaming</div>
+                        <div class="setting-control">
+                            <select class="setting-select" id="audioQualitySelect">
+                                <option value="32" data-localize="lowQuality">32 kbps (Low)</option>
+                                <option value="64" data-localize="mediumQuality">64 kbps (Medium)</option>
+                                <option value="128" selected data-localize="highQuality">128 kbps (High)</option>
+                                <option value="192" data-localize="bestQuality">192 kbps (Best)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="autoPlayStartup">
+                                <input type="checkbox" id="autoPlayStartup" onchange="window.quranActivityBar.settingsComponent.updateAutoPlaySetting(this.checked)">
+                                <span data-localize="autoPlayStartup">Auto-play on Startup</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="autoPlayDesc">Automatically start playing when VS Code opens</div>
+                    </div>
+                </div>
+
+                <!-- Appearance Settings -->
+                <div class="settings-section">
+                    <div class="settings-title">
+                        <span>🎨</span>
+                        <span data-localize="appearanceSettings">Appearance Settings</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="compactMode">
+                                <input type="checkbox" id="compactMode" onchange="window.quranActivityBar.settingsComponent.updateCompactModeSetting(this.checked)">
+                                <span data-localize="enableCompactMode">Enable compact mode</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="compactDesc">Use a more compact layout to save space</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="showNotifications">
+                                <input type="checkbox" id="showNotifications" checked onchange="window.quranActivityBar.settingsComponent.updateNotificationsSetting(this.checked)">
+                                <span data-localize="enableNotifications">Enable notifications</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="notificationsDesc">Display notifications for playback events</div>
+                    </div>
+                </div>
+
+                <!-- Islamic Reminders -->
+                <div class="settings-section">
+                    <div class="settings-title">
+                        <span>🕌</span>
+                        <span data-localize="islamicRemindersTitle">Islamic Reminders</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="enableReminders">
+                                <input type="checkbox" id="enableReminders" checked onchange="window.quranActivityBar.settingsComponent.updateEnableRemindersSetting(this.checked)">
+                                <span data-localize="enableIslamicReminders">Enable Islamic reminders</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="remindersDesc">Receive Islamic reminders and wisdom notifications</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label" data-localize="reminderInterval">Reminder Interval</div>
+                        <div class="setting-description" data-localize="reminderIntervalDesc">How often to show Islamic reminders</div>
+                        <div class="setting-control">
+                            <select class="setting-select" id="reminderIntervalSelect">
+                                <option value="5" data-localize="every5Minutes">Every 5 minutes</option>
+                                <option value="15" data-localize="every15Minutes">Every 15 minutes</option>
+                                <option value="30" selected data-localize="every30Minutes">Every 30 minutes</option>
+                                <option value="60" data-localize="every1Hour">Every 1 hour</option>
+                                <option value="120" data-localize="every2Hours">Every 2 hours</option>
+                                <option value="240" data-localize="every4Hours">Every 4 hours</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label" data-localize="reminderTypes">Reminder Types</div>
+                        <div class="setting-description" data-localize="reminderTypesDesc">Choose which types of Islamic content to receive</div>
+                        <div class="setting-control">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label><input type="checkbox" id="showAdia" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAdia', this.checked)"> <span data-localize="adiaPrayers">Adia (Islamic Prayers)</span></label>
+                                <label><input type="checkbox" id="showAhadis" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showAhadis', this.checked)"> <span data-localize="ahadisSayings">Ahadis (Prophet's Sayings)</span></label>
+                                <label><input type="checkbox" id="showWisdom" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showWisdom', this.checked)"> <span data-localize="islamicWisdom">Islamic Wisdom</span></label>
+                                <label><input type="checkbox" id="showMorningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showMorningAzkar', this.checked)"> <span data-localize="morningAzkar">🌅 Morning Azkar (After Fajr - Sunrise)</span></label>
+                                <label><input type="checkbox" id="showEveningAzkar" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('showEveningAzkar', this.checked)"> <span data-localize="eveningAzkar">🌆 Evening Azkar (After Asr - Maghrib)</span></label>
+                                <label><input type="checkbox" id="enableAyahKursiReminder" checked onchange="window.quranActivityBar.settingsComponent.updateReminderTypeSetting('enableAyahKursiReminder', this.checked)"> <span data-localize="ayahKursiReminder">🕌 Ayah Al-Kursi (After every prayer)</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="workingHoursOnly">
+                                <input type="checkbox" id="workingHoursOnly" onchange="window.quranActivityBar.settingsComponent.updateWorkingHoursSetting(this.checked)">
+                                <span data-localize="workingHoursOnly">Working hours only</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="workingHoursDesc">Only show reminders during typical working hours (9 AM - 6 PM)</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-label" data-localize="prayerReminders">Prayer Reminders</div>
+                        <div class="setting-description" data-localize="prayerRemindersDesc">Get notified before prayer times</div>
+                        <div class="setting-control">
+                            <div class="prayer-toggles-grid">
+                                <label class="prayer-toggle-chip"><input type="checkbox" id="fajrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('fajrReminder', this.checked)"><span data-localize="prayerFajr">Fajr</span></label>
+                                <label class="prayer-toggle-chip"><input type="checkbox" id="duhrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('duhrReminder', this.checked)"><span data-localize="prayerDhuhr">Dhuhr</span></label>
+                                <label class="prayer-toggle-chip"><input type="checkbox" id="asrReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('asrReminder', this.checked)"><span data-localize="prayerAsr">Asr</span></label>
+                                <label class="prayer-toggle-chip"><input type="checkbox" id="maghribReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('maghribReminder', this.checked)"><span data-localize="prayerMaghrib">Maghrib</span></label>
+                                <label class="prayer-toggle-chip"><input type="checkbox" id="ishaReminder" onchange="window.quranActivityBar.settingsComponent.updateIslamicReminderSetting('ishaReminder', this.checked)"><span data-localize="prayerIsha">Isha</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="enableReviewNotifications">
+                                <input type="checkbox" id="enableReviewNotifications" onchange="window.quranActivityBar.settingsComponent.updateReviewNotificationsSetting(this.checked)">
+                                <span data-localize="enableReviewNotifications">Enable review notifications</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="reviewNotificationsDesc">Show occasional notifications asking to leave reviews on VS Code Marketplace</div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-control">
+                            <label class="checkbox-label" for="enableSponsorNotifications">
+                                <input type="checkbox" id="enableSponsorNotifications" onchange="window.quranActivityBar.settingsComponent.updateSponsorNotificationsSetting(this.checked)">
+                                <span data-localize="enableSponsorNotifications">Enable sponsor notifications</span>
+                            </label>
+                        </div>
+                        <div class="setting-description" data-localize="sponsorNotificationsDesc">Show occasional notifications encouraging to support CodeTune development</div>
+                    </div>
+                </div>
+
+                <!-- Smart Notification Settings -->
+                <div id="notificationSettingsContainer"></div>
             </div>
         </div>
 
@@ -713,6 +767,7 @@
     <script type="module" nonce="{{nonce}}" src="./components/audioPlayer.js"></script>
     <script type="module" nonce="{{nonce}}" src="./components/prayerTracker.js"></script>
     <script type="module" nonce="{{nonce}}" src="./components/settings.js"></script>
+    <script type="module" nonce="{{nonce}}" src="./components/notificationSettings.js"></script>
     <!--New v1.1.0 components -->
     <script type="module" nonce="{{nonce}}" src="./components/trackerDashboard.js"></script>
     <script type="module" nonce="{{nonce}}" src="./components/errorRecovery.js"></script>

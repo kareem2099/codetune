@@ -57,6 +57,8 @@ export class QuranPlayer {
 
     constructor(context: vscode.ExtensionContext) {
         this.context = context;
+        this.currentEdition = this.context.globalState.get<string>('codeTune_reciter', 'ar.abdulbasitmurattal');
+        this.bitrate = this.context.globalState.get<number>('codeTune_bitrate', 128);
         this.volume = vscode.workspace.getConfiguration('codeTune').get('quranVolume', 0.7);
         this.initializeSurahs();
         this.initializeEditions();
@@ -488,6 +490,9 @@ export class QuranPlayer {
     setEdition(edition: string): void {
         logger.info('QuranPlayer: Setting edition to:', edition);
         this.currentEdition = edition;
+        if (this.context) {
+            this.context.globalState.update('codeTune_reciter', edition);
+        }
     }
 
     pause(): void {
@@ -542,9 +547,16 @@ export class QuranPlayer {
     setBitrate(bitrate: number): void {
         if (this.availableBitrates.includes(bitrate)) {
             this.bitrate = bitrate;
+            if (this.context) {
+                this.context.globalState.update('codeTune_bitrate', bitrate);
+            }
         } else {
             throw new Error(`Invalid bitrate. Available options: ${this.availableBitrates.join(', ')}`);
         }
+    }
+
+    getBitrate(): number {
+        return this.bitrate;
     }
 
     /**

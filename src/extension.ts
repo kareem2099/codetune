@@ -10,6 +10,7 @@ import { WelcomeMessageManager } from './logic/welcomeMessage';
 import { ReviewNotificationManager } from './logic/reviewNotifications';
 import { SpiritualTracker } from './utils/SpiritualTracker';
 import { TrackerInsights } from './logic/trackerInsights';
+import { ThemeEngine } from './ui/themeEngine';
 
 // Initialize localization
 const localize = nls.loadMessageBundle();
@@ -139,6 +140,9 @@ async function checkAutoPlayOnStartup(context: vscode.ExtensionContext): Promise
 export function activate(context: vscode.ExtensionContext): void {
     logger.info('CodeTune extension is now active!');
 
+    // Initialize ThemeEngine
+    ThemeEngine.instance.initialize(context);
+
     // Initialize core services
     quranPlayer = new QuranPlayer(context);
     
@@ -167,12 +171,21 @@ export function activate(context: vscode.ExtensionContext): void {
     // Initialize Activity Bar webview provider
     logger.info('Extension: Creating Activity Bar provider...');
     const activityBarProvider = new ActivityBarViewProvider(
-        context.extensionUri,
+        context,
         quranPlayer,
         islamicRemindersManager
     );
 
     (global as any).activityBarProvider = activityBarProvider;
+
+    // Subscribe ThemeEngine to notify activity bar webview
+    ThemeEngine.instance.subscribe((vars) => {
+        activityBarProvider.sendMessageToWebview({
+            type: 'themeChanged',
+            theme: ThemeEngine.instance.getCurrentTheme(),
+            vars
+        });
+    });
 
     logger.info('Extension: Registering Activity Bar provider...');
     context.subscriptions.push(

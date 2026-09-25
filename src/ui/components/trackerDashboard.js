@@ -101,7 +101,7 @@ function createTrackerDashboardHTML() {
     return `
         <div class="tracker-dashboard" id="tracker-dashboard">
             <h3>
-                📊 Spiritual Progress Tracker
+                📊 <span data-localize="spiritualProgressTracker">Spiritual Progress Tracker</span>
                 <div class="info-tooltip-container">
                     <span class="info-icon">ℹ️</span>
                     <div class="info-tooltip-content">
@@ -114,7 +114,7 @@ function createTrackerDashboardHTML() {
 
             <!-- Daily Goals -->
             <div class="dashboard-section">
-                <h4>📅 Today's Goals</h4>
+                <h4 data-localize="todaysGoals">📅 Today's Goals</h4>
                 <div class="daily-goals">
                     <div class="goal-item" id="quran-goal">
                         <div class="goal-header">
@@ -140,22 +140,22 @@ function createTrackerDashboardHTML() {
 
             <!-- Streak -->
             <div class="dashboard-section">
-                <h4>🔥 Streak Status</h4>
+                <h4 data-localize="streakStatus">🔥 Streak Status</h4>
                 <div class="streak-display">
                     <div class="streak-item">
                         <div class="streak-count" id="current-streak">0</div>
-                        <div class="streak-label">Days</div>
-                        <div class="streak-sublabel">Current Streak</div>
+                        <div class="streak-label" data-localize="days">Days</div>
+                        <div class="streak-sublabel" data-localize="currentStreak">Current Streak</div>
                     </div>
                     <div class="streak-item">
                         <div class="streak-count" id="longest-streak">0</div>
-                        <div class="streak-label">Days</div>
-                        <div class="streak-sublabel">Longest Streak</div>
+                        <div class="streak-label" data-localize="days">Days</div>
+                        <div class="streak-sublabel" data-localize="longestStreak">Longest Streak</div>
                     </div>
                     <div class="streak-item">
                         <div class="streak-count" id="next-milestone">7</div>
-                        <div class="streak-label">Days</div>
-                        <div class="streak-sublabel">To Next Milestone</div>
+                        <div class="streak-label" data-localize="days">Days</div>
+                        <div class="streak-sublabel" data-localize="toNextMilestone">To Next Milestone</div>
                     </div>
                 </div>
                 <div id="milestone-label" class="milestone-label">🔥 One Week Warrior</div>
@@ -163,19 +163,19 @@ function createTrackerDashboardHTML() {
 
             <!-- All-Time Stats -->
             <div class="dashboard-section">
-                <h4>📈 All-Time Statistics</h4>
+                <h4 data-localize="allTimeStats">📈 All-Time Statistics</h4>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-value" id="total-quran">0</div>
-                        <div class="stat-label">Minutes of Quran</div>
+                        <div class="stat-label" data-localize="minutesOfQuran">Minutes of Quran</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="total-dhikr">0</div>
-                        <div class="stat-label">Total Dhikr</div>
+                        <div class="stat-label" data-localize="totalDhikr">Total Dhikr</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-value" id="active-days">0</div>
-                        <div class="stat-label">Active Days</div>
+                        <div class="stat-label" data-localize="activeDays">Active Days</div>
                     </div>
                 </div>
             </div>
@@ -189,35 +189,35 @@ function createTrackerDashboardHTML() {
 
             <!-- Achievements -->
             <div class="dashboard-section">
-                <h4>🏆 Achievements <span id="achievements-count" class="achievement-progress"></span></h4>
+                <h4>🏆 <span data-localize="achievements">Achievements</span> <span id="achievements-count" class="achievement-progress"></span></h4>
                 <div id="achievements-list" class="achievements-grid"></div>
-                <button id="view-all-achievements" class="secondary-button">View All Achievements</button>
+                <button id="view-all-achievements" class="secondary-button" data-localize="viewAllAchievements">View All Achievements</button>
             </div>
 
             <!-- Quick Actions -->
             <div class="dashboard-section">
-                <h4>⚡ Quick Actions</h4>
+                <h4 data-localize="quickActions">⚡ Quick Actions</h4>
                 <div class="quick-actions">
-                    <button id="log-quran-listening" class="action-button">📖 Log Quran Time</button>
-                    <button id="track-dhikr"         class="action-button">✨ Track Dhikr</button>
-                    <button id="refresh-dashboard"   class="action-button">🔄 Refresh</button>
+                    <button id="log-quran-listening" class="action-button" data-localize="logQuranTime">📖 Log Quran Time</button>
+                    <button id="track-dhikr"         class="action-button" data-localize="trackDhikr">✨ Track Dhikr</button>
+                    <button id="refresh-dashboard"   class="action-button" data-localize="refresh">🔄 Refresh</button>
                 </div>
             </div>
 
             <!-- Weekly Summary -->
             <div class="dashboard-section">
-                <h4>📊 Weekly Summary</h4>
+                <h4 data-localize="weeklySummary">📊 Weekly Summary</h4>
                 <div class="weekly-stats">
                     <div class="weekly-stat">
-                        <span class="stat-name">Active Days This Week:</span>
+                        <span class="stat-name" data-localize="activeDaysThisWeek">Active Days This Week:</span>
                         <span id="weekly-active-days">0/7</span>
                     </div>
                     <div class="weekly-stat">
-                        <span class="stat-name">Quran Minutes This Week:</span>
+                        <span class="stat-name" data-localize="quranMinutesThisWeek">Quran Minutes This Week:</span>
                         <span id="weekly-quran">0</span>
                     </div>
                     <div class="weekly-stat">
-                        <span class="stat-name">Dhikr This Week:</span>
+                        <span class="stat-name" data-localize="dhikrThisWeek">Dhikr This Week:</span>
                         <span id="weekly-dhikr">0</span>
                     </div>
                 </div>
@@ -437,6 +437,9 @@ if (typeof acquireVsCodeApi !== 'undefined' || typeof window !== 'undefined') {
         const mount = document.getElementById('tracker-dashboard-mount');
         if (mount) {
             mount.innerHTML = createTrackerDashboardHTML();
+            if (window.localization && window.localization.localizeElements) {
+                window.localization.localizeElements();
+            }
         }
         // Expose globally so activityBar.js can call updateFromPayload()
         window.trackerDashboardComponent = new TrackerDashboardComponent();

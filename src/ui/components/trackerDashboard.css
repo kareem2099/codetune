@@ -26,6 +26,19 @@
     --td-dhikr-grad: linear-gradient(135deg, #cba6f7, #f38ba8);
 }
 
+body.light-theme .tracker-dashboard,
+body.light-theme .error-recovery-container {
+    --td-bg: #f8fafc;
+    --td-surface: rgba(255, 255, 255, 0.7);
+    --td-border: rgba(0, 0, 0, 0.08);
+    --td-text: #0f172a;
+    --td-muted: #64748b;
+    --td-accent: #4f46e5;
+    --td-success: #16a34a;
+    --td-warning: #d97706;
+    --td-error: #dc2626;
+}
+
 /* ═══════════════════════════════════════════════
    TRACKER DASHBOARD
    ═══════════════════════════════════════════════ */

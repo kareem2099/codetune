@@ -43,6 +43,7 @@ export class AdvancedSettingsManager {
             'showWisdom', 'showMorningAzkar', 'showEveningAzkar', 'workingHoursOnly',
             'language', 'enableReviewNotifications', 'enableSponsorNotifications',
             'salawatCounter', 'enableAnalytics', 'autoBackupIntervalHours', 'theme',
+            'prayerReminders', 'volume', 'quranVolume',
             'smartNotifications.pauseDuringCoding', 'smartNotifications.quietHoursEnabled',
             'smartNotifications.quietHoursStart', 'smartNotifications.quietHoursEnd',
             'smartNotifications.focusModeDuration'
@@ -134,5 +135,26 @@ export class AdvancedSettingsManager {
     public getAllSettings(): Record<string, unknown> {
         const json = this.exportSettings();
         return (JSON.parse(json) as ExportedSettings).settings;
+    }
+
+    /**
+     * Migrate legacy settings from previous versions (e.g. quranPlayerSettings)
+     */
+    public migrateLegacySettings(legacy: Record<string, any>): Record<string, unknown> {
+        const migrated: Record<string, unknown> = {};
+        if (legacy.reciter) { migrated['reciter'] = legacy.reciter; }
+        if (legacy.volume !== undefined) { migrated['volume'] = legacy.volume; }
+        if (legacy.audioQuality) { migrated['audioQuality'] = legacy.audioQuality; }
+        if (legacy.language) { migrated['language'] = legacy.language; }
+        if (legacy.theme) { migrated['theme'] = legacy.theme; }
+        if (legacy.compactMode !== undefined) { migrated['compactMode'] = legacy.compactMode; }
+        if (legacy.enableReminders !== undefined) { migrated['enableReminders'] = legacy.enableReminders; }
+        if (legacy.reminderInterval !== undefined) { migrated['reminderInterval'] = legacy.reminderInterval; }
+        if (legacy.reminderTypes) {
+            Object.assign(migrated, legacy.reminderTypes);
+        }
+        if (legacy.workingHoursOnly !== undefined) { migrated['workingHoursOnly'] = legacy.workingHoursOnly; }
+        if (legacy.islamicReminders) { migrated['prayerReminders'] = legacy.islamicReminders; }
+        return migrated;
     }
 }
